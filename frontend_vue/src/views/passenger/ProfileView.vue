@@ -1,0 +1,192 @@
+<script setup>
+import { ref } from 'vue'
+import {
+  User, CreditCard, Clock, MapPin, Star, Settings, ChevronRight,
+  LogOut, Shield, Bell, Bus
+} from 'lucide-vue-next'
+
+const user = ref({
+  nome: 'Afonso Machado',
+  email: 'afonso.machado@alunos.uminho.pt',
+  tipo: 'Estudante Universitário',
+  nif: '2XX XXX XXX',
+  passeMensal: true,
+})
+
+const tripHistory = ref([
+  { data: '20/04/2026', linha: 'L43', origem: 'Estação CP', destino: 'Universidade', hora: '08:15', duracao: '18 min' },
+  { data: '19/04/2026', linha: 'L43', origem: 'Universidade', destino: 'Estação CP', hora: '17:30', duracao: '22 min' },
+  { data: '19/04/2026', linha: 'L7', origem: 'Av. Central', destino: 'S. Vítor', hora: '13:10', duracao: '12 min' },
+  { data: '18/04/2026', linha: 'L43', origem: 'Estação CP', destino: 'Universidade', hora: '09:00', duracao: '20 min' },
+  { data: '17/04/2026', linha: 'L7', origem: 'S. Vítor', destino: 'Celeirós', hora: '14:45', duracao: '25 min' },
+])
+
+const menuItems = [
+  { icon: CreditCard, label: 'Métodos de Pagamento', sub: 'VISA •••• 4521' },
+  { icon: Star, label: 'Linhas Favoritas', sub: 'L43, L7' },
+  { icon: Bell, label: 'Notificações', sub: 'Ativas' },
+  { icon: Shield, label: 'Privacidade e Dados', sub: 'RGPD' },
+  { icon: Settings, label: 'Definições', sub: '' },
+]
+</script>
+
+<template>
+  <div class="profile-page">
+    <!-- Profile Card -->
+    <div class="profile-card">
+      <div class="avatar">
+        <span class="avatar-initials">AM</span>
+      </div>
+      <div class="profile-info">
+        <h2 class="profile-name">{{ user.nome }}</h2>
+        <span class="profile-type">{{ user.tipo }}</span>
+        <span class="profile-email">{{ user.email }}</span>
+      </div>
+      <div class="pass-badge" v-if="user.passeMensal">
+        <Bus :size="14" />
+        Passe Ativo
+      </div>
+    </div>
+
+    <!-- Travel Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="stat-num">{{ tripHistory.length }}</span>
+        <span class="stat-label">Viagens este mês</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">2</span>
+        <span class="stat-label">Linhas usadas</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">97'</span>
+        <span class="stat-label">Tempo total</span>
+      </div>
+    </div>
+
+    <!-- Trip History -->
+    <div class="section">
+      <h3 class="section-title"><Clock :size="18" /> Histórico de Viagens</h3>
+      <div class="trip-list">
+        <div v-for="trip in tripHistory" :key="trip.data + trip.hora" class="trip-card">
+          <div class="trip-left">
+            <span class="trip-linha" :style="{background: trip.linha === 'L7' ? '#0284c7' : '#7c3aed'}">
+              {{ trip.linha }}
+            </span>
+            <div class="trip-info">
+              <span class="trip-route">{{ trip.origem }} → {{ trip.destino }}</span>
+              <span class="trip-meta">{{ trip.data }} · {{ trip.hora }} · {{ trip.duracao }}</span>
+            </div>
+          </div>
+          <ChevronRight :size="16" class="trip-arrow" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Menu Items -->
+    <div class="section">
+      <h3 class="section-title"><Settings :size="18" /> Configurações</h3>
+      <div class="menu-list">
+        <div v-for="item in menuItems" :key="item.label" class="menu-item">
+          <component :is="item.icon" :size="20" class="menu-icon" />
+          <div class="menu-text">
+            <span class="menu-label">{{ item.label }}</span>
+            <span v-if="item.sub" class="menu-sub">{{ item.sub }}</span>
+          </div>
+          <ChevronRight :size="16" class="menu-arrow" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Logout -->
+    <button class="logout-btn">
+      <LogOut :size="18" /> Terminar Sessão
+    </button>
+  </div>
+</template>
+
+<style scoped>
+.profile-page { padding: 1.25rem; padding-bottom: 2rem; }
+
+/* Profile Card */
+.profile-card {
+  background: linear-gradient(135deg, #0284c7, #7c3aed);
+  border-radius: 1.25rem; padding: 1.5rem;
+  color: #fff; position: relative;
+  box-shadow: 0 8px 32px rgba(3,105,161,0.3);
+  margin-bottom: 1.25rem;
+}
+.avatar {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: rgba(255,255,255,0.2); border: 3px solid rgba(255,255,255,0.4);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 0.85rem;
+}
+.avatar-initials { font-size: 1.25rem; font-weight: 800; }
+.profile-info { display: flex; flex-direction: column; }
+.profile-name { font-size: 1.3rem; font-weight: 800; margin: 0 0 0.2rem; }
+.profile-type { font-size: 0.85rem; opacity: 0.85; font-weight: 600; }
+.profile-email { font-size: 0.78rem; opacity: 0.6; margin-top: 0.15rem; }
+.pass-badge {
+  position: absolute; top: 1.25rem; right: 1.25rem;
+  display: flex; align-items: center; gap: 0.35rem;
+  background: rgba(255,255,255,0.2); padding: 0.35rem 0.85rem;
+  border-radius: 2rem; font-size: 0.75rem; font-weight: 700;
+}
+
+/* Stats */
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-bottom: 1.5rem; }
+.stat-card {
+  background: #fff; border-radius: 0.85rem; padding: 1rem;
+  text-align: center; box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+}
+.stat-num { display: block; font-size: 1.35rem; font-weight: 800; color: #0284c7; }
+.stat-label { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 600; letter-spacing: 0.04em; }
+
+/* Sections */
+.section { margin-bottom: 1.5rem; }
+.section-title {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0 0 0.85rem;
+}
+
+/* Trip List */
+.trip-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.trip-card {
+  display: flex; justify-content: space-between; align-items: center;
+  background: #fff; padding: 0.85rem 1rem; border-radius: 0.75rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.trip-left { display: flex; align-items: center; gap: 0.75rem; }
+.trip-linha {
+  color: #fff; font-weight: 800; font-size: 0.7rem; padding: 0.3rem 0.5rem;
+  border-radius: 0.35rem; min-width: 32px; text-align: center;
+}
+.trip-info { display: flex; flex-direction: column; }
+.trip-route { font-weight: 600; font-size: 0.88rem; color: #0f172a; }
+.trip-meta { font-size: 0.72rem; color: #94a3b8; margin-top: 0.15rem; }
+.trip-arrow { color: #cbd5e1; }
+
+/* Menu */
+.menu-list { display: flex; flex-direction: column; gap: 0.4rem; }
+.menu-item {
+  display: flex; align-items: center; gap: 0.85rem;
+  background: #fff; padding: 0.95rem 1rem; border-radius: 0.75rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.menu-icon { color: #0284c7; flex-shrink: 0; }
+.menu-text { flex: 1; display: flex; flex-direction: column; }
+.menu-label { font-weight: 600; font-size: 0.9rem; color: #0f172a; }
+.menu-sub { font-size: 0.75rem; color: #94a3b8; }
+.menu-arrow { color: #cbd5e1; flex-shrink: 0; }
+
+/* Logout */
+.logout-btn {
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  width: 100%; padding: 0.95rem; border-radius: 0.85rem;
+  background: #fef2f2; color: #ef4444; border: 1px solid #fecaca;
+  font-weight: 700; font-size: 0.9rem; cursor: pointer;
+  transition: all 0.15s;
+}
+.logout-btn:active { background: #fee2e2; transform: scale(0.98); }
+</style>

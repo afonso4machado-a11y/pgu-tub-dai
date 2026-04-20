@@ -1,0 +1,29 @@
+# Java
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Node / Frontend
+node_modules/
+dist/
+.vercel
+.vite
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Mac OS
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Configs / Scripts Locais
+deploy_to_azure.sh
+frontend_deploy.zip
+*.log

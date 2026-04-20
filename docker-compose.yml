@@ -1,0 +1,17 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: tub_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: tub
+      MYSQL_USER: tub_user
+      MYSQL_PASSWORD: tub_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - tub_data:/var/lib/mysql
+
+volumes:
+  tub_data:
