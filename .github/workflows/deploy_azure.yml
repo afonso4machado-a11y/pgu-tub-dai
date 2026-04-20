@@ -52,11 +52,11 @@ jobs:
       - name: Prepare Frontend Bundle
         run: |
           mkdir deploy_bundle
-          cp -r frontend_vue/dist/* deploy_bundle/
+          cp -r frontend_vue/dist deploy_bundle/
           cp frontend_vue/server.js deploy_bundle/
           cp frontend_vue/package.json deploy_bundle/
-          # Remover devDependencies para o Azure poupar espaço
-          sed -i '/devDependencies/,/}/d' deploy_bundle/package.json
+          # Remover devDependencies de forma mais segura para evitar JSON inválido
+          node -e "let j=require('./deploy_bundle/package.json'); delete j.devDependencies; require('fs').writeFileSync('./deploy_bundle/package.json', JSON.stringify(j, null, 2))"
 
       - name: Deploy to Azure Web App (Frontend)
         uses: azure/webapps-deploy@v3
