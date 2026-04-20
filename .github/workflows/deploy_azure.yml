@@ -55,8 +55,8 @@ jobs:
           cp -r frontend_vue/dist deploy_bundle/
           cp frontend_vue/server.js deploy_bundle/
           cp frontend_vue/package.json deploy_bundle/
-          # Remover devDependencies de forma mais segura para evitar JSON inválido
-          node -e "let j=require('./deploy_bundle/package.json'); delete j.devDependencies; require('fs').writeFileSync('./deploy_bundle/package.json', JSON.stringify(j, null, 2))"
+          cd deploy_bundle
+          npm install --omit=dev
 
       - name: Deploy to Azure Web App (Frontend)
         uses: azure/webapps-deploy@v3
