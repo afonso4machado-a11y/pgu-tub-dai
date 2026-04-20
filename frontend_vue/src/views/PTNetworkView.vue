@@ -103,8 +103,8 @@ function initMap() {
     attributionControl: false,
   })
 
-  // Dark tile layer for premium look
-  L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+  // Standard OpenStreetMap tiles (Free)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
   }).addTo(map)
 

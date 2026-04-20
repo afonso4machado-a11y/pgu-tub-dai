@@ -7,6 +7,39 @@ const greeting = ref('')
 const busCount = ref(0)
 const avgOcc = ref(0)
 
+// Configuração para Planeamento de Viagem
+const origin = ref('')
+const destination = ref('')
+const showSuggestions = ref({ origin: false, destination: false })
+const planResult = ref(null)
+
+const paragensBraga = [
+  'Terminal Intermodal', 'Universidade do Minho', 'Hospital de Braga', 
+  'Estádio Municipal', 'Bom Jesus', 'Sameiro', 'Maximinos', 
+  'São Vítor', 'Estação CP', 'Avenida Central', 'Tenões', 'Nogueiró'
+]
+
+const suggestions = computed(() => ({
+  origin: paragensBraga.filter(p => p.toLowerCase().includes(origin.value.toLowerCase()) && origin.value.length > 0),
+  destination: paragensBraga.filter(p => p.toLowerCase().includes(destination.value.toLowerCase()) && destination.value.length > 0)
+}))
+
+function selectSuggestion(type, value) {
+  if (type === 'origin') origin.value = value
+  if (type === 'destination') destination.value = value
+  showSuggestions.value[type] = false
+}
+
+function handlePlan() {
+  if (!origin.value || !destination.value) return
+  planResult.value = {
+    linha: 'L43',
+    tempo: '12 min',
+    partida: '5 min',
+    ocu: 65
+  }
+}
+
 const linhasFavoritas = ref([
   { id: 'L7', nome: 'Celeirós — S. Vítor', cor: '#0284c7' },
   { id: 'L43', nome: 'Estação — Universidade', cor: '#7c3aed' },
@@ -71,17 +104,73 @@ function lotLabel(pct) {
     <div class="trip-planner">
       <h3 class="section-title"><Navigation :size="18" /> Para onde vais?</h3>
       <div class="planner-inputs">
-        <div class="planner-input">
-          <div class="input-dot origin"></div>
-          <input type="text" placeholder="A minha localização" class="planner-field" />
+        <div class="planner-input-wrapper">
+          <div class="planner-input">
+            <div class="input-dot origin"></div>
+            <input 
+              type="text" 
+              v-model="origin" 
+              placeholder="A minha localização" 
+              class="planner-field"
+              @focus="showSuggestions.origin = true"
+              @blur="setTimeout(() => showSuggestions.origin = false, 200)"
+            />
+          </div>
+          <div v-if="showSuggestions.origin && suggestions.origin.length" class="suggestions-dropdown">
+            <div 
+              v-for="s in suggestions.origin" 
+              :key="s" 
+              class="suggestion-item"
+              @mousedown="selectSuggestion('origin', s)"
+            >
+              {{ s }}
+            </div>
+          </div>
         </div>
+
         <div class="planner-divider"></div>
-        <div class="planner-input">
-          <div class="input-dot destination"></div>
-          <input type="text" placeholder="Destino (ex: Universidade)" class="planner-field" />
+
+        <div class="planner-input-wrapper">
+          <div class="planner-input">
+            <div class="input-dot destination"></div>
+            <input 
+              type="text" 
+              v-model="destination" 
+              placeholder="Destino (ex: Universidade)" 
+              class="planner-field"
+              @focus="showSuggestions.destination = true"
+              @blur="setTimeout(() => showSuggestions.destination = false, 200)"
+            />
+          </div>
+          <div v-if="showSuggestions.destination && suggestions.destination.length" class="suggestions-dropdown">
+            <div 
+              v-for="s in suggestions.destination" 
+              :key="s" 
+              class="suggestion-item"
+              @mousedown="selectSuggestion('destination', s)"
+            >
+              {{ s }}
+            </div>
+          </div>
         </div>
       </div>
-      <button class="btn-plan">Planear Viagem</button>
+      <button class="btn-plan" @click="handlePlan">Planear Viagem</button>
+
+      <!-- Resultado do Planeamento -->
+      <div v-if="planResult" class="holiday-plan-result fade-in">
+        <div class="result-header">
+          <span class="res-linha">{{ planResult.linha }}</span>
+          <span class="res-msg">Melhor opção encontrada</span>
+        </div>
+        <div class="result-body">
+          <div class="res-item">
+            <Clock :size="14" /> <span>Chegada em <strong>{{ planResult.tempo }}</strong></span>
+          </div>
+          <div class="res-item">
+            <Bus :size="14" /> <span>Partida em <strong>{{ planResult.partida }}</strong></span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Próximos Autocarros -->
@@ -190,6 +279,37 @@ function lotLabel(pct) {
   font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: opacity 0.2s;
 }
 .btn-plan:active { opacity: 0.9; }
+
+/* Suggestions & Plan Result */
+.planner-input-wrapper { position: relative; width: 100%; }
+.suggestions-dropdown {
+  position: absolute; top: 100%; left: 0; right: 0;
+  background: #fff; border-radius: 0.75rem; border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  z-index: 1000; margin-top: 0.5rem; overflow: hidden;
+  max-height: 200px; overflow-y: auto;
+}
+.suggestion-item {
+  padding: 0.75rem 1rem; font-size: 0.9rem; color: #334155;
+  cursor: pointer; border-bottom: 1px solid #f1f5f9;
+}
+.suggestion-item:hover { background: #f8fafc; color: #0284c7; }
+
+.holiday-plan-result {
+  margin-top: 1.25rem; padding: 1rem;
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  border: 1px solid #bae6fd; border-radius: 0.75rem;
+}
+.result-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+.res-linha {
+  background: #0284c7; color: #fff; font-weight: 800; font-size: 0.75rem;
+  padding: 0.25rem 0.6rem; border-radius: 0.4rem;
+}
+.res-msg { font-size: 0.85rem; font-weight: 700; color: #0369a1; }
+.result-body { display: flex; gap: 1rem; }
+.res-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: #475569; }
+.res-item strong { color: #0f172a; }
+
 
 /* Section */
 .section { margin-bottom: 1.5rem; }
