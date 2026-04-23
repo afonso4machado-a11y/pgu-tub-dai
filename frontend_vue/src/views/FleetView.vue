@@ -1,6 +1,6 @@
 <script setup>
-import { ref } from 'vue'
-import { Search, Bus, Info, AlertTriangle, Activity } from 'lucide-vue-next'
+import { ref, computed } from 'vue'
+import { Search, Bus, Info, AlertTriangle, Activity, ShieldCheck } from 'lucide-vue-next'
 
 const apiUrl = '/api'
 const autoId = ref('')
@@ -18,27 +18,127 @@ const leitIn = ref('')
 const leitOut = ref('')
 const autoAlerts = ref([])
 
+// 🛡️ Estado de validação
+const formTouched = ref(false)
+const formErrors = ref({})
+const submitting = ref(false)
+
+// ─── Regras de Validação Estritas (Frontend Zero-Trust) ───
+
+/** Padrão matrícula portuguesa: XX-XX-XX onde X pode ser letra ou dígito */
+const MATRICULA_REGEX = /^[A-Z0-9]{2}-[A-Z0-9]{2}-[A-Z0-9]{2}$/
+
+/** Identificador: TUB-NNN ou formato alfanumérico (3-20 chars) */
+const ID_REGEX = /^[A-Za-z0-9\-]{3,20}$/
+
+/** Marca/Modelo: apenas letras, espaços, apóstrofes, hífenes (2-30 chars) */
+const NOME_REGEX = /^[A-Za-zÀ-ú\s'\-]{2,30}$/
+
+/** Linha: L seguido de 1-3 dígitos */
+const LINHA_REGEX = /^L\d{1,3}$/
+
+function validateForm() {
+  const errors = {}
+
+  // ID — obrigatório, formato válido
+  if (!autoId.value.trim()) {
+    errors.id = 'O identificador é obrigatório.'
+  } else if (!ID_REGEX.test(autoId.value.trim())) {
+    errors.id = 'Formato inválido. Use 3-20 caracteres alfanuméricos (ex: TUB-101).'
+  }
+
+  // Capacidade — obrigatório, inteiro > 0 e <= 200
+  const cap = parseInt(autoCap.value)
+  if (!autoCap.value && autoCap.value !== 0) {
+    errors.capacidade = 'A lotação é obrigatória.'
+  } else if (isNaN(cap) || !Number.isInteger(cap)) {
+    errors.capacidade = 'A lotação deve ser um número inteiro.'
+  } else if (cap <= 0) {
+    errors.capacidade = 'A lotação deve ser superior a 0.'
+  } else if (cap > 200) {
+    errors.capacidade = 'A lotação máxima permitida é 200.'
+  }
+
+  // Matrícula — obrigatória, formato português
+  if (!autoMatricula.value.trim()) {
+    errors.matricula = 'A matrícula é obrigatória.'
+  } else if (!MATRICULA_REGEX.test(autoMatricula.value.trim().toUpperCase())) {
+    errors.matricula = 'Formato inválido. Use XX-XX-XX (ex: 23-AB-45).'
+  }
+
+  // Marca — obrigatória
+  if (!autoMarca.value.trim()) {
+    errors.marca = 'A marca é obrigatória.'
+  } else if (!NOME_REGEX.test(autoMarca.value.trim())) {
+    errors.marca = 'A marca contém caracteres inválidos (2-30 letras).'
+  }
+
+  // Modelo — obrigatório
+  if (!autoModelo.value.trim()) {
+    errors.modelo = 'O modelo é obrigatório.'
+  } else if (!NOME_REGEX.test(autoModelo.value.trim())) {
+    errors.modelo = 'O modelo contém caracteres inválidos (2-30 letras).'
+  }
+
+  // Linha — opcional, mas se preenchido, deve respeitar formato
+  if (autoLinha.value.trim() && !LINHA_REGEX.test(autoLinha.value.trim())) {
+    errors.linha = 'Formato inválido. Use Lx ou Lxx (ex: L7, L43).'
+  }
+
+  formErrors.value = errors
+  return Object.keys(errors).length === 0
+}
+
+/** ⚡ Computed: formulário é válido? (para desativar botão) */
+const isFormValid = computed(() => {
+  if (!formTouched.value) return false
+  // Validação rápida sem side-effects
+  const id = autoId.value.trim()
+  const cap = parseInt(autoCap.value)
+  const mat = autoMatricula.value.trim().toUpperCase()
+  const marca = autoMarca.value.trim()
+  const modelo = autoModelo.value.trim()
+  const linha = autoLinha.value.trim()
+
+  if (!id || !ID_REGEX.test(id)) return false
+  if (isNaN(cap) || !Number.isInteger(cap) || cap <= 0 || cap > 200) return false
+  if (!mat || !MATRICULA_REGEX.test(mat)) return false
+  if (!marca || !NOME_REGEX.test(marca)) return false
+  if (!modelo || !NOME_REGEX.test(modelo)) return false
+  if (linha && !LINHA_REGEX.test(linha)) return false
+
+  return true
+})
+
+function markTouched() {
+  formTouched.value = true
+}
+
 async function handleRegistarAutocarro() {
+  formTouched.value = true
+  if (!validateForm()) return
+
+  submitting.value = true
   try {
     const req = await fetch(apiUrl + '/autocarros', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ 
-        id: autoId.value, 
-        capacidade: autoCap.value,
-        matricula: autoMatricula.value,
-        marca: autoMarca.value,
-        modelo: autoModelo.value
+        id: autoId.value.trim(), 
+        capacidade: parseInt(autoCap.value),
+        matricula: autoMatricula.value.trim().toUpperCase(),
+        marca: autoMarca.value.trim(),
+        modelo: autoModelo.value.trim()
       })
     })
     const res = await req.json()
     
     if (res.status === 'sucesso') {
       let finalMsg = res.mensagem
-      if (autoLinha.value) {
+      if (autoLinha.value.trim()) {
         try {
-          const reqLinha = await fetch(`${apiUrl}/linhas/${autoLinha.value}/autocarros`, {
+          const reqLinha = await fetch(`${apiUrl}/linhas/${autoLinha.value.trim()}/autocarros`, {
             method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ autocarroId: autoId.value })
+            body: JSON.stringify({ autocarroId: autoId.value.trim() })
           })
           const resLinha = await reqLinha.json()
           if (resLinha.status === 'sucesso') {
@@ -55,10 +155,15 @@ async function handleRegistarAutocarro() {
       alert(res.mensagem)
     }
     
+    // Limpar formulário
     autoId.value = ''; autoCap.value = ''; autoLinha.value = '';
     autoMatricula.value = ''; autoMarca.value = ''; autoModelo.value = '';
+    formTouched.value = false
+    formErrors.value = {}
   } catch(e) {
     alert("Falha de Comunicação com servidor Java.")
+  } finally {
+    submitting.value = false
   }
 }
 
@@ -101,36 +206,53 @@ async function handleRegLeitura() {
         <h3 class="panel-title"><Bus class="icon-inline"/> Nova Viatura na Frota</h3>
         <p class="panel-desc">Atribuição de matrícula interna e definição de lotação</p>
         
-        <form @submit.prevent="handleRegistarAutocarro" class="form-stack">
-          <div class="input-group">
-            <label>Identificador Único</label>
-            <input v-model="autoId" class="input-field fira-code" placeholder="Ex: TUB-101" required />
+        <form @submit.prevent="handleRegistarAutocarro" class="form-stack" novalidate>
+          <div class="input-group" :class="{'has-error': formTouched && formErrors.id}">
+            <label>Identificador Único <span class="required">*</span></label>
+            <input v-model="autoId" @input="markTouched" class="input-field fira-code" placeholder="Ex: TUB-101" />
+            <span v-if="formTouched && formErrors.id" class="field-error">{{ formErrors.id }}</span>
           </div>
           <div style="display: flex; gap: 1rem;">
-            <div class="input-group" style="flex: 1;">
-              <label>Capacidade Total</label>
-              <input type="number" v-model="autoCap" class="input-field" placeholder="Lotação" required />
+            <div class="input-group" style="flex: 1;" :class="{'has-error': formTouched && formErrors.capacidade}">
+              <label>Capacidade Total <span class="required">*</span></label>
+              <input type="number" v-model="autoCap" @input="markTouched" class="input-field" placeholder="Lotação (1-200)" min="1" max="200" step="1" />
+              <span v-if="formTouched && formErrors.capacidade" class="field-error">{{ formErrors.capacidade }}</span>
             </div>
-            <div class="input-group" style="flex: 1;">
-              <label>Matrícula</label>
-              <input v-model="autoMatricula" class="input-field fira-code" placeholder="00-XX-00" />
+            <div class="input-group" style="flex: 1;" :class="{'has-error': formTouched && formErrors.matricula}">
+              <label>Matrícula <span class="required">*</span></label>
+              <input v-model="autoMatricula" @input="markTouched" class="input-field fira-code" placeholder="XX-XX-XX" maxlength="8" />
+              <span v-if="formTouched && formErrors.matricula" class="field-error">{{ formErrors.matricula }}</span>
             </div>
           </div>
           <div style="display: flex; gap: 1rem;">
-            <div class="input-group" style="flex: 1;">
-              <label>Marca</label>
-              <input v-model="autoMarca" class="input-field" placeholder="Ex: Mercedes" />
+            <div class="input-group" style="flex: 1;" :class="{'has-error': formTouched && formErrors.marca}">
+              <label>Marca <span class="required">*</span></label>
+              <input v-model="autoMarca" @input="markTouched" class="input-field" placeholder="Ex: Mercedes" />
+              <span v-if="formTouched && formErrors.marca" class="field-error">{{ formErrors.marca }}</span>
             </div>
-            <div class="input-group" style="flex: 1;">
-              <label>Modelo</label>
-              <input v-model="autoModelo" class="input-field" placeholder="Ex: Citaro" />
+            <div class="input-group" style="flex: 1;" :class="{'has-error': formTouched && formErrors.modelo}">
+              <label>Modelo <span class="required">*</span></label>
+              <input v-model="autoModelo" @input="markTouched" class="input-field" placeholder="Ex: Citaro" />
+              <span v-if="formTouched && formErrors.modelo" class="field-error">{{ formErrors.modelo }}</span>
             </div>
           </div>
-          <div class="input-group">
+          <div class="input-group" :class="{'has-error': formTouched && formErrors.linha}">
             <label>Linha de Serviço (Opcional)</label>
-            <input v-model="autoLinha" class="input-field fira-code" placeholder="Ex: L1" />
+            <input v-model="autoLinha" @input="markTouched" class="input-field fira-code" placeholder="Ex: L1, L43" />
+            <span v-if="formTouched && formErrors.linha" class="field-error">{{ formErrors.linha }}</span>
           </div>
-          <button type="submit" class="btn btn-primary mt-4">Registar Viatura</button>
+
+          <!-- 🛡️ Indicador de validação -->
+          <div class="validation-status" :class="{'valid': formTouched && isFormValid, 'invalid': formTouched && !isFormValid}">
+            <ShieldCheck :size="16" />
+            <span v-if="!formTouched">Preencha todos os campos obrigatórios.</span>
+            <span v-else-if="isFormValid">Formulário válido — pronto para submissão.</span>
+            <span v-else>Corrija os erros assinalados acima.</span>
+          </div>
+
+          <button type="submit" class="btn btn-primary mt-4" :disabled="!isFormValid || submitting">
+            {{ submitting ? 'A registar...' : 'Registar Viatura' }}
+          </button>
         </form>
       </div>
       
@@ -226,6 +348,56 @@ async function handleRegLeitura() {
 .panel-desc { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
 .form-stack { display: flex; flex-direction: column; gap: 1rem; }
 .mt-4 { margin-top: 1rem; }
+
+/* 🛡️ Estilos de validação */
+.required { color: var(--danger); font-weight: 700; }
+
+.has-error .input-field {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3);
+}
+
+.field-error {
+  color: var(--danger);
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.validation-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid var(--border-light);
+  background: rgba(0,0,0,0.15);
+  color: var(--text-muted);
+  transition: all 0.3s ease;
+}
+
+.validation-status.valid {
+  background: rgba(20, 184, 166, 0.1);
+  border-color: rgba(20, 184, 166, 0.3);
+  color: var(--accent-teal);
+}
+
+.validation-status.invalid {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 
 .search-form { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
 .search-input { 

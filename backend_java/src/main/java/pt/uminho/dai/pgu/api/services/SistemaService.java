@@ -49,6 +49,9 @@ public class SistemaService {
             map.put("modelo", a.getModelo());
             map.put("linhaId", a.getLinhaId() != null ? a.getLinhaId() : "N/A");
             map.put("ocupacao", a.getTaxaOcupacao() * 100);
+            map.put("passageirosAtuais", a.getPassageirosAtuais());
+            map.put("capacidadeMaxima", a.getCapacidadeMaxima());
+            map.put("totalPassageirosTransportados", a.getTotalPassageirosTransportados());
             map.put("ultimaLeitura", a.getUltimaLeitura() != null ? a.getUltimaLeitura().toString() : "N/A");
             return map;
         }).toList();
