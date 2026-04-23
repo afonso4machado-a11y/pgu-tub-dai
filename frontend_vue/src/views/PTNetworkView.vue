@@ -15,10 +15,16 @@ const loading = ref(true)
 const filterLine = ref('')
 const showOnlyCritical = ref(false)
 
-// 🐞 FIX: Cache de posições simuladas por ID para evitar "saltos" dos marcadores
+// Cache de posições estáveis por ID (nunca muda após primeiro cálculo)
 const positionsCache = new Map()
-// 🐞 FIX: Cache de marcadores Leaflet por ID para evitar re-criação desnecessária
+// Cache de marcadores Leaflet por ID
 const markersCache = new Map()
+// Cache da última ocupação conhecida por ID (para evitar setIcon desnecessário)
+const lastOccCache = new Map()
+// Flag para bloquear updates durante animação de zoom
+let isZooming = false
+// Fingerprint dos dados para evitar re-renders com dados idênticos
+let lastDataFingerprint = ''
 
 // Paragens reais de Braga (exemplos representativos das linhas TUB)
 const paragens = [
@@ -110,6 +116,12 @@ function initMap() {
     attributionControl: false,
   })
 
+  // Bloquear updates de marcadores durante zoom para evitar saltos
+  map.on('zoomstart', () => { isZooming = true })
+  map.on('zoomend', () => { isZooming = false })
+  map.on('movestart', () => { isZooming = true })
+  map.on('moveend', () => { isZooming = false })
+
   // Standard OpenStreetMap tiles (Free)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
@@ -182,45 +194,52 @@ function buildPopupContent(bus) {
 }
 
 /**
- * 🐞 FIX: Atualização incremental — em vez de clearLayers() + re-add
- * (que causava flicker e re-posicionamento), agora mantém um cache de
- * marcadores e apenas atualiza ícones/popups quando os dados mudam.
+ * Atualização segura de marcadores — só toca no DOM quando:
+ * 1. O mapa NÃO está em zoom/pan (isZooming === false)
+ * 2. A cor do marcador mudou (banda de ocupação diferente)
+ * 3. É um marcador novo (não existe no cache)
  */
 function updateMapMarkers() {
-  if (!markersLayer) return
+  if (!markersLayer || isZooming) return
 
   const currentIds = new Set(filteredBuses.value.map(b => b.id))
 
-  // Remover marcadores de autocarros que já não estão nos filtros
+  // Remover marcadores que já não estão nos filtros
   for (const [id, marker] of markersCache) {
     if (!currentIds.has(id)) {
       markersLayer.removeLayer(marker)
       markersCache.delete(id)
+      lastOccCache.delete(id)
     }
   }
 
-  // Adicionar ou atualizar marcadores
   filteredBuses.value.forEach((bus, i) => {
     const pos = getStablePosition(bus, i)
+    const currentColor = busColor(bus.ocupacao || 0)
+    const cachedColor = lastOccCache.get(bus.id)
 
     if (markersCache.has(bus.id)) {
-      // Já existe — atualizar ícone e popup sem recriar
-      const marker = markersCache.get(bus.id)
-      marker.setIcon(busIcon(bus))
-      marker.setPopupContent(buildPopupContent(bus))
-      // Posição estável — não muda, não precisa de setLatLng
+      // Só atualizar ícone se a COR mudou (mudança de banda de ocupação)
+      if (cachedColor !== currentColor) {
+        const marker = markersCache.get(bus.id)
+        marker.setIcon(busIcon(bus))
+        lastOccCache.set(bus.id, currentColor)
+      }
+      // Popup atualiza-se sempre (texto leve, sem impacto no DOM do ícone)
+      markersCache.get(bus.id).setPopupContent(buildPopupContent(bus))
     } else {
       // Novo marcador
-      const marker = L.marker(pos, { 
+      const marker = L.marker(pos, {
         icon: busIcon(bus),
-        // 🐞 FIX: bubblingMouseEvents=false impede que cliques 
-        // se propaguem ao mapa e causem comportamentos erráticos
-        bubblingMouseEvents: false
+        bubblingMouseEvents: false,
+        interactive: true,
       })
 
-      marker.bindPopup(buildPopupContent(bus), { className: 'bus-popup' })
+      marker.bindPopup(buildPopupContent(bus), {
+        className: 'bus-popup',
+        autoPan: false,
+      })
 
-      // 🐞 FIX: stopPropagation para não afetar o mapa subjacente
       marker.on('click', (e) => {
         L.DomEvent.stopPropagation(e)
         selectedBus.value = bus
@@ -228,22 +247,30 @@ function updateMapMarkers() {
 
       marker.addTo(markersLayer)
       markersCache.set(bus.id, marker)
+      lastOccCache.set(bus.id, currentColor)
     }
   })
 }
 
-// 🐞 FIX: Watch em vez de chamar updateMapMarkers em cada fetchFleet, 
-// evitando re-renders desnecessários quando os dados não mudam
-watch(filteredBuses, () => {
+// Só dispara updateMapMarkers quando filtros mudam (não no polling)
+watch([filterLine, showOnlyCritical], () => {
   updateMapMarkers()
-}, { deep: true })
+})
 
 async function fetchFleet() {
   try {
     const res = await fetch(`${apiUrl}/autocarros`)
     const data = await res.json()
     if (data.status === 'sucesso') {
-      autocarros.value = data.autocarros || []
+      const newBuses = data.autocarros || []
+      // Fingerprint: só atualizar se os dados realmente mudaram
+      const fp = JSON.stringify(newBuses.map(b => b.id + ':' + Math.round(b.ocupacao || 0)))
+      if (fp !== lastDataFingerprint) {
+        lastDataFingerprint = fp
+        autocarros.value = newBuses
+        // Atualizar marcadores apenas se não estiver em zoom
+        if (!isZooming) updateMapMarkers()
+      }
     }
   } catch(e) {
     console.error('Erro ao obter frota:', e)
