@@ -93,18 +93,24 @@ const DEMO_HISTORICO = (() => {
 })()
 
 /**
- * Tenta fazer fetch à API real. Se falhar, retorna dados demo.
+ * Tenta fazer fetch à API real. Se falhar ou se o Modo Demo estiver ativo, retorna dados demo.
  */
 export async function apiFetch(endpoint, options = {}) {
   const baseUrl = '/api'
+  const isDemoForced = localStorage.getItem('pgu_demo_mode') === 'true'
+
+  if (isDemoForced) {
+    console.log(`[Demo Mode] Serving mock data for: ${endpoint}`)
+    return { live: false, data: getDemoData(endpoint) }
+  }
 
   try {
-    const res = await fetch(`${baseUrl}${endpoint}`, { ...options, signal: AbortSignal.timeout(3000) })
+    const res = await fetch(`${baseUrl}${endpoint}`, { ...options, signal: AbortSignal.timeout(4000) })
     const data = await res.json()
     if (data.status === 'sucesso') return { live: true, data }
     throw new Error('API error')
   } catch (e) {
-    // Fallback to demo data
+    // Fallback to demo data only if real fetch fails
     return { live: false, data: getDemoData(endpoint) }
   }
 }

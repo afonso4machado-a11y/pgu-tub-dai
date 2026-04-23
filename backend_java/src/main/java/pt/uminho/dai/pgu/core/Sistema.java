@@ -11,6 +11,8 @@ public class Sistema {
     private final RepositorioAlertas repositorioAlertas;
     private final RepositorioClientesAlertas repositorioClientesAlertas;
     private final RepositorioLinhas repositorioLinhas;
+    private final RepositorioParagens repositorioParagens;
+    private final RepositorioCorrelacao repositorioCorrelacao;
     private final ThresholdsAlerta thresholdsAlerta;
 
     public Sistema() {
@@ -24,6 +26,8 @@ public class Sistema {
         this.repositorioAlertas = new RepositorioAlertas();
         this.repositorioClientesAlertas = new RepositorioClientesAlertas();
         this.repositorioLinhas = new RepositorioLinhas();
+        this.repositorioParagens = new RepositorioParagens();
+        this.repositorioCorrelacao = new RepositorioCorrelacao();
         this.thresholdsAlerta = thresholdsAlerta;
     }
 
@@ -37,6 +41,8 @@ public class Sistema {
         this.repositorioAlertas = repAlertas;
         this.repositorioClientesAlertas = repClientesAlertas;
         this.repositorioLinhas = new RepositorioLinhas();
+        this.repositorioParagens = new RepositorioParagens();
+        this.repositorioCorrelacao = new RepositorioCorrelacao();
         this.thresholdsAlerta = thresholdsAlerta;
     }
 
@@ -48,12 +54,26 @@ public class Sistema {
         repositorioAutocarros.guardar(new Autocarro(id, capacidadeMaxima, matricula, marca, modelo));
     }
 
-    public void registarCliente(String id, String nome) {
-        repositorioClientes.guardar(new Cliente(id, nome));
+    public void registarCliente(String id, String nome, String email, String password) {
+        repositorioClientes.guardar(new Cliente(id, nome, email, password));
     }
 
     public void registarLinha(String id, String nome) {
         repositorioLinhas.guardar(new Linha(id, nome));
+    }
+
+    public java.util.Optional<Cliente> loginCliente(String email, String password) {
+        return repositorioClientes.procurarPorEmail(email)
+                .filter(c -> password.equals(c.getPassword()));
+    }
+
+    public java.util.Optional<Cliente> procurarClientePorId(String id) {
+        return repositorioClientes.procurarPorId(id);
+    }
+
+    public boolean loginAdmin(String email, String password) {
+        // Regra: email @uminho.pt e password tub_uminho26
+        return email != null && email.endsWith("@uminho.pt") && "tub_uminho26".equals(password);
     }
 
     public void adicionarParagemALinha(String linhaId, String nomeParagem) {
@@ -200,6 +220,10 @@ public class Sistema {
         return new java.util.ArrayList<>(repositorioAutocarros.listarTodos());
     }
 
+    public List<String> obterTodasParagens() {
+        return repositorioParagens.listarTodas();
+    }
+
     public java.util.Map<String, java.util.Map<String, java.util.Map<String, Integer>>> obterHistoricoPorDia() {
         return repositorioLeituras.obterHistoricoPorDia();
     }
@@ -212,100 +236,20 @@ public class Sistema {
     public java.util.Map<String, Object> obterDadosCorrelacao(String dataInicio, String dataFim) {
         java.util.Map<String, Object> resultado = new java.util.LinkedHashMap<>();
 
-        // ── 1. Contagem Real (Procura) — dados das leituras por linha ──
-        java.util.List<java.util.Map<String, Object>> procuraPorLinha = new java.util.ArrayList<>();
-        String sqlProcura =
-            "SELECT a.linha_id, " +
-            "SUM(l.entradas) as total_entradas, " +
-            "SUM(l.saidas) as total_saidas, " +
-            "COUNT(DISTINCT DATE(l.timestamp)) as dias_com_dados, " +
-            "COUNT(*) as total_leituras " +
-            "FROM leituras l " +
-            "JOIN autocarros a ON l.autocarro_id = a.id " +
-            "WHERE DATE(l.timestamp) BETWEEN ? AND ? " +
-            "AND a.linha_id IS NOT NULL " +
-            "GROUP BY a.linha_id " +
-            "ORDER BY total_entradas DESC";
+        // ── 1. Contagem Real (Procura) ──
+        java.util.List<java.util.Map<String, Object>> procuraPorLinha = 
+            repositorioCorrelacao.obterProcuraPorLinha(dataInicio, dataFim);
 
-        try (java.sql.Connection conn = DatabaseConnection.obterConexao();
-             java.sql.PreparedStatement ps = conn.prepareStatement(sqlProcura)) {
-            ps.setString(1, dataInicio);
-            ps.setString(2, dataFim);
-            try (java.sql.ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    java.util.Map<String, Object> entry = new java.util.LinkedHashMap<>();
-                    entry.put("linhaId", rs.getString("linha_id"));
-                    entry.put("totalEntradas", rs.getInt("total_entradas"));
-                    entry.put("totalSaidas", rs.getInt("total_saidas"));
-                    entry.put("diasComDados", rs.getInt("dias_com_dados"));
-                    entry.put("totalLeituras", rs.getInt("total_leituras"));
-                    procuraPorLinha.add(entry);
-                }
-            }
-        } catch (java.sql.SQLException e) {
-            System.err.println("Erro na correlação (procura): " + e.getMessage());
-        }
+        // ── 2. Oferta Planeada ──
+        java.util.List<java.util.Map<String, Object>> ofertaPorLinha = 
+            repositorioCorrelacao.obterOfertaPlaneada();
 
-        // ── 2. Oferta Planeada — viagens programadas (GTFS) por linha ──
-        java.util.List<java.util.Map<String, Object>> ofertaPorLinha = new java.util.ArrayList<>();
-        String sqlOferta =
-            "SELECT v.linha_id, v.tipo_dia, " +
-            "COUNT(*) as viagens_programadas " +
-            "FROM viagens v " +
-            "GROUP BY v.linha_id, v.tipo_dia " +
-            "ORDER BY v.linha_id";
+        // ── 3. Distribuição Horária ──
+        java.util.List<java.util.Map<String, Object>> procuraPorHora = 
+            repositorioCorrelacao.obterProcuraPorHora(dataInicio, dataFim);
 
-        try (java.sql.Connection conn = DatabaseConnection.obterConexao();
-             java.sql.PreparedStatement ps = conn.prepareStatement(sqlOferta);
-             java.sql.ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                java.util.Map<String, Object> entry = new java.util.LinkedHashMap<>();
-                entry.put("linhaId", rs.getString("linha_id"));
-                entry.put("tipoDia", rs.getString("tipo_dia"));
-                entry.put("viagensProgramadas", rs.getInt("viagens_programadas"));
-                ofertaPorLinha.add(entry);
-            }
-        } catch (java.sql.SQLException e) {
-            System.err.println("Erro na correlação (oferta): " + e.getMessage());
-        }
-
-        // ── 3. Distribuição Horária da Procura ──
-        java.util.List<java.util.Map<String, Object>> procuraPorHora = new java.util.ArrayList<>();
-        String sqlHoraria =
-            "SELECT HOUR(l.timestamp) as hora, " +
-            "SUM(l.entradas) as entradas, " +
-            "SUM(l.saidas) as saidas " +
-            "FROM leituras l " +
-            "WHERE DATE(l.timestamp) BETWEEN ? AND ? " +
-            "GROUP BY hora " +
-            "ORDER BY hora";
-
-        try (java.sql.Connection conn = DatabaseConnection.obterConexao();
-             java.sql.PreparedStatement ps = conn.prepareStatement(sqlHoraria)) {
-            ps.setString(1, dataInicio);
-            ps.setString(2, dataFim);
-            try (java.sql.ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    java.util.Map<String, Object> entry = new java.util.LinkedHashMap<>();
-                    entry.put("hora", rs.getInt("hora"));
-                    entry.put("entradas", rs.getInt("entradas"));
-                    entry.put("saidas", rs.getInt("saidas"));
-                    procuraPorHora.add(entry);
-                }
-            }
-        } catch (java.sql.SQLException e) {
-            System.err.println("Erro na correlação (horária): " + e.getMessage());
-        }
-
-        // ── 4. Bilhética Simulada — Validações por tipo ──
-        // Nota: dados simulados até integração real com API de bilhética (3.3)
+        // ── 4. Bilhética Simulada ──
         java.util.Map<String, Integer> bilheticaSimulada = new java.util.LinkedHashMap<>();
-        bilheticaSimulada.put("Estudante", 0);
-        bilheticaSimulada.put("Sénior", 0);
-        bilheticaSimulada.put("Passe Normal", 0);
-        bilheticaSimulada.put("Zapping", 0);
-
-        // Distribuir as entradas reais pelos perfis de forma proporcional (simulação)
         int totalEntradasGeral = procuraPorLinha.stream()
             .mapToInt(m -> (int) m.get("totalEntradas")).sum();
 
@@ -339,5 +283,17 @@ public class Sistema {
         resultado.put("bilheticaSimulada", bilheticaSimulada);
 
         return resultado;
+    }
+
+    public List<Alerta> obterAlertasRecentes(int limite) {
+        return repositorioAlertas.listarAlertasRecentes(limite);
+    }
+
+    public List<Linha> obterTodasLinhas() {
+        return new java.util.ArrayList<>(repositorioLinhas.listarTodas());
+    }
+
+    public void atualizarCliente(Cliente cliente) {
+        repositorioClientes.guardar(cliente);
     }
 }

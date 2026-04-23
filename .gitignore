@@ -23,7 +23,18 @@ yarn-error.log*
 *.swp
 *.swo
 
+# Environment / Credentials (NUNCA submeter ao Git!)
+backend_java/.env
+.env
+.env.local
+.env.production
+
 # Configs / Scripts Locais
 deploy_to_azure.sh
 frontend_deploy.zip
 *.log
+
+# Visual Paradigm
+*.vpp
+*.vpp.bak*
+

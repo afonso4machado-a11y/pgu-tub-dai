@@ -1,8 +1,12 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { MapPin, Navigation, Clock, Bus, ChevronRight, Zap, Star, TrendingUp } from 'lucide-vue-next'
+import { MapPin, Navigation, Clock, Bus, ChevronRight, Zap, Star, TrendingUp, FlaskConical, Database } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
+import { authService } from '../../services/auth'
 
 const apiUrl = '/api'
+const router = useRouter()
+const currentUser = ref(authService.getUser())
 const greeting = ref('')
 const busCount = ref(0)
 const avgOcc = ref(0)
@@ -13,15 +17,62 @@ const destination = ref('')
 const showSuggestions = ref({ origin: false, destination: false })
 const planResult = ref(null)
 
-const paragensBraga = [
-  'Terminal Intermodal', 'Universidade do Minho', 'Hospital de Braga', 
-  'Estádio Municipal', 'Bom Jesus', 'Sameiro', 'Maximinos', 
-  'São Vítor', 'Estação CP', 'Avenida Central', 'Tenões', 'Nogueiró'
-]
+const paragensBraga = ref([])
+
+const normalize = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+function getFilteredSuggestions(query) {
+  if (!query || query.length < 1) return []
+  const q = normalize(query)
+  
+  return paragensBraga.value
+    .map(name => {
+      const n = normalize(name)
+      const words = n.split(' ')
+      let score = 0
+      
+      // 1. Prioridade Máxima: Começa exatamente com a query (Letra a Letra)
+      if (n.startsWith(q)) {
+        score += 10000 + (q.length * 100)
+      }
+      
+      // 2. Prioridade Alta: Alguma palavra começa com a query
+      else if (words.some(w => w.startsWith(q))) {
+        score += 5000 + (q.length * 50)
+      }
+      
+      // 3. Prioridade Média: Contém a sequência em qualquer lugar
+      else if (n.includes(q)) {
+        score += 2000 - n.indexOf(q)
+      }
+      
+      // 4. Fuzzy: Letras aparecem na mesma ordem (Sequência Subsequente)
+      else {
+        let qIdx = 0
+        let lastIdx = -1
+        for (let char of q) {
+          const foundIdx = n.indexOf(char, lastIdx + 1)
+          if (foundIdx !== -1) {
+            qIdx++
+            lastIdx = foundIdx
+          }
+        }
+        if (qIdx === q.length) {
+          score += 1000 - (lastIdx - n.indexOf(q[0]))
+        }
+      }
+
+      return { name, score }
+    })
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
+    .map(item => item.name)
+    .slice(0, 6)
+}
 
 const suggestions = computed(() => ({
-  origin: paragensBraga.filter(p => p.toLowerCase().includes(origin.value.toLowerCase()) && origin.value.length > 0),
-  destination: paragensBraga.filter(p => p.toLowerCase().includes(destination.value.toLowerCase()) && destination.value.length > 0)
+  origin: getFilteredSuggestions(origin.value),
+  destination: getFilteredSuggestions(destination.value)
 }))
 
 function selectSuggestion(type, value) {
@@ -51,7 +102,11 @@ const proximosAutocarros = ref([
   { linha: 'L7', destino: 'Celeirós', minutos: 14, lotacao: 28 },
 ])
 
+const isDemo = ref(false)
+
 onMounted(async () => {
+  isDemo.value = localStorage.getItem('pgu_demo_mode') === 'true'
+  
   const hour = new Date().getHours()
   if (hour < 12) greeting.value = 'Bom dia'
   else if (hour < 19) greeting.value = 'Boa tarde'
@@ -64,8 +119,24 @@ onMounted(async () => {
       busCount.value = data.dashboard?.totalAutocarros || 0
       avgOcc.value = Math.round(data.dashboard?.taxaOcupacaoMedia || 0)
     }
+
+    // Fetch Paragens reais
+    const pRes = await fetch(`${apiUrl}/paragens`)
+    const pData = await pRes.json()
+    if (pData.status === 'sucesso') {
+      paragensBraga.value = pData.paragens
+    } else {
+      // Fallback se a BD não tiver dados ou falhar
+      paragensBraga.value = ['Terminal Intermodal', 'Universidade do Minho', 'Hospital de Braga', 'Estação CP', 'Avenida Central', 'Braga Parque']
+    }
   } catch(e) { /* offline mode */ }
 })
+
+function toggleDemo() {
+  isDemo.value = !isDemo.value
+  localStorage.setItem('pgu_demo_mode', isDemo.value)
+  window.location.reload()
+}
 
 function lotColor(pct) {
   if (pct > 80) return '#ef4444'
@@ -82,11 +153,22 @@ function lotLabel(pct) {
 
 <template>
   <div class="home-page">
+    <!-- Demo Banner -->
+    <div v-if="isDemo" class="demo-banner">
+      <Zap :size="14" /> MODO SIMULAÇÃO ATIVO
+    </div>
+
     <!-- Greeting -->
     <div class="greeting-section">
-      <h2 class="greeting">{{ greeting }}, Afonso</h2>
+      <h2 class="greeting">{{ greeting }}, {{ currentUser?.nome || 'Utilizador' }}</h2>
       <p class="greeting-sub">Pronto para a tua viagem?</p>
     </div>
+
+    <!-- Floating Demo Toggle (discreet) -->
+    <button class="fab-demo" @click="toggleDemo" :class="{ active: isDemo }">
+      <FlaskConical v-if="isDemo" :size="20" />
+      <Database v-else :size="20" />
+    </button>
 
     <!-- Quick Actions -->
     <div class="quick-actions">
@@ -234,7 +316,47 @@ function lotLabel(pct) {
 </template>
 
 <style scoped>
-.home-page { padding: 1.25rem; padding-bottom: 2rem; }
+.home-page { padding: 1.25rem; padding-bottom: 2rem; position: relative; }
+
+/* Demo Mode UI */
+.demo-banner {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid #fde68a;
+}
+
+.fab-demo {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.3s ease;
+}
+
+.fab-demo.active {
+  background: #f59e0b;
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+}
 
 /* Greeting */
 .greeting-section { margin-bottom: 1.5rem; }

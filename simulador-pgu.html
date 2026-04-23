@@ -673,7 +673,23 @@
         <div class="controls-row">
             <div class="card">
                 <div class="card-title"><span class="dot" style="background:var(--accent-blue)"></span>Configuração</div>
+                <div class="control-group" style="margin-bottom: 15px;">
+                    <div class="control-label">API URL</div>
+                    <input type="text" id="apiUrlInput" value="https://backend-pgu-tub-2026.azurewebsites.net" 
+                           style="background: var(--bg-primary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px; border-radius: var(--radius-sm); font-size: 0.75rem; font-family: 'Fira Code', monospace; width: 100%;">
+                </div>
+                <div class="control-group" style="margin-bottom: 15px;">
+                    <div class="control-label">Autocarro ID</div>
+                    <input type="text" id="busIdInput" value="TUB-101" 
+                           style="background: var(--bg-primary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px; border-radius: var(--radius-sm); font-size: 0.75rem; font-family: 'Fira Code', monospace; width: 100%;">
+                </div>
                 <div class="control-group">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.8rem; color: var(--text-secondary);">
+                        <input type="checkbox" id="syncToggle" style="width: 16px; height: 16px;">
+                        Ativar Sincronização Real-Time
+                    </label>
+                </div>
+                <div class="control-group" style="margin-top: 15px;">
                     <div class="control-label">
                         Limite de Lotação
                         <span id="limitDisplay">40</span>
@@ -932,9 +948,36 @@
         }
 
         // ===== PIPELINE SEQUENCE =====
-        function runPipeline(isEntry, callback) {
+        async function runPipeline(isEntry, callback) {
+            const isSyncActive = document.getElementById('syncToggle').checked;
+            const apiUrl = document.getElementById('apiUrlInput').value;
+            const busId = document.getElementById('busIdInput').value;
+
             // Step 1: Passenger node
             animateNode('nodePassenger');
+
+            // Step 1.5: Real API Call (Async)
+            if (isSyncActive) {
+                try {
+                    const payload = {
+                        id: busId,
+                        entradas: isEntry ? "1" : "0",
+                        saidas: isEntry ? "0" : "1"
+                    };
+                    fetch(`${apiUrl}/api/leituras`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    }).then(res => {
+                        if (res.ok) addLog('db', `Azure Sync: Sucesso (Bus ${busId})`);
+                        else addLog('alert', `Azure Sync: Erro ${res.status}`);
+                    }).catch(e => {
+                        addLog('alert', `Azure Sync: Falha na ligação`);
+                    });
+                } catch (e) {
+                    console.error('Erro no fetch:', e);
+                }
+            }
 
             // Step 2: Arrow 1 → Gestor
             setTimeout(() => {

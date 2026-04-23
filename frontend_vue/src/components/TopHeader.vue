@@ -1,5 +1,26 @@
 <script setup>
-import { Bell, ShieldCheck } from 'lucide-vue-next'
+import { ref, onMounted } from 'vue'
+import { Bell, ShieldCheck, Database, FlaskConical, LogOut } from 'lucide-vue-next'
+import { authService } from '../services/auth'
+
+const isDemo = ref(false)
+const adminUser = ref(null)
+
+onMounted(() => {
+  isDemo.value = localStorage.getItem('pgu_demo_mode') === 'true'
+  const userStr = localStorage.getItem('pgu_admin_user')
+  if (userStr) adminUser.value = JSON.parse(userStr)
+})
+
+function toggleDemo() {
+  isDemo.value = !isDemo.value
+  localStorage.setItem('pgu_demo_mode', isDemo.value)
+  window.location.reload()
+}
+
+function handleLogout() {
+  authService.logoutAdmin()
+}
 </script>
 
 <template>
@@ -9,14 +30,34 @@ import { Bell, ShieldCheck } from 'lucide-vue-next'
     </div>
     
     <div class="header-actions">
-      <div class="status-badge">
+      <!-- Demo Mode Toggle -->
+      <button 
+        class="demo-toggle" 
+        :class="{ 'is-demo': isDemo }" 
+        @click="toggleDemo"
+        :title="isDemo ? 'Mudar para Dados Reais' : 'Mudar para Dados Demo'"
+      >
+        <component :is="isDemo ? FlaskConical : Database" :size="16" />
+        <span>{{ isDemo ? 'MODO DEMO' : 'DADOS REAIS' }}</span>
+      </button>
+
+      <div v-if="adminUser" class="admin-profile">
+        <span class="admin-name">{{ adminUser.nome }}</span>
+        <span class="admin-email">{{ adminUser.email }}</span>
+      </div>
+
+      <div class="status-badge" :style="{ borderColor: isDemo ? '#f59e0b' : '#10b981', color: isDemo ? '#f59e0b' : '#10b981', background: isDemo ? 'rgba(245,158,11,0.1)' : 'rgba(16,185,129,0.1)' }">
         <ShieldCheck :size="16" class="status-icon" />
-        <span class="fira-code">SISTEMA ONLINE</span>
+        <span class="fira-code">{{ isDemo ? 'SIMULAÇÃO ATIVA' : 'SISTEMA ONLINE' }}</span>
       </div>
       
       <button class="icon-btn">
         <Bell :size="20" />
         <span class="notification-dot"></span>
+      </button>
+
+      <button class="icon-btn logout-btn" @click="handleLogout" title="Sair do Sistema">
+        <LogOut :size="20" />
       </button>
     </div>
   </header>
@@ -53,13 +94,40 @@ import { Bell, ShieldCheck } from 'lucide-vue-next'
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success);
   padding: 0.4rem 1rem;
   border-radius: 2rem;
   font-size: 0.75rem;
   border: 1px solid rgba(16, 185, 129, 0.2);
   box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+  transition: all 0.3s ease;
+}
+
+.demo-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.4rem 0.85rem;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: 'Fira Code', monospace;
+  transition: all 0.3s ease;
+}
+
+.demo-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--text-muted);
+}
+
+.demo-toggle.is-demo {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: #f59e0b;
+  color: #f59e0b;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
 }
 
 .icon-btn {
@@ -73,6 +141,24 @@ import { Bell, ShieldCheck } from 'lucide-vue-next'
 }
 .icon-btn:hover {
   color: var(--text-main);
+}
+.logout-btn:hover {
+  color: var(--danger);
+}
+.admin-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-right: 0.5rem;
+}
+.admin-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.admin-email {
+  font-size: 0.7rem;
+  color: var(--text-muted);
 }
 .notification-dot {
   position: absolute;

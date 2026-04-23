@@ -8,6 +8,7 @@ import TicketingView from '../views/TicketingView.vue'
 import OccupancyView from '../views/OccupancyView.vue'
 import CorrelationView from '../views/CorrelationView.vue'
 import AlertsCenterView from '../views/AlertsCenterView.vue'
+import NotFoundView from '../views/NotFoundView.vue'
 
 // ── Passenger App (Mobile PWA) ──
 import PassengerApp from '../layouts/PassengerApp.vue'
@@ -17,50 +18,74 @@ import PaxTicket from '../views/passenger/TicketView.vue'
 import PaxAlerts from '../views/passenger/AlertsView.vue'
 import PaxProfile from '../views/passenger/ProfileView.vue'
 
+import AdminLogin from '../views/admin/LoginView.vue'
+import PaxLogin from '../views/passenger/LoginView.vue'
+import { authService } from '../services/auth'
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    // ═══ AUTH ROUTES ═══
+    {
+      path: '/login',
+      name: 'admin-login',
+      component: AdminLogin
+    },
+    {
+      path: '/app/login',
+      name: 'pax-login',
+      component: PaxLogin
+    },
+
     // ═══ BACKOFFICE ROUTES ═══
     {
       path: '/',
       name: 'dashboard',
-      component: DashboardView
+      component: DashboardView,
+      meta: { requiresAdmin: true }
     },
     {
       path: '/fleet',
       name: 'fleet',
-      component: FleetView
+      component: FleetView,
+      meta: { requiresAdmin: true }
     },
     {
       path: '/network',
       name: 'network',
-      component: PTNetworkView
+      component: PTNetworkView,
+      meta: { requiresAdmin: true }
     },
     {
       path: '/ticketing',
       name: 'ticketing',
-      component: TicketingView
+      component: TicketingView,
+      meta: { requiresAdmin: true }
     },
     {
       path: '/occupancy',
       name: 'occupancy',
-      component: OccupancyView
+      component: OccupancyView,
+      meta: { requiresAdmin: true }
     },
     {
       path: '/correlation',
       name: 'correlation',
-      component: CorrelationView
+      component: CorrelationView,
+      meta: { requiresAdmin: true }
     },
     {
       path: '/alerts',
       name: 'alerts',
-      component: AlertsCenterView
+      component: AlertsCenterView,
+      meta: { requiresAdmin: true }
     },
 
     // ═══ PASSENGER APP ROUTES ═══
     {
       path: '/app',
       component: PassengerApp,
+      meta: { requiresUser: true },
       children: [
         { path: '', name: 'pax-home', component: PaxHome },
         { path: 'map', name: 'pax-map', component: PaxMap },
@@ -68,8 +93,29 @@ const router = createRouter({
         { path: 'alerts', name: 'pax-alerts', component: PaxAlerts },
         { path: 'profile', name: 'pax-profile', component: PaxProfile },
       ]
+    },
+
+    // ═══ 404 CATCH-ALL ═══
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: NotFoundView
     }
   ]
+})
+
+router.beforeEach((to, from, next) => {
+  // Admin Guard
+  if (to.meta.requiresAdmin && !authService.isAdminLoggedIn()) {
+    next('/login')
+  } 
+  // Passenger Guard
+  else if (to.meta.requiresUser && !authService.getUser()) {
+    next('/app/login')
+  }
+  else {
+    next()
+  }
 })
 
 export default router

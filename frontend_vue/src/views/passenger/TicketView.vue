@@ -2,13 +2,16 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { Ticket, Shield, Clock, RefreshCw, CheckCircle, QrCode } from 'lucide-vue-next'
 
+import { authService } from '../../services/auth'
+
+const localUser = authService.getUser()
 const activeTicket = ref({
-  tipo: 'Passe Mensal',
+  tipo: localUser?.passeMensal ? 'Passe Mensal' : 'Bilhete Simples',
   zona: 'Zona Urbana Braga',
-  validade: '2026-04-30',
-  titular: 'Afonso Machado',
-  nif: '***456***',
-  estado: 'Ativo',
+  validade: localUser?.passeMensal ? '2026-04-30' : '-',
+  titular: localUser?.nome || 'Utilizador',
+  nif: localUser?.nif || '--- --- ---',
+  estado: localUser?.passeMensal ? 'Ativo' : 'Pendente',
 })
 
 const qrData = ref('')
@@ -61,6 +64,7 @@ function generateQRGrid() {
 const qrGrid = computed(() => generateQRGrid())
 
 const validadeFormatted = computed(() => {
+  if (activeTicket.value.validade === '-') return 'N/A'
   return new Date(activeTicket.value.validade).toLocaleDateString('pt-PT', {
     day: 'numeric', month: 'long', year: 'numeric'
   })

@@ -1,29 +1,48 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import {
   User, CreditCard, Clock, MapPin, Star, Settings, ChevronRight,
   LogOut, Shield, Bell, Bus
 } from 'lucide-vue-next'
 
-const user = ref({
-  nome: 'Afonso Machado',
-  email: 'afonso.machado@alunos.uminho.pt',
-  tipo: 'Estudante Universitário',
-  nif: '2XX XXX XXX',
-  passeMensal: true,
+import { authService } from '../../services/auth'
+
+const user = ref(authService.getUser() || {
+  nome: 'Convidado',
+  email: 'login@pgu.pt',
+  tipo: 'Utilizador',
+  nif: '--- --- ---',
+  passeMensal: false,
 })
+
+onMounted(async () => {
+  const localUser = authService.getUser()
+  if (localUser && localUser.id && !localUser.id.startsWith('demo-')) {
+    try {
+      const res = await fetch(`/api/auth/profile/${localUser.id}`)
+      const data = await res.json()
+      if (data.status === 'sucesso') {
+        user.value = { ...data.user, tipo: 'Utilizador' }
+        localStorage.setItem('pgu_user', JSON.stringify(user.value))
+      }
+    } catch (e) {
+      console.error('Erro ao carregar perfil real:', e)
+    }
+  }
+})
+
+function handleLogout() {
+  authService.logoutPassenger()
+}
 
 const tripHistory = ref([
   { data: '20/04/2026', linha: 'L43', origem: 'Estação CP', destino: 'Universidade', hora: '08:15', duracao: '18 min' },
   { data: '19/04/2026', linha: 'L43', origem: 'Universidade', destino: 'Estação CP', hora: '17:30', duracao: '22 min' },
-  { data: '19/04/2026', linha: 'L7', origem: 'Av. Central', destino: 'S. Vítor', hora: '13:10', duracao: '12 min' },
-  { data: '18/04/2026', linha: 'L43', origem: 'Estação CP', destino: 'Universidade', hora: '09:00', duracao: '20 min' },
-  { data: '17/04/2026', linha: 'L7', origem: 'S. Vítor', destino: 'Celeirós', hora: '14:45', duracao: '25 min' },
 ])
 
 const menuItems = [
-  { icon: CreditCard, label: 'Métodos de Pagamento', sub: 'VISA •••• 4521' },
-  { icon: Star, label: 'Linhas Favoritas', sub: 'L43, L7' },
+  { icon: CreditCard, label: 'Métodos de Pagamento', sub: 'Gerir cartões' },
+  { icon: Star, label: 'Linhas Favoritas', sub: 'Configurar atalhos' },
   { icon: Bell, label: 'Notificações', sub: 'Ativas' },
   { icon: Shield, label: 'Privacidade e Dados', sub: 'RGPD' },
   { icon: Settings, label: 'Definições', sub: '' },
@@ -35,12 +54,15 @@ const menuItems = [
     <!-- Profile Card -->
     <div class="profile-card">
       <div class="avatar">
-        <span class="avatar-initials">AM</span>
+        <span class="avatar-initials">
+          {{ user.nome.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() }}
+        </span>
       </div>
       <div class="profile-info">
         <h2 class="profile-name">{{ user.nome }}</h2>
         <span class="profile-type">{{ user.tipo }}</span>
         <span class="profile-email">{{ user.email }}</span>
+        <span class="profile-nif">NIF: {{ user.nif }}</span>
       </div>
       <div class="pass-badge" v-if="user.passeMensal">
         <Bus :size="14" />
@@ -99,7 +121,7 @@ const menuItems = [
     </div>
 
     <!-- Logout -->
-    <button class="logout-btn">
+    <button class="logout-btn" @click="handleLogout">
       <LogOut :size="18" /> Terminar Sessão
     </button>
   </div>
@@ -127,6 +149,7 @@ const menuItems = [
 .profile-name { font-size: 1.3rem; font-weight: 800; margin: 0 0 0.2rem; }
 .profile-type { font-size: 0.85rem; opacity: 0.85; font-weight: 600; }
 .profile-email { font-size: 0.78rem; opacity: 0.6; margin-top: 0.15rem; }
+.profile-nif { font-size: 0.78rem; opacity: 0.6; margin-top: 0.05rem; }
 .pass-badge {
   position: absolute; top: 1.25rem; right: 1.25rem;
   display: flex; align-items: center; gap: 0.35rem;

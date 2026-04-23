@@ -5,6 +5,7 @@ import pt.uminho.dai.pgu.core.Alerta;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -136,5 +137,116 @@ public class ApiController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("status", (Object)"erro", "mensagem", (Object)e.getMessage()));
         }
+    }
+
+    @PostMapping("/auth/signup")
+    public ResponseEntity<Map<String, Object>> signup(@RequestBody Map<String, String> payload) {
+        try {
+            Map<String, Object> user = sistemaService.signupCliente(
+                payload.get("nome"), 
+                payload.get("email"), 
+                payload.get("password")
+            );
+            return ResponseEntity.ok(Map.of("status", "sucesso", "user", user));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/auth/profile/{id}")
+    public ResponseEntity<Map<String, Object>> getProfile(@PathVariable String id) {
+        try {
+            Map<String, Object> user = sistemaService.obterPerfilCliente(id);
+            return ResponseEntity.ok(Map.of("status", "sucesso", "user", user));
+        } catch (Exception e) {
+            return ResponseEntity.status(404).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/auth/login")
+    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> payload) {
+        try {
+            Map<String, Object> user = sistemaService.loginCliente(
+                payload.get("email"), 
+                payload.get("password")
+            );
+            return ResponseEntity.ok(Map.of("status", "sucesso", "user", user));
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/auth/admin/login")
+    public ResponseEntity<Map<String, Object>> adminLogin(@RequestBody Map<String, String> payload) {
+        boolean ok = sistemaService.loginAdmin(payload.get("email"), payload.get("password"));
+        if (ok) {
+            return ResponseEntity.ok(Map.of("status", "sucesso", "admin", true));
+        } else {
+            return ResponseEntity.status(401).body(Map.of("status", "erro", "mensagem", "Acesso restrito. Verifique as credenciais @uminho.pt."));
+        }
+    }
+
+    @GetMapping("/paragens")
+    public ResponseEntity<Map<String, Object>> listarParagens() {
+        try {
+            List<String> paragens = sistemaService.listarParagens();
+            return ResponseEntity.ok(Map.of("status", "sucesso", "paragens", paragens));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+        }
+    }
+
+    // ═══ ALERTAS ENDPOINT (Passenger App) ═══
+
+    @GetMapping("/alertas")
+    public ResponseEntity<Map<String, Object>> listarAlertas(
+            @RequestParam(defaultValue = "20") int limite) {
+        try {
+            List<Map<String, Object>> alertas = sistemaService.listarAlertasRecentes(limite);
+            return ResponseEntity.ok(Map.of("status", "sucesso", "alertas", alertas));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+        }
+    }
+
+    // ═══ LINHAS ENDPOINT ═══
+
+    @GetMapping("/linhas")
+    public ResponseEntity<Map<String, Object>> listarLinhas() {
+        try {
+            List<Map<String, Object>> linhas = sistemaService.listarLinhas();
+            return ResponseEntity.ok(Map.of("status", "sucesso", "linhas", linhas));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+        }
+    }
+
+    // ═══ PROFILE UPDATE ═══
+
+    @PutMapping("/auth/profile/{id}")
+    public ResponseEntity<Map<String, Object>> updateProfile(@PathVariable String id,
+            @RequestBody Map<String, Object> payload) {
+        try {
+            Map<String, Object> user = sistemaService.atualizarPerfilCliente(id, payload);
+            return ResponseEntity.ok(Map.of("status", "sucesso", "user", user));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", e.getMessage()));
+        }
+    }
+
+    // ═══ HEALTH CHECK (Monitorização) ═══
+
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, Object>> health() {
+        Map<String, Object> health = new HashMap<>();
+        health.put("status", "UP");
+        health.put("servico", "PGU/TUB Backend");
+        health.put("versao", "5.0.0");
+        health.put("timestamp", LocalDateTime.now().toString());
+        health.put("componentes", Map.of(
+            "api", "UP",
+            "database", sistemaService.verificarConexaoBD() ? "UP" : "DOWN"
+        ));
+        return ResponseEntity.ok(health);
     }
 }

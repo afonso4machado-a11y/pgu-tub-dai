@@ -82,4 +82,95 @@ public class SistemaService {
         }
         return sistema.obterDadosCorrelacao(dataInicio, dataFim);
     }
+
+    public Map<String, Object> signupCliente(String nome, String email, String password) throws Exception {
+        String id = java.util.UUID.randomUUID().toString();
+        sistema.registarCliente(id, nome, email, password);
+        return Map.of("id", id, "nome", nome, "email", email);
+    }
+
+    public Map<String, Object> loginCliente(String email, String password) throws Exception {
+        return sistema.loginCliente(email, password)
+                .map(c -> Map.of(
+                    "id", (Object)c.getId(), 
+                    "nome", (Object)c.getNome(), 
+                    "email", (Object)c.getEmail(),
+                    "nif", c.getNif() != null ? c.getNif() : "--- --- ---",
+                    "passeMensal", c.isPasseMensal()
+                ))
+                .orElseThrow(() -> new Exception("Credenciais inválidas"));
+    }
+
+    public Map<String, Object> obterPerfilCliente(String id) throws Exception {
+        return sistema.procurarClientePorId(id)
+                .map(c -> Map.of(
+                    "id", (Object)c.getId(), 
+                    "nome", (Object)c.getNome(), 
+                    "email", (Object)c.getEmail(),
+                    "nif", c.getNif() != null ? c.getNif() : "--- --- ---",
+                    "passeMensal", c.isPasseMensal()
+                ))
+                .orElseThrow(() -> new Exception("Cliente não encontrado"));
+    }
+
+    public boolean loginAdmin(String email, String password) {
+        return sistema.loginAdmin(email, password);
+    }
+
+    public List<String> listarParagens() {
+        return sistema.obterTodasParagens();
+    }
+
+    public List<Map<String, Object>> listarAlertasRecentes(int limite) {
+        return sistema.obterAlertasRecentes(limite).stream().map(a -> {
+            Map<String, Object> map = new java.util.HashMap<>();
+            map.put("autocarroId", a.getAutocarroId());
+            map.put("tipo", a.getTipo().toString());
+            map.put("mensagem", a.getMensagem());
+            map.put("timestamp", a.getTimestamp().toString());
+            return map;
+        }).toList();
+    }
+
+    public List<Map<String, Object>> listarLinhas() {
+        return sistema.obterTodasLinhas().stream().map(l -> {
+            Map<String, Object> map = new java.util.HashMap<>();
+            map.put("id", l.getId());
+            map.put("nome", l.getNome());
+            return map;
+        }).toList();
+    }
+
+    public Map<String, Object> atualizarPerfilCliente(String id, Map<String, Object> dados) throws Exception {
+        var cliente = sistema.procurarClientePorId(id)
+                .orElseThrow(() -> new Exception("Cliente não encontrado"));
+        
+        if (dados.containsKey("nif")) {
+            cliente.setNif((String) dados.get("nif"));
+        }
+        if (dados.containsKey("passeMensal")) {
+            cliente.setPasseMensal((Boolean) dados.get("passeMensal"));
+        }
+        // Persistir alterações
+        sistema.atualizarCliente(cliente);
+        
+        return Map.of(
+            "id", cliente.getId(),
+            "nome", cliente.getNome(),
+            "email", cliente.getEmail(),
+            "nif", cliente.getNif() != null ? cliente.getNif() : "--- --- ---",
+            "passeMensal", cliente.isPasseMensal()
+        );
+    }
+
+    public boolean verificarConexaoBD() {
+        try {
+            var conn = pt.uminho.dai.pgu.core.DatabaseConnection.obterConexao();
+            boolean valid = conn.isValid(2);
+            conn.close();
+            return valid;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

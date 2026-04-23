@@ -1,14 +1,28 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { RefreshCw, Users, Bus, Percent, AlertTriangle, Info, Bell, Activity } from 'lucide-vue-next'
+import { RefreshCw, Users, Bus, Percent, AlertTriangle, Info, Bell, Activity, FlaskConical, Database } from 'lucide-vue-next'
 import { apiFetch } from '../services/api.js'
 
 const dashboardStats = ref(null)
 const loading = ref(true)
 const err = ref('')
 const isDemo = ref(false)
+const adminUser = ref(null)
 
-onMounted(() => carregarDashboard())
+onMounted(() => {
+  const userStr = localStorage.getItem('pgu_admin_user')
+  if (userStr) adminUser.value = JSON.parse(userStr)
+  
+  // Sincronizar estado do demo com o localStorage
+  isDemo.value = localStorage.getItem('pgu_demo_mode') === 'true'
+  carregarDashboard()
+})
+
+function toggleDemoMode() {
+  const newMode = !isDemo.value
+  localStorage.setItem('pgu_demo_mode', newMode)
+  window.location.reload()
+}
 
 async function carregarDashboard() {
   loading.value = true
@@ -37,10 +51,25 @@ function formatDate(ds) {
 
 <template>
   <div class="dashboard-view fade-in">
+    <div v-if="adminUser" class="welcome-banner">
+      <div class="banner-content">
+        <h2>Bem-vindo de volta, {{ adminUser.nome }}! 👋</h2>
+        <p>Gestor de Frota • {{ adminUser.email }}</p>
+      </div>
+      <div class="mode-selector" :class="{ 'demo-active': isDemo }">
+        <span class="mode-label">{{ isDemo ? 'MODO DEMO (SIMULAÇÃO)' : 'MODO REAL (AZURE DB)' }}</span>
+        <button @click="toggleDemoMode" class="btn-toggle-mode">
+          <FlaskConical v-if="isDemo" :size="18"/>
+          <Database v-else :size="18"/>
+          {{ isDemo ? 'Ativar Modo Real' : 'Ativar Modo Demo' }}
+        </button>
+      </div>
+    </div>
+
     <div class="action-bar">
-      <h3 class="section-title">Visão Geral do Sistema</h3>
+      <h3 class="section-title">Painel de Operações</h3>
       <button @click="carregarDashboard" class="btn btn-secondary" :disabled="loading">
-        <RefreshCw :class="{'spin': loading}" :size="16"/> Atualizar Métricas
+        <RefreshCw :class="{'spin': loading}" :size="16"/> Sincronizar
       </button>
     </div>
 
@@ -126,6 +155,74 @@ function formatDate(ds) {
 .section-title { margin: 0; }
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { 100% { transform: rotate(360deg); } }
+
+.welcome-banner {
+  margin-bottom: 2rem;
+  background: var(--bg-surface);
+  padding: 1.5rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.welcome-banner h2 {
+  font-size: 1.5rem;
+  margin: 0;
+  color: var(--text-main);
+}
+.welcome-banner p {
+  margin: 0.25rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.mode-selector {
+  background: rgba(16, 185, 129, 0.1);
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.mode-selector.demo-active {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.mode-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--success);
+}
+
+.demo-active .mode-label {
+  color: var(--warning);
+}
+
+.btn-toggle-mode {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  color: var(--text-main);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-toggle-mode:hover {
+  background: var(--bg-surface);
+  border-color: var(--accent-blue);
+}
 
 .error-banner {
   background: rgba(239, 68, 68, 0.1);
