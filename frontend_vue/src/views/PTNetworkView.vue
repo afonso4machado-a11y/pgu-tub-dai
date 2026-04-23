@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { MapPin, Route, Settings2, Bus, Users, AlertTriangle, Radio, Locate } from 'lucide-vue-next'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -14,6 +14,11 @@ const selectedBus = ref(null)
 const loading = ref(true)
 const filterLine = ref('')
 const showOnlyCritical = ref(false)
+
+// 🐞 FIX: Cache de posições simuladas por ID para evitar "saltos" dos marcadores
+const positionsCache = new Map()
+// 🐞 FIX: Cache de marcadores Leaflet por ID para evitar re-criação desnecessária
+const markersCache = new Map()
 
 // Paragens reais de Braga (exemplos representativos das linhas TUB)
 const paragens = [
@@ -74,9 +79,11 @@ function busIcon(bus) {
       border: 3px solid #fff;
       box-shadow: 0 0 12px ${color}88, 0 2px 8px rgba(0,0,0,0.4);
       font-family: 'Fira Code', monospace;
+      pointer-events: auto;
     ">${bus.linhaId || bus.id.substring(0, 4)}</div>`,
     iconSize: [36, 36],
     iconAnchor: [18, 18],
+    popupAnchor: [0, -18],
   })
 }
 
@@ -125,48 +132,111 @@ function initMap() {
   })
 }
 
-function simulatePosition(bus, idx) {
-  // Distribute buses around Braga center with slight randomness
-  const baseLat = 41.5503 + (Math.sin(idx * 1.3) * 0.015)
-  const baseLng = -8.4227 + (Math.cos(idx * 0.9) * 0.02)
-  const jitterLat = (Math.random() - 0.5) * 0.003
-  const jitterLng = (Math.random() - 0.5) * 0.004
-  return [baseLat + jitterLat, baseLng + jitterLng]
+/**
+ * 🐞 FIX: Posição estável por ID — usa seed determinístico baseado no
+ * hash do ID do autocarro, evitando o jitter aleatório que causava os 
+ * marcadores a "mudar de sítio" a cada re-render.
+ */
+function getStablePosition(bus, idx) {
+  if (positionsCache.has(bus.id)) {
+    return positionsCache.get(bus.id)
+  }
+  // Hash simples determinístico baseado no ID
+  let hash = 0
+  for (let i = 0; i < bus.id.length; i++) {
+    hash = ((hash << 5) - hash) + bus.id.charCodeAt(i)
+    hash |= 0 // Converter para inteiro 32-bit
+  }
+  const baseLat = 41.5503 + (Math.sin(hash * 1.3) * 0.015)
+  const baseLng = -8.4227 + (Math.cos(hash * 0.9) * 0.02)
+  // Jitter determinístico (baseado no hash, não em Math.random())
+  const jitterLat = (Math.sin(hash * 3.7) * 0.002)
+  const jitterLng = (Math.cos(hash * 2.3) * 0.003)
+  const pos = [baseLat + jitterLat, baseLng + jitterLng]
+  positionsCache.set(bus.id, pos)
+  return pos
 }
 
+function buildPopupContent(bus) {
+  return `
+    <div style="font-family:'Inter',sans-serif;min-width:180px;">
+      <div style="font-weight:700;font-size:14px;margin-bottom:6px;color:#0ea5e9;">
+        ${bus.id}
+      </div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:8px;">
+        Linha: ${bus.linhaId || 'N/A'} · ${bus.marca || ''} ${bus.modelo || ''}
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;">
+        <span>Ocupação:</span>
+        <strong style="color:${busColor(bus.ocupacao)}">${Math.round(bus.ocupacao || 0)}%</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;">
+        <span>Passageiros:</span>
+        <strong>${bus.passageirosAtuais} / ${bus.capacidadeMaxima}</strong>
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:#94a3b8;">
+        Última leitura: ${bus.ultimaLeitura !== 'N/A' ? new Date(bus.ultimaLeitura).toLocaleTimeString('pt-PT') : '--:--'}
+      </div>
+    </div>
+  `
+}
+
+/**
+ * 🐞 FIX: Atualização incremental — em vez de clearLayers() + re-add
+ * (que causava flicker e re-posicionamento), agora mantém um cache de
+ * marcadores e apenas atualiza ícones/popups quando os dados mudam.
+ */
 function updateMapMarkers() {
   if (!markersLayer) return
-  markersLayer.clearLayers()
 
+  const currentIds = new Set(filteredBuses.value.map(b => b.id))
+
+  // Remover marcadores de autocarros que já não estão nos filtros
+  for (const [id, marker] of markersCache) {
+    if (!currentIds.has(id)) {
+      markersLayer.removeLayer(marker)
+      markersCache.delete(id)
+    }
+  }
+
+  // Adicionar ou atualizar marcadores
   filteredBuses.value.forEach((bus, i) => {
-    const pos = simulatePosition(bus, i)
-    const marker = L.marker(pos, { icon: busIcon(bus) })
-    marker.bindPopup(`
-      <div style="font-family:'Inter',sans-serif;min-width:180px;">
-        <div style="font-weight:700;font-size:14px;margin-bottom:6px;color:#0ea5e9;">
-          ${bus.id}
-        </div>
-        <div style="font-size:12px;color:#64748b;margin-bottom:8px;">
-          Linha: ${bus.linhaId || 'N/A'} · ${bus.marca || ''} ${bus.modelo || ''}
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:13px;">
-          <span>Ocupação:</span>
-          <strong style="color:${busColor(bus.ocupacao)}">${Math.round(bus.ocupacao || 0)}%</strong>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:13px;">
-          <span>Passageiros:</span>
-          <strong>${bus.passageirosAtuais} / ${bus.capacidadeMaxima}</strong>
-        </div>
-        <div style="margin-top:6px;font-size:11px;color:#94a3b8;">
-          Última leitura: ${bus.ultimaLeitura !== 'N/A' ? new Date(bus.ultimaLeitura).toLocaleTimeString('pt-PT') : '--:--'}
-        </div>
-      </div>
-    `, { className: 'bus-popup' })
+    const pos = getStablePosition(bus, i)
 
-    marker.on('click', () => { selectedBus.value = bus })
-    marker.addTo(markersLayer)
+    if (markersCache.has(bus.id)) {
+      // Já existe — atualizar ícone e popup sem recriar
+      const marker = markersCache.get(bus.id)
+      marker.setIcon(busIcon(bus))
+      marker.setPopupContent(buildPopupContent(bus))
+      // Posição estável — não muda, não precisa de setLatLng
+    } else {
+      // Novo marcador
+      const marker = L.marker(pos, { 
+        icon: busIcon(bus),
+        // 🐞 FIX: bubblingMouseEvents=false impede que cliques 
+        // se propaguem ao mapa e causem comportamentos erráticos
+        bubblingMouseEvents: false
+      })
+
+      marker.bindPopup(buildPopupContent(bus), { className: 'bus-popup' })
+
+      // 🐞 FIX: stopPropagation para não afetar o mapa subjacente
+      marker.on('click', (e) => {
+        L.DomEvent.stopPropagation(e)
+        selectedBus.value = bus
+      })
+
+      marker.addTo(markersLayer)
+      markersCache.set(bus.id, marker)
+    }
   })
 }
+
+// 🐞 FIX: Watch em vez de chamar updateMapMarkers em cada fetchFleet, 
+// evitando re-renders desnecessários quando os dados não mudam
+watch(filteredBuses, () => {
+  updateMapMarkers()
+}, { deep: true })
 
 async function fetchFleet() {
   try {
@@ -174,7 +244,6 @@ async function fetchFleet() {
     const data = await res.json()
     if (data.status === 'sucesso') {
       autocarros.value = data.autocarros || []
-      updateMapMarkers()
     }
   } catch(e) {
     console.error('Erro ao obter frota:', e)
@@ -195,6 +264,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (timer) clearInterval(timer)
+  markersCache.clear()
+  positionsCache.clear()
   if (map) { map.remove(); map = null }
 })
 </script>
