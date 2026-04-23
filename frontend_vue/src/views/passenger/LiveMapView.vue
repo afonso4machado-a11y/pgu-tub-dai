@@ -1,6 +1,6 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { Bus, Users, MapPin, Locate, Filter } from 'lucide-vue-next'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { Users, Locate } from 'lucide-vue-next'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -10,6 +10,17 @@ let markersLayer = null
 let timer = null
 const autocarros = ref([])
 const selectedBus = ref(null)
+
+// Cache de posições estáveis por ID (calculada uma vez com hash determinístico)
+const positionsCache = new Map()
+// Cache de marcadores Leaflet por ID
+const markersCache = new Map()
+// Cache da última cor por ID — só chama setIcon se a cor mudou
+const lastColorCache = new Map()
+// Bloquear updates durante zoom/pan para evitar saltos de marcadores
+let isZooming = false
+// Fingerprint para evitar re-renders com dados idênticos
+let lastDataFingerprint = ''
 
 const paragens = [
   { nome: 'Terminal Intermodal', lat: 41.5503, lng: -8.4227 },
@@ -85,6 +96,12 @@ function initMap() {
     attributionControl: false,
   })
 
+  // Bloquear updates durante zoom/pan para evitar saltos
+  map.on('zoomstart', () => { isZooming = true })
+  map.on('zoomend',   () => { isZooming = false })
+  map.on('movestart', () => { isZooming = true })
+  map.on('moveend',   () => { isZooming = false })
+
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     maxZoom: 19,
   }).addTo(map)
@@ -98,21 +115,61 @@ function initMap() {
   })
 }
 
-function simulatePos(bus, i) {
-  return [
-    41.5503 + Math.sin(i * 1.3) * 0.015 + (Math.random() - 0.5) * 0.003,
-    -8.4227 + Math.cos(i * 0.9) * 0.02 + (Math.random() - 0.5) * 0.004,
+// Posição determinística por ID (sem Math.random — nunca muda)
+function getStablePos(bus) {
+  if (positionsCache.has(bus.id)) return positionsCache.get(bus.id)
+  let hash = 0
+  for (let i = 0; i < bus.id.length; i++) {
+    hash = ((hash << 5) - hash) + bus.id.charCodeAt(i)
+    hash |= 0
+  }
+  const pos = [
+    41.5503 + Math.sin(hash * 1.3) * 0.015 + Math.sin(hash * 3.7) * 0.002,
+    -8.4227 + Math.cos(hash * 0.9) * 0.02  + Math.cos(hash * 2.3) * 0.003,
   ]
+  positionsCache.set(bus.id, pos)
+  return pos
 }
 
+// Atualização incremental — nunca toca no DOM durante zoom
 function updateMarkers() {
-  if (!markersLayer) return
-  markersLayer.clearLayers()
-  autocarros.value.forEach((bus, i) => {
-    const pos = simulatePos(bus, i)
-    const marker = L.marker(pos, { icon: busIcon(bus) })
-    marker.on('click', () => { selectedBus.value = bus })
-    marker.addTo(markersLayer)
+  if (!markersLayer || isZooming) return
+
+  const currentIds = new Set(autocarros.value.map(b => b.id))
+
+  // Remover marcadores obsoletos
+  for (const [id, marker] of markersCache) {
+    if (!currentIds.has(id)) {
+      markersLayer.removeLayer(marker)
+      markersCache.delete(id)
+      lastColorCache.delete(id)
+    }
+  }
+
+  autocarros.value.forEach(bus => {
+    const currentColor = lotColor(bus.ocupacao || 0)
+
+    if (markersCache.has(bus.id)) {
+      // Só atualizar ícone se a cor (banda de lotação) mudou
+      if (lastColorCache.get(bus.id) !== currentColor) {
+        markersCache.get(bus.id).setIcon(busIcon(bus))
+        lastColorCache.set(bus.id, currentColor)
+      }
+    } else {
+      // Novo marcador
+      const pos = getStablePos(bus)
+      const marker = L.marker(pos, {
+        icon: busIcon(bus),
+        bubblingMouseEvents: false,
+      })
+      marker.on('click', (e) => {
+        L.DomEvent.stopPropagation(e)
+        selectedBus.value = bus
+      })
+      marker.addTo(markersLayer)
+      markersCache.set(bus.id, marker)
+      lastColorCache.set(bus.id, currentColor)
+    }
   })
 }
 
@@ -121,8 +178,14 @@ async function fetchBuses() {
     const res = await fetch(`${apiUrl}/autocarros`)
     const data = await res.json()
     if (data.status === 'sucesso') {
-      autocarros.value = data.autocarros || []
-      updateMarkers()
+      const newBuses = data.autocarros || []
+      // Só atualizar se os dados mudaram (evita re-render idle)
+      const fp = JSON.stringify(newBuses.map(b => b.id + ':' + Math.round(b.ocupacao || 0)))
+      if (fp !== lastDataFingerprint) {
+        lastDataFingerprint = fp
+        autocarros.value = newBuses
+        if (!isZooming) updateMarkers()
+      }
     }
   } catch(e) { /* offline */ }
 }
@@ -134,7 +197,13 @@ function centerMap() {
 function dismissCard() { selectedBus.value = null }
 
 onMounted(() => { initMap(); fetchBuses(); timer = setInterval(fetchBuses, 5000) })
-onUnmounted(() => { if (timer) clearInterval(timer); if (map) { map.remove(); map = null } })
+onUnmounted(() => {
+  if (timer) clearInterval(timer)
+  markersCache.clear()
+  positionsCache.clear()
+  lastColorCache.clear()
+  if (map) { map.remove(); map = null }
+})
 </script>
 
 <template>
