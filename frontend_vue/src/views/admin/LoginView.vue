@@ -1,14 +1,25 @@
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { authService } from '../../services/auth'
-import { ShieldCheck, Lock, Mail, ArrowRight } from 'lucide-vue-next'
+import { ShieldCheck, Lock, Mail, ArrowRight, Clock } from 'lucide-vue-next'
 
 const router = useRouter()
+const route = useRoute()
 const email = ref('')
 const password = ref('')
 const error = ref('')
 const loading = ref(false)
+const sessionExpired = ref(false)
+
+onMounted(() => {
+  // Detectar se o utilizador foi redirecionado por expiração de sessão
+  if (route.query.reason === 'expired') {
+    sessionExpired.value = true
+    // Limpar dados residuais de sessão expirada
+    localStorage.removeItem('pgu_admin_login_at')
+  }
+})
 
 const isValidEmail = (e) => e.endsWith('@uminho.pt') || e.endsWith('@um')
 
@@ -19,6 +30,7 @@ async function handleLogin() {
   }
   
   error.value = ''
+  sessionExpired.value = false
   loading.value = true
   
   try {
@@ -41,6 +53,12 @@ async function handleLogin() {
         </div>
         <h1 class="title-glow">TUB Backoffice</h1>
         <p class="subtitle">Acesso restrito a administradores</p>
+      </div>
+
+      <!-- Sessão expirada banner -->
+      <div v-if="sessionExpired" class="expired-banner fade-in">
+        <Clock :size="16" />
+        <span>A sua sessão expirou por inatividade (2h). Por favor, autentique-se novamente.</span>
       </div>
 
       <form @submit.prevent="handleLogin" class="login-form">
@@ -208,5 +226,19 @@ input:focus {
   margin-top: 2.5rem;
   color: var(--text-muted);
   font-size: 0.75rem;
+}
+
+.expired-banner {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
 }
 </style>

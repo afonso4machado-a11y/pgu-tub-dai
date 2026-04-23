@@ -1,19 +1,30 @@
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { authService } from '../../services/auth'
-import { User, Mail, Lock, ArrowRight, Bus } from 'lucide-vue-next'
+import { User, Mail, Lock, ArrowRight, Bus, Clock } from 'lucide-vue-next'
 
 const router = useRouter()
+const route = useRoute()
 const isSignup = ref(true)
 const nome = ref('')
 const email = ref('')
 const password = ref('')
 const error = ref('')
 const loading = ref(false)
+const sessionExpired = ref(false)
+
+onMounted(() => {
+  if (route.query.reason === 'expired') {
+    sessionExpired.value = true
+    isSignup.value = false  // Mostrar login em vez de signup
+    localStorage.removeItem('pgu_user_login_at')
+  }
+})
 
 async function handleSubmit() {
   error.value = ''
+  sessionExpired.value = false
   loading.value = true
   
   try {
@@ -42,6 +53,12 @@ async function handleSubmit() {
     </div>
 
     <div class="form-container">
+      <!-- Sessão expirada banner -->
+      <div v-if="sessionExpired" class="expired-banner">
+        <Clock :size="16" />
+        <span>A tua sessão expirou (7 dias). Entra novamente para continuar.</span>
+      </div>
+
       <div class="onboarding-header">
         <h2 v-if="isSignup">Cria o teu Perfil</h2>
         <h2 v-else>Entrar na Conta</h2>
@@ -211,5 +228,18 @@ input {
 
 .submit-btn:disabled {
   opacity: 0.7;
+}
+
+.expired-banner {
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
 }
 </style>

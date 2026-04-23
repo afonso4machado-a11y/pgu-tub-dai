@@ -1,16 +1,30 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { Bell, ShieldCheck, Database, FlaskConical, LogOut } from 'lucide-vue-next'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { Bell, ShieldCheck, Database, FlaskConical, LogOut, Clock } from 'lucide-vue-next'
 import { authService } from '../services/auth'
 
 const isDemo = ref(false)
 const adminUser = ref(null)
+const sessionMinutes = ref(0)
+let sessionTimer = null
 
 onMounted(() => {
   isDemo.value = localStorage.getItem('pgu_demo_mode') === 'true'
   const userStr = localStorage.getItem('pgu_admin_user')
   if (userStr) adminUser.value = JSON.parse(userStr)
+
+  // Atualizar tempo de sessão restante a cada minuto
+  updateSessionTime()
+  sessionTimer = setInterval(updateSessionTime, 60000)
 })
+
+onUnmounted(() => {
+  if (sessionTimer) clearInterval(sessionTimer)
+})
+
+function updateSessionTime() {
+  sessionMinutes.value = authService.getAdminSessionRemaining()
+}
 
 function toggleDemo() {
   isDemo.value = !isDemo.value
@@ -44,6 +58,12 @@ function handleLogout() {
       <div v-if="adminUser" class="admin-profile">
         <span class="admin-name">{{ adminUser.nome }}</span>
         <span class="admin-email">{{ adminUser.email }}</span>
+      </div>
+
+      <!-- Temporizador de Sessão -->
+      <div class="session-timer" :class="{ 'session-warning': sessionMinutes < 15 }">
+        <Clock :size="14" />
+        <span>{{ sessionMinutes }}min</span>
       </div>
 
       <div class="status-badge" :style="{ borderColor: isDemo ? '#f59e0b' : '#10b981', color: isDemo ? '#f59e0b' : '#10b981', background: isDemo ? 'rgba(245,158,11,0.1)' : 'rgba(16,185,129,0.1)' }">
@@ -169,5 +189,32 @@ function handleLogout() {
   background: var(--danger);
   border-radius: 50%;
   box-shadow: 0 0 8px var(--danger);
+}
+
+.session-timer {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 2rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: 'Fira Code', monospace;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-light);
+  transition: all 0.3s ease;
+}
+
+.session-timer.session-warning {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+  animation: pulse-warning 2s ease-in-out infinite;
+}
+
+@keyframes pulse-warning {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+  50% { box-shadow: 0 0 8px 2px rgba(245, 158, 11, 0.2); }
 }
 </style>

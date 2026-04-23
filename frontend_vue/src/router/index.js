@@ -105,17 +105,26 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  // Admin Guard
-  if (to.meta.requiresAdmin && !authService.isAdminLoggedIn()) {
-    next('/login')
-  } 
-  // Passenger Guard
-  else if (to.meta.requiresUser && !authService.getUser()) {
-    next('/app/login')
+  // Admin Guard — verifica sessão + expiração (2h inatividade)
+  if (to.meta.requiresAdmin) {
+    if (!authService.isAdminLoggedIn()) {
+      // Verificar se é expiração ou primeiro acesso
+      const hadSession = localStorage.getItem('pgu_admin_login_at')
+      next({ path: '/login', query: hadSession ? { reason: 'expired' } : {} })
+      return
+    }
   }
-  else {
-    next()
+
+  // Passenger Guard — verifica sessão + expiração (7 dias)
+  if (to.meta.requiresUser) {
+    if (!authService.getUser()) {
+      const hadSession = localStorage.getItem('pgu_user_login_at')
+      next({ path: '/app/login', query: hadSession ? { reason: 'expired' } : {} })
+      return
+    }
   }
+
+  next()
 })
 
 export default router
