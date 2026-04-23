@@ -161,6 +161,28 @@
         </div>
     </div>
 
+    <!-- PARTE 4 -->
+    <div class="card">
+        <h2>PARTE 4: Como Funciona a Base de Dados na Nuvem (Azure)</h2>
+        <p>A Base de Dados é onde toda a informação vital dos TUB (utilizadores, autocarros, viagens, alertas) é guardada. Em vez de termos um computador físico a correr na universidade para guardar isto, decidimos usar a "Nuvem" da Microsoft, especificamente o <strong>Azure MySQL Flexible Server</strong>.</p>
+        
+        <div class="analogy">
+            <strong>A Analogia do Cofre de Banco:</strong><br>
+            Guardar a base de dados no próprio computador (localhost) é como guardar as tuas poupanças debaixo do colchão — se o computador avariar ou houver um pico de luz, perdes tudo. Colocar a base de dados no Azure é como depositar o dinheiro num Cofre de Banco Suíço: tens guardas armados (Cibersegurança da Microsoft), cópias de segurança automáticas todos os dias, e o cofre aumenta de tamanho sozinho se precisares de mais espaço.
+        </div>
+
+        <h3>As Nossas Decisões de Segurança (Porque não partilhamos a password?):</h3>
+        <ul>
+            <li><strong>O Segredo do ficheiro .env:</strong> Quando programamos, não escrevemos a password verdadeira do banco de dados no código-fonte. Usamos um ficheiro invisível chamado <code>.env</code>. A grande jogada é que este ficheiro <strong>nunca é enviado para a internet (GitHub)</strong>. Por isso, podes partilhar o link do GitHub com toda a gente à vontade, porque o "código do cofre" fica sempre só no teu computador.</li>
+            <li><strong>A Inteligência da Conexão:</strong> O nosso código em Java é esperto. Quando ele liga, procura primeiro na própria Microsoft se há lá alguma password escondida (Application Settings). Só se não encontrar é que usa a tua password local de teste. Isto permite-te testar no teu PC sem estragar a base de dados real.</li>
+            <li><strong>O Carro-Forte (SSL/TLS):</strong> Configurámos o sistema para <strong>exigir SSL</strong>. Isto significa que quando a tua app pede para ver os dados de um passageiro, essa informação viaja pela internet dentro de um "túnel blindado". Se um hacker se puser no meio do caminho a tentar roubar os dados, só vai conseguir ler um monte de letras e números embaralhados.</li>
+        </ul>
+
+        <div class="summary">
+            Em suma, a escolha do Azure serve para garantir que a informação crítica dos TUB nunca se perde, está protegida contra hackers através de encriptação, e permite que o código da app seja público sem expor as chaves da casa.
+        </div>
+    </div>
+
     <div class="intro" style="background-color: #eafaf1; border-left-color: #27ae60; text-align: center;">
         <p><strong>Fim da Aula!</strong></p>
         <p>No fim de contas, o 4SRS e toda esta arquitetura invisível têm um único propósito: <strong>fazer com que os autocarros em Braga sejam mais eficientes, menos poluentes e que tu, como passageiro, tenhas uma experiência moderna, previsível e com um lugar sentado sempre que possível.</strong></p>
