@@ -105,17 +105,13 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  // Admin Guard — verifica sessão + expiração (2h inatividade)
-  if (to.meta.requiresAdmin) {
-    if (!authService.isAdminLoggedIn()) {
-      // Verificar se é expiração ou primeiro acesso
-      const hadSession = localStorage.getItem('pgu_admin_login_at')
-      next({ path: '/login', query: hadSession ? { reason: 'expired' } : {} })
-      return
-    }
+  // Admin Guard — usa sessionStorage, expira ao fechar o browser/tab
+  if (to.meta.requiresAdmin && !authService.isAdminLoggedIn()) {
+    next('/login')
+    return
   }
 
-  // Passenger Guard — verifica sessão + expiração (7 dias)
+  // Passenger Guard — expira após 7 dias
   if (to.meta.requiresUser) {
     if (!authService.getUser()) {
       const hadSession = localStorage.getItem('pgu_user_login_at')

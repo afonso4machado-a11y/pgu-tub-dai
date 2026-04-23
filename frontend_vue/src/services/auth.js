@@ -1,39 +1,26 @@
 /**
  * Serviço de Autenticação PGU/TUB
  * 
- * Gestão de sessão com expiração automática:
- *   - Admin (Backoffice):  2 horas de inatividade
+ * Gestão de sessão:
+ *   - Admin (Backoffice):  Sessão por separador — expira ao fechar o browser/tab
  *   - Passageiro (Mobile): 7 dias desde o último login
  * 
- * Cada interação do admin com a app renova a sessão (sliding window).
- * O passageiro mantém a sessão fixa até expirar.
+ * A sessão admin usa sessionStorage (limpo automaticamente pelo browser ao fechar).
+ * O passageiro usa localStorage com TTL fixo de 7 dias.
  */
 
-// ── Tempos de Expiração ──
-const ADMIN_SESSION_TTL = 2 * 60 * 60 * 1000     // 2 horas (em ms)
+// ── Tempo de Expiração (Passageiro) ──
 const PASSENGER_SESSION_TTL = 7 * 24 * 60 * 60 * 1000  // 7 dias (em ms)
 
 export const authService = {
 
   // ═══════════════════════════════════════════
-  //  ADMIN (Backoffice) — Sessão Sliding 2h
+  //  ADMIN (Backoffice) — Sessão por Tab/Browser
+  //  Usa sessionStorage: apaga-se ao fechar o separador
   // ═══════════════════════════════════════════
 
   isAdminLoggedIn() {
-    if (localStorage.getItem('pgu_admin_session') !== 'true') return false
-
-    const lastActivity = parseInt(localStorage.getItem('pgu_admin_last_activity') || '0')
-    const now = Date.now()
-
-    if (now - lastActivity > ADMIN_SESSION_TTL) {
-      // Sessão expirada — limpar tudo
-      this._clearAdminSession()
-      return false
-    }
-
-    // Renovar sessão (sliding window) — cada verificação renova o tempo
-    localStorage.setItem('pgu_admin_last_activity', now.toString())
-    return true
+    return sessionStorage.getItem('pgu_admin_session') === 'true'
   },
 
   async loginAdmin(email, password) {
@@ -68,18 +55,13 @@ export const authService = {
   },
 
   _setAdminSession(nome, email) {
-    const now = Date.now()
-    localStorage.setItem('pgu_admin_session', 'true')
-    localStorage.setItem('pgu_admin_last_activity', now.toString())
-    localStorage.setItem('pgu_admin_login_at', now.toString())
-    localStorage.setItem('pgu_admin_user', JSON.stringify({ nome, email }))
+    sessionStorage.setItem('pgu_admin_session', 'true')
+    sessionStorage.setItem('pgu_admin_user', JSON.stringify({ nome, email }))
   },
 
   _clearAdminSession() {
-    localStorage.removeItem('pgu_admin_session')
-    localStorage.removeItem('pgu_admin_last_activity')
-    localStorage.removeItem('pgu_admin_login_at')
-    localStorage.removeItem('pgu_admin_user')
+    sessionStorage.removeItem('pgu_admin_session')
+    sessionStorage.removeItem('pgu_admin_user')
   },
 
   logoutAdmin() {
@@ -88,13 +70,11 @@ export const authService = {
   },
 
   /**
-   * Retorna quanto tempo resta na sessão admin (em minutos).
-   * Útil para mostrar countdown no UI.
+   * Retorna os dados do admin logado (ou null).
    */
-  getAdminSessionRemaining() {
-    const lastActivity = parseInt(localStorage.getItem('pgu_admin_last_activity') || '0')
-    const remaining = ADMIN_SESSION_TTL - (Date.now() - lastActivity)
-    return Math.max(0, Math.round(remaining / 60000))
+  getAdminUser() {
+    const userStr = sessionStorage.getItem('pgu_admin_user')
+    return userStr ? JSON.parse(userStr) : null
   },
 
   // ═══════════════════════════════════════════

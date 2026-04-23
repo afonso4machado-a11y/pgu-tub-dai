@@ -1,30 +1,15 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { Bell, ShieldCheck, Database, FlaskConical, LogOut, Clock } from 'lucide-vue-next'
+import { ref, onMounted } from 'vue'
+import { Bell, ShieldCheck, Database, FlaskConical, LogOut } from 'lucide-vue-next'
 import { authService } from '../services/auth'
 
 const isDemo = ref(false)
 const adminUser = ref(null)
-const sessionMinutes = ref(0)
-let sessionTimer = null
 
 onMounted(() => {
   isDemo.value = localStorage.getItem('pgu_demo_mode') === 'true'
-  const userStr = localStorage.getItem('pgu_admin_user')
-  if (userStr) adminUser.value = JSON.parse(userStr)
-
-  // Atualizar tempo de sessão restante a cada minuto
-  updateSessionTime()
-  sessionTimer = setInterval(updateSessionTime, 60000)
+  adminUser.value = authService.getAdminUser()
 })
-
-onUnmounted(() => {
-  if (sessionTimer) clearInterval(sessionTimer)
-})
-
-function updateSessionTime() {
-  sessionMinutes.value = authService.getAdminSessionRemaining()
-}
 
 function toggleDemo() {
   isDemo.value = !isDemo.value
@@ -58,12 +43,6 @@ function handleLogout() {
       <div v-if="adminUser" class="admin-profile">
         <span class="admin-name">{{ adminUser.nome }}</span>
         <span class="admin-email">{{ adminUser.email }}</span>
-      </div>
-
-      <!-- Temporizador de Sessão -->
-      <div class="session-timer" :class="{ 'session-warning': sessionMinutes < 15 }">
-        <Clock :size="14" />
-        <span>{{ sessionMinutes }}min</span>
       </div>
 
       <div class="status-badge" :style="{ borderColor: isDemo ? '#f59e0b' : '#10b981', color: isDemo ? '#f59e0b' : '#10b981', background: isDemo ? 'rgba(245,158,11,0.1)' : 'rgba(16,185,129,0.1)' }">

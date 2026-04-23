@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { RefreshCw, Users, Bus, Percent, AlertTriangle, Info, Bell, Activity, FlaskConical, Database } from 'lucide-vue-next'
 import { apiFetch } from '../services/api.js'
+import { authService } from '../services/auth'
 
 const dashboardStats = ref(null)
 const loading = ref(true)
@@ -10,8 +11,7 @@ const isDemo = ref(false)
 const adminUser = ref(null)
 
 onMounted(() => {
-  const userStr = localStorage.getItem('pgu_admin_user')
-  if (userStr) adminUser.value = JSON.parse(userStr)
+  adminUser.value = authService.getAdminUser()
   
   // Sincronizar estado do demo com o localStorage
   isDemo.value = localStorage.getItem('pgu_demo_mode') === 'true'
