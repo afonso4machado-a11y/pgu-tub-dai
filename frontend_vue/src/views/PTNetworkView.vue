@@ -132,7 +132,13 @@ function initMap() {
   // Standard OpenStreetMap tiles (Free)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
+    noWrap: true
   }).addTo(map)
+
+  // Fix for map rendering incorrectly or zoomed out when container resizes
+  setTimeout(() => {
+    if (map) map.invalidateSize()
+  }, 400)
 
   L.control.zoom({ position: 'bottomright' }).addTo(map)
   L.control.attribution({ position: 'bottomleft', prefix: 'OSM' }).addTo(map)
