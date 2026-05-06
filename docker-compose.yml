@@ -3,10 +3,10 @@ services:
     image: mysql:8.0
     container_name: tub_mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: tub
-      MYSQL_USER: tub_user
-      MYSQL_PASSWORD: tub_pass
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Definir MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-tub}
+      MYSQL_USER: ${DB_USER:-tub_user}
+      MYSQL_PASSWORD: ${DB_PASS:?Definir DB_PASS}
     ports:
       - "3306:3306"
     volumes:

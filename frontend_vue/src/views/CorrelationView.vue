@@ -221,7 +221,7 @@ function exportCSV() {
           </div>
         </div>
         <p class="simulated-note">
-          <div class="lucide-warning-wrap">⚠️</div> Dados simulados proporcionalmente às entradas reais. A integração com a API de bilhética (vertical 3.3) substituirá estes valores.
+          <div class="lucide-warning-wrap"><AlertTriangle :size="16" /></div> Dados simulados proporcionalmente às entradas reais. A integração com a API de bilhética (vertical 3.3) substituirá estes valores.
         </p>
       </div>
     </div>

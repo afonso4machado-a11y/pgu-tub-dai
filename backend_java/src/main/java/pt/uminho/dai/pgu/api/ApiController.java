@@ -1,9 +1,20 @@
 package pt.uminho.dai.pgu.api;
 
 import pt.uminho.dai.pgu.api.dto.RegistarAutocarroDTO;
+import pt.uminho.dai.pgu.api.dto.RegistarLeiturasDTO;
+import pt.uminho.dai.pgu.api.dto.RegistarLinhaDTO;
+import pt.uminho.dai.pgu.api.dto.AdicionarParagemDTO;
+import pt.uminho.dai.pgu.api.dto.AssociarAutocarroDTO;
+import pt.uminho.dai.pgu.api.dto.ClienteSignupDTO;
+import pt.uminho.dai.pgu.api.dto.ClienteLoginDTO;
+import pt.uminho.dai.pgu.api.dto.AdminLoginDTO;
+import pt.uminho.dai.pgu.api.dto.AtualizarPerfilDTO;
 import pt.uminho.dai.pgu.api.services.SistemaService;
 import pt.uminho.dai.pgu.core.Alerta;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -69,11 +80,9 @@ public class ApiController {
     }
 
     @PostMapping("/leituras")
-    public ResponseEntity<Map<String, Object>> registarLeituras(@RequestBody Map<String, String> payload) {
+    public ResponseEntity<Map<String, Object>> registarLeituras(@Valid @RequestBody RegistarLeiturasDTO payload) {
         try {
-            int entradas = Integer.parseInt(payload.get("entradas"));
-            int saidas = Integer.parseInt(payload.get("saidas"));
-            List<Alerta> alertas = sistemaService.registarLeituras(payload.get("id"), entradas, saidas);
+            List<Alerta> alertas = sistemaService.registarLeituras(payload.getId(), payload.getEntradas(), payload.getSaidas());
 
             Map<String, Object> response = new HashMap<>();
             response.put("status", "sucesso");
@@ -125,9 +134,9 @@ public class ApiController {
     }
 
     @PostMapping("/linhas")
-    public ResponseEntity<Map<String, String>> registarLinha(@RequestBody Map<String, String> payload) {
+    public ResponseEntity<Map<String, String>> registarLinha(@Valid @RequestBody RegistarLinhaDTO payload) {
         try {
-            sistemaService.registarLinha(payload.get("id"), payload.get("nome"));
+            sistemaService.registarLinha(payload.getId(), payload.getNome());
             return ResponseEntity.ok(Map.of("status", "sucesso", "mensagem", "Linha resolvida"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", e.getMessage()));
@@ -136,9 +145,9 @@ public class ApiController {
 
     @PostMapping("/linhas/{id}/paragens")
     public ResponseEntity<Map<String, String>> adicionarParagem(@PathVariable String id,
-            @RequestBody Map<String, String> payload) {
+            @Valid @RequestBody AdicionarParagemDTO payload) {
         try {
-            sistemaService.adicionarParagemALinha(id, payload.get("paragem"));
+            sistemaService.adicionarParagemALinha(id, payload.getParagem());
             return ResponseEntity.ok(Map.of("status", "sucesso", "mensagem", "Paragem inserida com sucesso"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", e.getMessage()));
@@ -147,9 +156,9 @@ public class ApiController {
 
     @PostMapping("/linhas/{id}/autocarros")
     public ResponseEntity<Map<String, String>> associarAuto(@PathVariable String id,
-            @RequestBody Map<String, String> payload) {
+            @Valid @RequestBody AssociarAutocarroDTO payload) {
         try {
-            sistemaService.associarAutocarroALinha(payload.get("autocarroId"), id);
+            sistemaService.associarAutocarroALinha(payload.getAutocarroId(), id);
             return ResponseEntity.ok(Map.of("status", "sucesso", "mensagem", "Associação concluida."));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", e.getMessage()));
@@ -172,12 +181,12 @@ public class ApiController {
     }
 
     @PostMapping("/auth/signup")
-    public ResponseEntity<Map<String, Object>> signup(@RequestBody Map<String, String> payload) {
+    public ResponseEntity<Map<String, Object>> signup(@Valid @RequestBody ClienteSignupDTO payload) {
         try {
             Map<String, Object> user = sistemaService.signupCliente(
-                payload.get("nome"), 
-                payload.get("email"), 
-                payload.get("password")
+                payload.getNome(),
+                payload.getEmail(),
+                payload.getPassword()
             );
             return ResponseEntity.ok(Map.of("status", "sucesso", "user", user));
         } catch (Exception e) {
@@ -196,11 +205,11 @@ public class ApiController {
     }
 
     @PostMapping("/auth/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> payload) {
+    public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody ClienteLoginDTO payload) {
         try {
             Map<String, Object> user = sistemaService.loginCliente(
-                payload.get("email"), 
-                payload.get("password")
+                payload.getEmail(),
+                payload.getPassword()
             );
             return ResponseEntity.ok(Map.of("status", "sucesso", "user", user));
         } catch (Exception e) {
@@ -209,8 +218,8 @@ public class ApiController {
     }
 
     @PostMapping("/auth/admin/login")
-    public ResponseEntity<Map<String, Object>> adminLogin(@RequestBody Map<String, String> payload) {
-        boolean ok = sistemaService.loginAdmin(payload.get("email"), payload.get("password"));
+    public ResponseEntity<Map<String, Object>> adminLogin(@Valid @RequestBody AdminLoginDTO payload) {
+        boolean ok = sistemaService.loginAdmin(payload.getEmail(), payload.getPassword());
         if (ok) {
             return ResponseEntity.ok(Map.of("status", "sucesso", "admin", true));
         } else {
@@ -232,7 +241,7 @@ public class ApiController {
 
     @GetMapping("/alertas")
     public ResponseEntity<Map<String, Object>> listarAlertas(
-            @RequestParam(defaultValue = "20") int limite) {
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int limite) {
         try {
             List<Map<String, Object>> alertas = sistemaService.listarAlertasRecentes(limite);
             return ResponseEntity.ok(Map.of("status", "sucesso", "alertas", alertas));
@@ -253,11 +262,12 @@ public class ApiController {
         }
     }
 
-    // ═══ PROFILE UPDATE ═══
+    // ═══ PROFILE UPDATE (Hardened — DTO validado para prevenir Stored XSS) ═══
 
     @PutMapping("/auth/profile/{id}")
-    public ResponseEntity<Map<String, Object>> updateProfile(@PathVariable String id,
-            @RequestBody Map<String, Object> payload) {
+    public ResponseEntity<Map<String, Object>> updateProfile(
+            @PathVariable @Pattern(regexp = "^[a-f0-9\\-]+$", message = "ID inválido.") String id,
+            @Valid @RequestBody AtualizarPerfilDTO payload) {
         try {
             Map<String, Object> user = sistemaService.atualizarPerfilCliente(id, payload);
             return ResponseEntity.ok(Map.of("status", "sucesso", "user", user));
