@@ -1,6 +1,6 @@
 package pt.uminho.dai.pgu.api;
 
-import pt.uminho.dai.pgu.core.Sistema;
+import pt.uminho.dai.pgu.services.Sistema;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;

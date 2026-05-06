@@ -10,7 +10,7 @@ import pt.uminho.dai.pgu.api.dto.ClienteLoginDTO;
 import pt.uminho.dai.pgu.api.dto.AdminLoginDTO;
 import pt.uminho.dai.pgu.api.dto.AtualizarPerfilDTO;
 import pt.uminho.dai.pgu.api.services.SistemaService;
-import pt.uminho.dai.pgu.core.Alerta;
+import pt.uminho.dai.pgu.models.Alerta;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

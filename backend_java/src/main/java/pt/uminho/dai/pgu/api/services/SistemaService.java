@@ -1,8 +1,8 @@
 package pt.uminho.dai.pgu.api.services;
 
-import pt.uminho.dai.pgu.core.Alerta;
-import pt.uminho.dai.pgu.core.Autocarro;
-import pt.uminho.dai.pgu.core.Sistema;
+import pt.uminho.dai.pgu.models.Alerta;
+import pt.uminho.dai.pgu.models.Autocarro;
+import pt.uminho.dai.pgu.services.Sistema;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -172,7 +172,7 @@ public class SistemaService {
 
     public boolean verificarConexaoBD() {
         try {
-            var conn = pt.uminho.dai.pgu.core.DatabaseConnection.obterConexao();
+            var conn = pt.uminho.dai.pgu.repositories.DatabaseConnection.obterConexao();
             boolean valid = conn.isValid(2);
             conn.close();
             return valid;

@@ -1,4 +1,6 @@
-package pt.uminho.dai.pgu.core;
+package pt.uminho.dai.pgu.repositories;
+import pt.uminho.dai.pgu.models.*;
+import pt.uminho.dai.pgu.services.*;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -11,7 +13,7 @@ public class RepositorioAutocarros {
         carregarDaBD();
     }
 
-    protected RepositorioAutocarros(boolean semBD) {
+    public RepositorioAutocarros(boolean semBD) {
         // Construtor para uso em testes — não carrega da BD
     }
 

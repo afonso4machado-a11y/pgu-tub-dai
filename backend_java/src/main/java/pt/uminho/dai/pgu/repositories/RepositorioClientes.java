@@ -1,4 +1,6 @@
-package pt.uminho.dai.pgu.core;
+package pt.uminho.dai.pgu.repositories;
+import pt.uminho.dai.pgu.models.*;
+import pt.uminho.dai.pgu.services.*;
 
 import java.sql.*;
 import java.util.*;
@@ -10,7 +12,7 @@ public class RepositorioClientes {
         carregarDaBD();
     }
 
-    protected RepositorioClientes(boolean semBD) {
+    public RepositorioClientes(boolean semBD) {
         // Construtor para uso em testes — não carrega da BD
     }
 

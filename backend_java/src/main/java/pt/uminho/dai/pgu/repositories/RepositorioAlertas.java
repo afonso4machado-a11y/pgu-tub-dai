@@ -1,4 +1,6 @@
-package pt.uminho.dai.pgu.core;
+package pt.uminho.dai.pgu.repositories;
+import pt.uminho.dai.pgu.models.*;
+import pt.uminho.dai.pgu.services.*;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -8,7 +10,7 @@ public class RepositorioAlertas {
 
     public RepositorioAlertas() {}
 
-    protected RepositorioAlertas(boolean semBD) {
+    public RepositorioAlertas(boolean semBD) {
         // Construtor para uso em testes
     }
 
