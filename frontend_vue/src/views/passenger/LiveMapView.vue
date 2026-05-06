@@ -113,7 +113,13 @@ function initMap() {
 
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     maxZoom: 19,
+    noWrap: true
   }).addTo(map)
+
+  // Force recalculation after flexbox/DOM layout settles
+  setTimeout(() => {
+    if (map) map.invalidateSize()
+  }, 400)
 
   markersLayer = L.layerGroup().addTo(map)
 
