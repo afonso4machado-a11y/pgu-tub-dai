@@ -1,0 +1,3 @@
+# Marcar a pasta do frontend como código "externo/vendido" para que o GitHub a ignore nas estatísticas de linguagens
+# Isto fará com que o Java seja reconhecido como a linguagem principal do projeto, refletindo o trabalho de Backend.
+frontend_vue/* linguist-vendored
