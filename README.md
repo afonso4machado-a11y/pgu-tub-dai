@@ -71,22 +71,21 @@ npm run dev
 ## 📁 Estrutura do Repositório
 
 ```
-TrabalhoDAI-master/
-├── backend_java/               # API REST (Spring Boot + JDBC)
-│   ├── src/main/java/.../api/  # Controller, Service, Config
-│   ├── src/main/java/.../core/ # Domínio: Sistema, Repositórios, Entidades
-│   ├── .env.example            # Template de configuração
-│   └── pom.xml                 # Dependências Maven
+pgu-tub-dai/
+├── backend_java/               # API REST (Java Spring Boot MVC)
+│   ├── src/.../api/            # Controllers (Endpoints HTTP)
+│   ├── src/.../services/       # Lógica de Negócio (Motor PGU)
+│   ├── src/.../repositories/   # Acesso à BD (JDBC)
+│   └── src/.../models/         # Entidades de Dados
 ├── frontend_vue/               # SPA/PWA (Vue.js 3 + Vite)
-│   ├── src/views/              # Views do Backoffice
-│   ├── src/views/passenger/    # Views da App Passageiro
-│   ├── src/views/admin/        # Login Administrador
-│   ├── src/services/           # API + Auth services
-│   └── src/components/         # Sidebar, TopHeader
-├── diagramas/                  # Diagramas arquiteturais (PNG)
+│   ├── src/views/              # Ecrãs (Backoffice e Mobile)
+│   └── src/services/           # Clientes HTTP para a API
+├── docs/                       # Notas de requisitos e assets
+├── tools/                      # Simulador de sensores IoT e utilitários
+├── 07_Anexos_e_Historico/      # Histórico académico
+├── docker-compose.yml          # Orquestração (MySQL + Java + Vue)
 ├── init.sql                    # Schema MySQL com índices B-Tree
-├── docker-compose.yml          # MySQL local para desenvolvimento
-└── simulador-pgu.html          # Simulador de sensores IoT
+└── pom.xml                     # Maven Root Config
 ```
 
 ## 🔑 API Endpoints
