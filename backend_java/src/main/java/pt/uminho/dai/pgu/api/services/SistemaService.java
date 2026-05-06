@@ -180,23 +180,4 @@ public class SistemaService {
             return false;
         }
     }
-
-    /**
-     * TEMPORÁRIO — Reset completo da base de dados operacional.
-     * Remove autocarros, leituras, alertas e associações.
-     * Mantém linhas, paragens, viagens e horários intactos.
-     */
-    public void resetDadosOperacionais() throws Exception {
-        try (var conn = pt.uminho.dai.pgu.core.DatabaseConnection.obterConexao()) {
-            conn.setAutoCommit(false);
-            try (var stmt = conn.createStatement()) {
-                stmt.executeUpdate("DELETE FROM clientes_alertas");
-                stmt.executeUpdate("DELETE FROM alertas");
-                stmt.executeUpdate("DELETE FROM leituras");
-                stmt.executeUpdate("DELETE FROM autocarros");
-                stmt.executeUpdate("DELETE FROM clientes");
-            }
-            conn.commit();
-        }
-    }
 }
