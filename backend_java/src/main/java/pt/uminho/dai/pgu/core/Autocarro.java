@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.Objects;
 
 public class Autocarro {
+    // Limites de memória — prevenir OutOfMemoryError em operação prolongada
+    private static final int MAX_HISTORICO_LEITURAS = 500;
+    private static final int MAX_HISTORICO_ALERTAS = 200;
+
     private final String id;
     private final int capacidadeMaxima;
     private String matricula;
@@ -159,6 +163,10 @@ public class Autocarro {
 
         passageirosAtuais = Math.min(ocupacaoCalculada, capacidadeMaxima);
         historicoLeituras.add(leitura);
+        // Evitar crescimento ilimitado — manter só as N mais recentes
+        if (historicoLeituras.size() > MAX_HISTORICO_LEITURAS) {
+            historicoLeituras.subList(0, historicoLeituras.size() - MAX_HISTORICO_LEITURAS).clear();
+        }
         ultimaLeitura = leitura.getTimestamp();
 
         if (getTaxaOcupacao() >= thresholds.getLimiteOcupacao()) {
@@ -176,6 +184,9 @@ public class Autocarro {
     private Alerta registarAlerta(TipoAlerta tipo, String mensagem, LocalDateTime timestamp) {
         Alerta alerta = new Alerta(id, tipo, mensagem, timestamp);
         historicoAlertas.add(alerta);
+        if (historicoAlertas.size() > MAX_HISTORICO_ALERTAS) {
+            historicoAlertas.subList(0, historicoAlertas.size() - MAX_HISTORICO_ALERTAS).clear();
+        }
         return alerta;
     }
 

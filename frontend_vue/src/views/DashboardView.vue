@@ -53,7 +53,7 @@ function formatDate(ds) {
   <div class="dashboard-view fade-in">
     <div v-if="adminUser" class="welcome-banner">
       <div class="banner-content">
-        <h2>Bem-vindo de volta, {{ adminUser.nome }}! 👋</h2>
+        <h2>Bem-vindo de volta, {{ adminUser.nome }}</h2>
         <p>Gestor de Frota • {{ adminUser.email }}</p>
       </div>
       <div class="mode-selector" :class="{ 'demo-active': isDemo }">

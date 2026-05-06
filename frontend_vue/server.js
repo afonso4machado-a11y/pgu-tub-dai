@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-const BACKEND_URL = 'backend-pgu-tub-2026.azurewebsites.net';
+const BACKEND_URL = process.env.BACKEND_URL || 'backend-pgu-tub-2026.azurewebsites.net';
 
 // Proxy requests starting with /api to the Java backend
 app.use('/api', proxy(BACKEND_URL, {

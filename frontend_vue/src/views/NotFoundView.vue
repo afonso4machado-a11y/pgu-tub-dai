@@ -12,7 +12,7 @@ const router = useRouter()
       <h2 class="nf-title">Rota não encontrada</h2>
       <p class="nf-desc">
         A página que procuras não existe ou foi movida.
-        <br />Tal como um autocarro que saiu fora da rota. 🚌
+        <br />Tal como um autocarro que saiu fora da rota.
       </p>
       <div class="nf-actions">
         <button class="nf-btn primary" @click="router.push('/')">

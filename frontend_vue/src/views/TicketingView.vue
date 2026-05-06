@@ -224,7 +224,7 @@ function exportCSV() {
         </tbody>
       </table>
       <p class="simulated-note">
-        <div class="lucide-warning-wrap">⚠️</div> Dados gerados proporcionalmente às contagens reais dos sensores. A integração com a API de bilhética SCB dos TUB (vertical 3.3) substituirá estas estimativas por dados de validação reais.
+        <div class="lucide-warning-wrap"><AlertTriangle :size="16" /></div> Dados gerados proporcionalmente às contagens reais dos sensores. A integração com a API de bilhética SCB dos TUB (vertical 3.3) substituirá estas estimativas por dados de validação reais.
       </p>
     </div>
   </div>

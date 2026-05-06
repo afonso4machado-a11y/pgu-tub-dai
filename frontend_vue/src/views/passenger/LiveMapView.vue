@@ -42,9 +42,9 @@ function lotColor(occ) {
 }
 
 function lotEmoji(occ) {
-  if (occ > 80) return '🔴'
-  if (occ > 60) return '🟡'
-  return '🟢'
+  if (occ > 80) return '●'
+  if (occ > 60) return '●'
+  return '●'
 }
 
 function lotLabel(occ) {
@@ -217,9 +217,9 @@ onUnmounted(() => {
 
     <!-- Legend -->
     <div class="map-legend">
-      <span class="legend-item">🟢 Livre</span>
-      <span class="legend-item">🟡 Moderado</span>
-      <span class="legend-item">🔴 Lotado</span>
+      <span class="legend-item"><span class="dot" style="background:#10b981"></span> Livre</span>
+      <span class="legend-item"><span class="dot" style="background:#eab308"></span> Moderado</span>
+      <span class="legend-item"><span class="dot" style="background:#ef4444"></span> Lotado</span>
     </div>
 
     <!-- Selected Bus Card -->
@@ -238,7 +238,7 @@ onUnmounted(() => {
           </div>
           <div class="bdc-lot">
             <span class="bdc-lot-text" :style="{color: lotColor(selectedBus.ocupacao)}">
-              {{ lotEmoji(selectedBus.ocupacao) }} {{ lotLabel(selectedBus.ocupacao) }} · {{ Math.round(selectedBus.ocupacao) }}%
+              {{ lotLabel(selectedBus.ocupacao) }} · {{ Math.round(selectedBus.ocupacao) }}%
             </span>
             <div class="bdc-bar-track">
               <div class="bdc-bar" :style="{width: Math.min(selectedBus.ocupacao, 100) + '%', background: lotColor(selectedBus.ocupacao)}"></div>
@@ -294,6 +294,7 @@ onUnmounted(() => {
 .bdc-bar-track { height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; margin-top: 0.35rem; }
 .bdc-bar { height: 100%; border-radius: 3px; transition: width 0.5s; }
 .bdc-tip { text-align: center; color: #cbd5e1; font-size: 0.7rem; margin: 0.75rem 0 0; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 2px; }
 
 .card-slide-enter-active, .card-slide-leave-active { transition: all 0.25s ease; }
 .card-slide-enter-from, .card-slide-leave-to { opacity: 0; transform: translateY(100%); }

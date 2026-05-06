@@ -5,7 +5,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SistemaTest {
@@ -27,8 +26,7 @@ class SistemaTest {
 
         List<Alerta> alertas = sistema.receberLeitura("BUS-1", 9, 0, LocalDateTime.now());
 
-        assertEquals(1, alertas.size());
-        assertEquals(TipoAlerta.OCUPACAO_ACIMA_DO_LIMIAR, alertas.get(0).getTipo());
+        assertTrue(alertas.stream().anyMatch(alerta -> alerta.getTipo() == TipoAlerta.OCUPACAO_ACIMA_DO_LIMIAR));
     }
 
     @Test

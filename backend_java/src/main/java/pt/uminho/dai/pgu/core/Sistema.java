@@ -67,13 +67,23 @@ public class Sistema {
                 .filter(c -> password.equals(c.getPassword()));
     }
 
+    public java.util.Optional<Cliente> procurarClientePorEmail(String email) {
+        return repositorioClientes.procurarPorEmail(email);
+    }
+
     public java.util.Optional<Cliente> procurarClientePorId(String id) {
         return repositorioClientes.procurarPorId(id);
     }
 
     public boolean loginAdmin(String email, String password) {
-        // Regra: email @uminho.pt e password tub_uminho26
-        return email != null && email.endsWith("@uminho.pt") && "tub_uminho26".equals(password);
+        String adminPassword = System.getenv().getOrDefault("PGU_ADMIN_PASSWORD", "");
+        return email != null
+                && (email.endsWith("@uminho.pt") || email.endsWith("@um"))
+                && !adminPassword.isBlank()
+                && password != null
+                && java.security.MessageDigest.isEqual(
+                    adminPassword.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                    password.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     public void adicionarParagemALinha(String linhaId, String nomeParagem) {

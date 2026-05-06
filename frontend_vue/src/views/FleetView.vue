@@ -18,7 +18,7 @@ const leitIn = ref('')
 const leitOut = ref('')
 const autoAlerts = ref([])
 
-// 🛡️ Estado de validação
+// Estado de validação
 const formTouched = ref(false)
 const formErrors = ref({})
 const submitting = ref(false)
@@ -89,7 +89,7 @@ function validateForm() {
   return Object.keys(errors).length === 0
 }
 
-/** ⚡ Computed: formulário é válido? (para desativar botão) */
+/** Computed: formulário é válido? (para desativar botão) */
 const isFormValid = computed(() => {
   if (!formTouched.value) return false
   // Validação rápida sem side-effects
@@ -242,7 +242,7 @@ async function handleRegLeitura() {
             <span v-if="formTouched && formErrors.linha" class="field-error">{{ formErrors.linha }}</span>
           </div>
 
-          <!-- 🛡️ Indicador de validação -->
+          <!-- Indicador de validação -->
           <div class="validation-status" :class="{'valid': formTouched && isFormValid, 'invalid': formTouched && !isFormValid}">
             <ShieldCheck :size="16" />
             <span v-if="!formTouched">Preencha todos os campos obrigatórios.</span>
@@ -349,7 +349,7 @@ async function handleRegLeitura() {
 .form-stack { display: flex; flex-direction: column; gap: 1rem; }
 .mt-4 { margin-top: 1rem; }
 
-/* 🛡️ Estilos de validação */
+/* Estilos de validação */
 .required { color: var(--danger); font-weight: 700; }
 
 .has-error .input-field {
