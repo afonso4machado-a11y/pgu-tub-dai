@@ -1,17 +1,51 @@
+version: '3.8'
+
 services:
   mysql:
     image: mysql:8.0
     container_name: tub_mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Definir MYSQL_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
       MYSQL_DATABASE: ${DB_NAME:-tub}
       MYSQL_USER: ${DB_USER:-tub_user}
-      MYSQL_PASSWORD: ${DB_PASS:?Definir DB_PASS}
+      MYSQL_PASSWORD: ${DB_PASS:-tub_password}
     ports:
       - "3306:3306"
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - tub_data:/var/lib/mysql
+    networks:
+      - pgu-network
+
+  backend:
+    build: 
+      context: ./backend_java
+    container_name: tub_backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/tub?allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=tub_user
+      - SPRING_DATASOURCE_PASSWORD=tub_password
+    depends_on:
+      - mysql
+    networks:
+      - pgu-network
+
+  frontend:
+    build:
+      context: ./frontend_vue
+    container_name: tub_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - pgu-network
+
+networks:
+  pgu-network:
+    driver: bridge
 
 volumes:
   tub_data:
