@@ -38,3 +38,4 @@ frontend_deploy.zip
 *.vpp
 *.vpp.bak*
 
+.agent/
