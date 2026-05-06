@@ -291,20 +291,4 @@ public class ApiController {
         ));
         return ResponseEntity.ok(health);
     }
-
-    // ═══ TEMPORÁRIO — Reset da Base de Dados (protegido por password admin) ═══
-
-    @PostMapping("/admin/reset")
-    public ResponseEntity<Map<String, Object>> resetDatabase(@RequestBody Map<String, String> payload) {
-        String password = payload.get("password");
-        if (!"tub_uminho26".equals(password)) {
-            return ResponseEntity.status(403).body(Map.of("status", "erro", "mensagem", "Acesso negado."));
-        }
-        try {
-            sistemaService.resetDadosOperacionais();
-            return ResponseEntity.ok(Map.of("status", "sucesso", "mensagem", "Base de dados operacional limpa com sucesso."));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("status", "erro", "mensagem", e.getMessage()));
-        }
-    }
 }
