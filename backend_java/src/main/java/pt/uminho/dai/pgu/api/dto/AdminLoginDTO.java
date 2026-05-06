@@ -10,7 +10,7 @@ public class AdminLoginDTO {
     private String email;
 
     @NotBlank(message = "Password é obrigatória.")
-    @Size(min = 8, max = 128, message = "Password com tamanho inválido.")
+    @Size(min = 4, max = 128, message = "Password com tamanho inválido.")
     private String password;
 
     public String getEmail() { return email; }

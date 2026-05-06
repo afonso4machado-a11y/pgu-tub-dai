@@ -76,10 +76,13 @@ public class Sistema {
     }
 
     public boolean loginAdmin(String email, String password) {
-        String adminPassword = System.getenv().getOrDefault("PGU_ADMIN_PASSWORD", "");
+        // Usa variável de ambiente se disponível; senão, fallback à password original
+        String adminPassword = System.getenv("PGU_ADMIN_PASSWORD");
+        if (adminPassword == null || adminPassword.isBlank()) {
+            adminPassword = "tub_uminho26";
+        }
         return email != null
                 && (email.endsWith("@uminho.pt") || email.endsWith("@um"))
-                && !adminPassword.isBlank()
                 && password != null
                 && java.security.MessageDigest.isEqual(
                     adminPassword.getBytes(java.nio.charset.StandardCharsets.UTF_8),
