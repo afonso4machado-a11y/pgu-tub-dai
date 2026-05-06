@@ -28,18 +28,25 @@ let lastDataFingerprint = ''
 
 // Paragens reais de Braga (exemplos representativos das linhas TUB)
 const paragens = [
-  { nome: 'Terminal Intermodal', lat: 41.5503, lng: -8.4227 },
-  { nome: 'Universidade do Minho (Gualtar)', lat: 41.5614, lng: -8.3966 },
-  { nome: 'Hospital de Braga', lat: 41.5578, lng: -8.3843 },
-  { nome: 'Estádio Municipal', lat: 41.5623, lng: -8.4291 },
-  { nome: 'Bom Jesus', lat: 41.5547, lng: -8.3787 },
-  { nome: 'Sameiro', lat: 41.5417, lng: -8.3634 },
-  { nome: 'Maximinos', lat: 41.5461, lng: -8.4378 },
+  // Linha 07H — Celeirós ↔ S. Vítor
+  { nome: "S. Mamede d' Este", lat: 41.5680, lng: -8.3920 },
+  { nome: 'Avenida da Liberdade', lat: 41.5510, lng: -8.4210 },
+  { nome: 'Celeirós', lat: 41.5720, lng: -8.4050 },
   { nome: 'São Vítor', lat: 41.5437, lng: -8.4148 },
-  { nome: 'Estação CP', lat: 41.5489, lng: -8.4341 },
+  // Linha 40H — Hospital ↔ Real
+  { nome: 'Hospital de Braga', lat: 41.5578, lng: -8.3843 },
+  { nome: 'Rua Egídio Guimarães', lat: 41.5505, lng: -8.4180 },
   { nome: 'Avenida Central', lat: 41.5492, lng: -8.4260 },
-  { nome: 'Tenões', lat: 41.5647, lng: -8.4127 },
+  { nome: 'Rua Mário de Almeida', lat: 41.5470, lng: -8.4300 },
+  // Linha 43H — Estação CP ↔ Universidade
+  { nome: 'Estação C.P.', lat: 41.5489, lng: -8.4341 },
+  { nome: 'Universidade do Minho', lat: 41.5614, lng: -8.3966 },
+  // Pontos de referência urbana
+  { nome: 'Terminal Intermodal', lat: 41.5503, lng: -8.4227 },
+  { nome: 'Maximinos', lat: 41.5461, lng: -8.4378 },
+  { nome: 'Bom Jesus', lat: 41.5547, lng: -8.3787 },
   { nome: 'Nogueiró', lat: 41.5519, lng: -8.4486 },
+  { nome: 'Gualtar', lat: 41.5590, lng: -8.3980 },
 ]
 
 const filteredBuses = computed(() => {
