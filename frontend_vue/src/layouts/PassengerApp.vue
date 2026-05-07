@@ -1,10 +1,10 @@
 <script setup>
 import { useRoute } from 'vue-router'
 import { MapPin, Ticket, Bell, User, Home, Signal, BatteryFull, Sun, Moon, Monitor } from 'lucide-vue-next'
-import { useTheme } from '../composables/useTheme'
+import { usePassengerTheme } from '../composables/usePassengerTheme'
 
 const route = useRoute()
-const { currentTheme, setTheme } = useTheme()
+const { currentPassengerTheme, setTheme } = usePassengerTheme()
 
 const tabs = [
   { id: 'home', path: '/app', label: 'Início', icon: Home },
@@ -37,7 +37,7 @@ const tabs = [
       <div class="theme-switcher">
         <button
           class="theme-btn"
-          :class="{ active: currentTheme === 'light' }"
+          :class="{ active: currentPassengerTheme === 'light' }"
           @click="setTheme('light')"
           title="Modo Claro"
         >
@@ -45,7 +45,7 @@ const tabs = [
         </button>
         <button
           class="theme-btn"
-          :class="{ active: currentTheme === 'dark' }"
+          :class="{ active: currentPassengerTheme === 'dark' }"
           @click="setTheme('dark')"
           title="Modo Escuro"
         >
@@ -53,7 +53,7 @@ const tabs = [
         </button>
         <button
           class="theme-btn"
-          :class="{ active: currentTheme === 'auto' }"
+          :class="{ active: currentPassengerTheme === 'auto' }"
           @click="setTheme('auto')"
           title="Modo Automático"
         >
