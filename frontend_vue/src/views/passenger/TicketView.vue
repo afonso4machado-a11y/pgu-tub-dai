@@ -216,7 +216,7 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
   height: 24px; margin: 0 -2px;
 }
 .tear-circle {
-  width: 24px; height: 24px; border-radius: 50%; background: #f8fafc;
+  width: 24px; height: 24px; border-radius: 50%; background: var(--bg-primary);
   flex-shrink: 0;
 }
 .tear-circle.left { margin-left: -12px; }
@@ -227,9 +227,9 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
 
 /* QR Section */
 .qr-section {
-  background: #fff; padding: 1.5rem; text-align: center;
+  background: var(--bg-surface); padding: 1.5rem; text-align: center;
 }
-.qr-instruction { color: #64748b; font-size: 0.8rem; font-weight: 600; margin: 0 0 1rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.qr-instruction { color: var(--text-muted); font-size: 0.8rem; font-weight: 600; margin: 0 0 1rem; text-transform: uppercase; letter-spacing: 0.04em; }
 
 .qr-container {
   display: inline-block; padding: 0.75rem;
@@ -240,7 +240,7 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
 
 .qr-grid { display: flex; flex-direction: column; gap: 0; }
 .qr-row { display: flex; gap: 0; }
-.qr-cell { width: 10px; height: 10px; background: #fff; }
+.qr-cell { width: 10px; height: 10px; background: var(--bg-surface); }
 .qr-filled { background: #0f172a; }
 
 .qr-meta {
@@ -249,11 +249,11 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
 }
 .qr-timer {
   display: flex; align-items: center; gap: 0.35rem;
-  color: #64748b; font-size: 0.8rem;
+  color: var(--text-muted); font-size: 0.8rem;
 }
 .qr-refresh-btn {
   display: flex; align-items: center; gap: 0.3rem;
-  background: #f1f5f9; border: 1px solid #e2e8f0;
+  background: var(--bg-hover); border: 1px solid var(--border-light);
   color: #0284c7; padding: 0.35rem 0.75rem; border-radius: 2rem;
   font-size: 0.75rem; font-weight: 700; cursor: pointer;
   transition: all 0.2s;
@@ -262,7 +262,7 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
 
 .qr-security {
   display: flex; align-items: center; justify-content: center; gap: 0.35rem;
-  margin-top: 0.75rem; color: #94a3b8; font-size: 0.7rem;
+  margin-top: 0.75rem; color: var(--text-muted); font-size: 0.7rem;
 }
 
 /* Actions */
@@ -274,5 +274,5 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
 }
 .action-btn:active { transform: scale(0.98); }
 .action-btn.primary { background: #0284c7; color: #fff; box-shadow: 0 2px 12px rgba(2,132,199,0.3); }
-.action-btn.secondary { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+.action-btn.secondary { background: var(--bg-hover); color: #334155; border: 1px solid var(--border-light); }
 </style>

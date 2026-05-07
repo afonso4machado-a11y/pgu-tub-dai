@@ -65,7 +65,7 @@ const tabs = [
   width: 100%;
   max-width: 430px;
   margin: 0 auto;
-  background: #f8fafc;
+  background: var(--bg-primary);
   position: relative;
   overflow: hidden;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -115,8 +115,8 @@ const tabs = [
   display: flex;
   justify-content: space-around;
   align-items: center;
-  background: #fff;
-  border-top: 1px solid #e2e8f0;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-light);
   padding: 0.5rem 0 0.65rem;
   box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
 }

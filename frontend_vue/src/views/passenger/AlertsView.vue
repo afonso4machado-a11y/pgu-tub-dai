@@ -118,7 +118,7 @@ const unreadCount = computed(() => alerts.value.filter(a => !a.lido).length)
 .alerts-page { padding: 1.25rem; padding-bottom: 2rem; }
 
 .alerts-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-.page-title { font-size: 1.5rem; font-weight: 800; color: #0f172a; margin: 0; }
+.page-title { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin: 0; }
 .unread-badge {
   background: #ef4444; color: #fff; padding: 0.25rem 0.75rem;
   border-radius: 2rem; font-size: 0.75rem; font-weight: 700;
@@ -129,8 +129,8 @@ const unreadCount = computed(() => alerts.value.filter(a => !a.lido).length)
 .filter-chip {
   display: flex; align-items: center; gap: 0.35rem;
   padding: 0.5rem 1rem; border-radius: 2rem;
-  border: 1px solid #e2e8f0; background: #fff;
-  font-size: 0.8rem; font-weight: 600; color: #64748b;
+  border: 1px solid var(--border-light); background: var(--bg-surface);
+  font-size: 0.8rem; font-weight: 600; color: var(--text-muted);
   cursor: pointer; transition: all 0.2s;
 }
 .filter-chip.active {
@@ -142,7 +142,7 @@ const unreadCount = computed(() => alerts.value.filter(a => !a.lido).length)
 
 .alert-card {
   display: flex; align-items: flex-start; gap: 0.85rem;
-  background: #fff; padding: 1rem; border-radius: 0.85rem;
+  background: var(--bg-surface); padding: 1rem; border-radius: 0.85rem;
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
   transition: all 0.2s; position: relative;
 }
@@ -151,35 +151,35 @@ const unreadCount = computed(() => alerts.value.filter(a => !a.lido).length)
 
 .ac-icon {
   width: 36px; height: 36px; border-radius: 50%;
-  background: #f8fafc; display: flex; align-items: center; justify-content: center;
+  background: var(--bg-primary); display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
 .ac-content { flex: 1; min-width: 0; }
 .ac-top { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; }
 .ac-tipo { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
 .ac-linha {
-  background: #f1f5f9; padding: 0.15rem 0.5rem; border-radius: 0.3rem;
+  background: var(--bg-hover); padding: 0.15rem 0.5rem; border-radius: 0.3rem;
   font-size: 0.7rem; font-weight: 700; color: #334155;
 }
 .ac-msg { margin: 0; font-size: 0.88rem; color: #334155; line-height: 1.45; }
 .ac-time {
   display: flex; align-items: center; gap: 0.3rem;
-  font-size: 0.72rem; color: #94a3b8; margin-top: 0.4rem;
+  font-size: 0.72rem; color: var(--text-muted); margin-top: 0.4rem;
 }
 .ac-dot {
   width: 8px; height: 8px; border-radius: 50%; background: #0284c7;
   flex-shrink: 0; margin-top: 0.5rem;
 }
 
-.empty { text-align: center; padding: 3rem 1rem; color: #94a3b8; }
+.empty { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
 .empty-icon { opacity: 0.3; margin-bottom: 0.5rem; }
 .empty-sub { font-size: 0.8rem; }
 
 .settings-hint {
   display: flex; align-items: center; gap: 0.5rem;
   margin-top: 1.5rem; padding: 1rem;
-  background: #fff; border-radius: 0.85rem;
-  color: #64748b; font-size: 0.85rem; font-weight: 500;
+  background: var(--bg-surface); border-radius: 0.85rem;
+  color: var(--text-muted); font-size: 0.85rem; font-weight: 500;
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 .settings-hint span { flex: 1; }

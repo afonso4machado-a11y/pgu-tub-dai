@@ -352,14 +352,14 @@ function lotLabel(pct) {
   height: 48px;
   border-radius: 50%;
   border: none;
-  background: #fff;
+  background: var(--bg-surface);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
   cursor: pointer;
-  color: #64748b;
+  color: var(--text-muted);
   transition: all 0.3s ease;
 }
 
@@ -371,8 +371,8 @@ function lotLabel(pct) {
 
 /* Greeting */
 .greeting-section { margin-bottom: 1.5rem; }
-.greeting { font-size: 1.5rem; font-weight: 800; color: #0f172a; margin: 0; }
-.greeting-sub { color: #64748b; font-size: 0.95rem; margin: 0.25rem 0 0; }
+.greeting { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin: 0; }
+.greeting-sub { color: var(--text-muted); font-size: 0.95rem; margin: 0.25rem 0 0; }
 
 /* Quick Actions */
 .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem; }
@@ -388,12 +388,12 @@ function lotLabel(pct) {
 
 /* Trip Planner */
 .trip-planner {
-  background: #fff; border-radius: 1rem; padding: 1.25rem;
+  background: var(--bg-surface); border-radius: 1rem; padding: 1.25rem;
   box-shadow: 0 2px 16px rgba(0,0,0,0.06); margin-bottom: 1.5rem;
 }
 .section-title {
   display: flex; align-items: center; gap: 0.5rem;
-  font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0 0 1rem;
+  font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0 0 1rem;
 }
 .planner-inputs { display: flex; flex-direction: column; gap: 0; margin-bottom: 1rem; }
 .planner-input { display: flex; align-items: center; gap: 0.75rem; }
@@ -401,10 +401,10 @@ function lotLabel(pct) {
 .input-dot.origin { background: #10b981; border: 2px solid #a7f3d0; }
 .input-dot.destination { background: #ef4444; border: 2px solid #fecaca; }
 .planner-field {
-  flex: 1; border: none; border-bottom: 1px solid #e2e8f0; padding: 0.75rem 0;
-  font-size: 0.95rem; color: #0f172a; background: transparent; outline: none;
+  flex: 1; border: none; border-bottom: 1px solid var(--border-light); padding: 0.75rem 0;
+  font-size: 0.95rem; color: var(--text-main); background: transparent; outline: none;
 }
-.planner-field::placeholder { color: #94a3b8; }
+.planner-field::placeholder { color: var(--text-muted); }
 .planner-divider { width: 1px; height: 16px; background: #e2e8f0; margin-left: 5px; }
 .btn-plan {
   width: 100%; padding: 0.85rem; border: none; border-radius: 0.75rem;
@@ -417,16 +417,16 @@ function lotLabel(pct) {
 .planner-input-wrapper { position: relative; width: 100%; }
 .suggestions-dropdown {
   position: absolute; top: 100%; left: 0; right: 0;
-  background: #fff; border-radius: 0.75rem; border: 1px solid #e2e8f0;
+  background: var(--bg-surface); border-radius: 0.75rem; border: 1px solid var(--border-light);
   box-shadow: 0 10px 25px rgba(0,0,0,0.1);
   z-index: 1000; margin-top: 0.5rem; overflow: hidden;
   max-height: 200px; overflow-y: auto;
 }
 .suggestion-item {
   padding: 0.75rem 1rem; font-size: 0.9rem; color: #334155;
-  cursor: pointer; border-bottom: 1px solid #f1f5f9;
+  cursor: pointer; border-bottom: 1px solid var(--border-light);
 }
-.suggestion-item:hover { background: #f8fafc; color: #0284c7; }
+.suggestion-item:hover { background: var(--bg-primary); color: #0284c7; }
 
 .holiday-plan-result {
   margin-top: 1.25rem; padding: 1rem;
@@ -441,7 +441,7 @@ function lotLabel(pct) {
 .res-msg { font-size: 0.85rem; font-weight: 700; color: #0369a1; }
 .result-body { display: flex; gap: 1rem; }
 .res-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: #475569; }
-.res-item strong { color: #0f172a; }
+.res-item strong { color: var(--text-main); }
 
 
 /* Section */
@@ -451,7 +451,7 @@ function lotLabel(pct) {
 .bus-list { display: flex; flex-direction: column; gap: 0.6rem; }
 .bus-card {
   display: flex; justify-content: space-between; align-items: center;
-  background: #fff; padding: 0.85rem 1rem; border-radius: 0.85rem;
+  background: var(--bg-surface); padding: 0.85rem 1rem; border-radius: 0.85rem;
   box-shadow: 0 1px 6px rgba(0,0,0,0.04);
 }
 .bus-left { display: flex; align-items: center; gap: 0.75rem; }
@@ -460,18 +460,18 @@ function lotLabel(pct) {
   border-radius: 0.4rem; min-width: 36px; text-align: center;
 }
 .bus-info { display: flex; flex-direction: column; }
-.bus-destino { font-weight: 600; font-size: 0.9rem; color: #0f172a; }
+.bus-destino { font-weight: 600; font-size: 0.9rem; color: var(--text-main); }
 .bus-lotacao-label { font-size: 0.75rem; font-weight: 600; }
 .bus-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem; }
 .bus-minutos { font-size: 1.25rem; font-weight: 800; color: #0284c7; }
-.lot-indicator { width: 48px; height: 4px; background: #f1f5f9; border-radius: 2px; overflow: hidden; }
+.lot-indicator { width: 48px; height: 4px; background: var(--bg-hover); border-radius: 2px; overflow: hidden; }
 .lot-bar { height: 100%; border-radius: 2px; transition: width 0.4s; }
 
 /* Favorites */
 .fav-list { display: flex; flex-direction: column; gap: 0.5rem; }
 .fav-card {
   display: flex; justify-content: space-between; align-items: center;
-  background: #fff; padding: 0.85rem 1rem; border-radius: 0.85rem;
+  background: var(--bg-surface); padding: 0.85rem 1rem; border-radius: 0.85rem;
   box-shadow: 0 1px 6px rgba(0,0,0,0.04);
 }
 .fav-left { display: flex; align-items: center; gap: 0.75rem; }
@@ -486,10 +486,10 @@ function lotLabel(pct) {
 .stats-section { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 .mini-stat {
   display: flex; align-items: center; gap: 0.75rem;
-  background: #fff; padding: 1rem; border-radius: 0.85rem;
+  background: var(--bg-surface); padding: 1rem; border-radius: 0.85rem;
   box-shadow: 0 1px 6px rgba(0,0,0,0.04);
 }
 .stat-icon { color: #0284c7; }
-.stat-val { font-size: 1.15rem; font-weight: 800; color: #0f172a; display: block; }
-.stat-lbl { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; font-weight: 600; }
+.stat-val { font-size: 1.15rem; font-weight: 800; color: var(--text-main); display: block; }
+.stat-lbl { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
 </style>
