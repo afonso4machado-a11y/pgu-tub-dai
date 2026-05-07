@@ -110,7 +110,7 @@ const menuItems = [
 .brand-logo {
   width: 48px;
   height: auto;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
+  filter: drop-shadow(0 0 8px var(--img-shadow));
 }
 .brand-title {
   font-size: 1.5rem;
@@ -150,7 +150,7 @@ const menuItems = [
   transition: all 0.2s ease;
 }
 .menu-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
   color: var(--text-main);
 }
 .menu-item.active {
@@ -167,7 +167,7 @@ const menuItems = [
   display: flex;
   align-items: center;
   gap: 1rem;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--bg-input);
 }
 .avatar {
   width: 40px; height: 40px;
