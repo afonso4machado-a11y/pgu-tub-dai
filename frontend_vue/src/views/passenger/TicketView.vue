@@ -233,15 +233,15 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
 
 .qr-container {
   display: inline-block; padding: 0.75rem;
-  border: 2px solid #e2e8f0; border-radius: 0.75rem;
+  border: 2px solid var(--border-light); border-radius: 0.75rem;
   transition: all 0.3s;
 }
 .qr-refreshing { opacity: 0.3; }
 
 .qr-grid { display: flex; flex-direction: column; gap: 0; }
 .qr-row { display: flex; gap: 0; }
-.qr-cell { width: 10px; height: 10px; background: var(--bg-surface); }
-.qr-filled { background: #0f172a; }
+.qr-cell { width: 10px; height: 10px; background: transparent; }
+.qr-filled { background: var(--text-main); }
 
 .qr-meta {
   display: flex; justify-content: center; align-items: center; gap: 1rem;
@@ -254,11 +254,11 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
 .qr-refresh-btn {
   display: flex; align-items: center; gap: 0.3rem;
   background: var(--bg-hover); border: 1px solid var(--border-light);
-  color: #0284c7; padding: 0.35rem 0.75rem; border-radius: 2rem;
+  color: var(--accent-blue); padding: 0.35rem 0.75rem; border-radius: 2rem;
   font-size: 0.75rem; font-weight: 700; cursor: pointer;
   transition: all 0.2s;
 }
-.qr-refresh-btn:active { background: #e2e8f0; }
+.qr-refresh-btn:active { background: var(--bg-hover-strong); }
 
 .qr-security {
   display: flex; align-items: center; justify-content: center; gap: 0.35rem;
@@ -273,6 +273,6 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
   border: none; cursor: pointer; transition: all 0.15s;
 }
 .action-btn:active { transform: scale(0.98); }
-.action-btn.primary { background: #0284c7; color: #fff; box-shadow: 0 2px 12px rgba(2,132,199,0.3); }
-.action-btn.secondary { background: var(--bg-hover); color: #334155; border: 1px solid var(--border-light); }
+.action-btn.primary { background: var(--accent-blue); color: #fff; box-shadow: 0 2px 12px rgba(2,132,199,0.3); }
+.action-btn.secondary { background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border-light); }
 </style>
