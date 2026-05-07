@@ -166,15 +166,42 @@ public class Sistema {
         sb.append("-> Volume Total de Passageiros Transportados: ").append(volumeTotalPassageiros).append("\n");
 
         sb.append("\n--- VOLUME DE PASSAGEIROS POR LINHA E HORA ---\n");
+        Map<String, Map<Integer, Integer>> volumePorLinha = new java.util.TreeMap<>();
+
         for (Autocarro a : repositorioAutocarros.listarTodos()) {
-            sb.append(" -> Veiculo/Linha: ").append(a.getId()).append("\n");
-            Map<Integer, Integer> volumePorHora = a.obterVolumePorHora();
-            if (volumePorHora.isEmpty()) {
-                sb.append("    (Sem registos)\n");
-            } else {
-                for (Map.Entry<Integer, Integer> entry : volumePorHora.entrySet()) {
-                    sb.append(String.format("    %02dh00 - %02dh59: %d passageiros\n",
-                            entry.getKey(), entry.getKey(), entry.getValue()));
+            String linhaId = a.getLinhaId();
+            String nomeLinha = "Sem Linha";
+            if (linhaId != null) {
+                Optional<Linha> linhaOpt = repositorioLinhas.procurarPorId(linhaId);
+                if (linhaOpt.isPresent()) {
+                    nomeLinha = "Linha " + linhaOpt.get().getNome() + " (" + linhaId + ")";
+                } else {
+                    nomeLinha = "Linha " + linhaId;
+                }
+            }
+
+            volumePorLinha.putIfAbsent(nomeLinha, new java.util.TreeMap<>());
+            Map<Integer, Integer> volumeDaLinha = volumePorLinha.get(nomeLinha);
+
+            Map<Integer, Integer> volumeDoAutocarro = a.obterVolumePorHora();
+            for (Map.Entry<Integer, Integer> entry : volumeDoAutocarro.entrySet()) {
+                volumeDaLinha.put(entry.getKey(), volumeDaLinha.getOrDefault(entry.getKey(), 0) + entry.getValue());
+            }
+        }
+
+        if (volumePorLinha.isEmpty()) {
+            sb.append("    (Sem registos)\n");
+        } else {
+            for (Map.Entry<String, Map<Integer, Integer>> entryLinha : volumePorLinha.entrySet()) {
+                sb.append(" -> ").append(entryLinha.getKey()).append("\n");
+                Map<Integer, Integer> volumePorHora = entryLinha.getValue();
+                if (volumePorHora.isEmpty()) {
+                    sb.append("    (Sem registos)\n");
+                } else {
+                    for (Map.Entry<Integer, Integer> entry : volumePorHora.entrySet()) {
+                        sb.append(String.format("    %02dh00 - %02dh59: %d passageiros\n",
+                                entry.getKey(), entry.getKey(), entry.getValue()));
+                    }
                 }
             }
         }

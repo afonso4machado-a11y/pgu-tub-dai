@@ -192,7 +192,6 @@ public class Autocarro {
         return alerta;
     }
 
-    //Método teste para ja pois nao temos linhas separadas de autocarros ou seja autocarro=linha
     public java.util.Map<Integer, Integer> obterVolumePorHora() {
         java.util.Map<Integer, Integer> volumePorHora = new java.util.TreeMap<>();
         for (LeituraContagem leitura : historicoLeituras) {
