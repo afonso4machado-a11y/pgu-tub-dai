@@ -1,11 +1,19 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useTheme } from './composables/useTheme'
+import { onMounted } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import TopHeader from './components/TopHeader.vue'
 
 const route = useRoute()
 const isPassengerApp = computed(() => route.path.startsWith('/app'))
+
+const { initTheme } = useTheme()
+
+onMounted(() => {
+  initTheme()
+})
 </script>
 
 <template>
@@ -35,7 +43,7 @@ const isPassengerApp = computed(() => route.path.startsWith('/app'))
   display: flex;
   height: 100vh;
   overflow: hidden;
-  background: radial-gradient(circle at top right, #0f172a, #020617);
+  background: radial-gradient(circle at top right, var(--bg-surface), var(--bg-primary));
 }
 
 .pwa-wrapper {

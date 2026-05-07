@@ -1,10 +1,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Bell, ShieldCheck, Database, FlaskConical, LogOut } from 'lucide-vue-next'
+import { Bell, ShieldCheck, Database, FlaskConical, LogOut, Sun, Moon, Monitor } from 'lucide-vue-next'
+import { useTheme } from '../composables/useTheme'
 import { authService } from '../services/auth'
 
 const isDemo = ref(false)
 const adminUser = ref(null)
+const { currentTheme, setTheme } = useTheme()
 
 onMounted(() => {
   isDemo.value = localStorage.getItem('pgu_demo_mode') === 'true'
@@ -29,6 +31,35 @@ function handleLogout() {
     </div>
     
     <div class="header-actions">
+
+      <!-- Theme Switcher -->
+      <div class="theme-switcher">
+        <button
+          class="theme-btn"
+          :class="{ active: currentTheme === 'light' }"
+          @click="setTheme('light')"
+          title="Modo Claro"
+        >
+          <Sun :size="16" />
+        </button>
+        <button
+          class="theme-btn"
+          :class="{ active: currentTheme === 'dark' }"
+          @click="setTheme('dark')"
+          title="Modo Escuro"
+        >
+          <Moon :size="16" />
+        </button>
+        <button
+          class="theme-btn"
+          :class="{ active: currentTheme === 'auto' }"
+          @click="setTheme('auto')"
+          title="Modo Automático"
+        >
+          <Monitor :size="16" />
+        </button>
+      </div>
+
       <!-- Demo Mode Toggle -->
       <button 
         class="demo-toggle" 
@@ -45,7 +76,7 @@ function handleLogout() {
         <span class="admin-email">{{ adminUser.email }}</span>
       </div>
 
-      <div class="status-badge" :style="{ borderColor: isDemo ? '#f59e0b' : '#10b981', color: isDemo ? '#f59e0b' : '#10b981', background: isDemo ? 'rgba(245,158,11,0.1)' : 'rgba(16,185,129,0.1)' }">
+      <div class="status-badge" :class="isDemo ? 'status-demo' : 'status-online'">
         <ShieldCheck :size="16" class="status-icon" />
         <span class="fira-code">{{ isDemo ? 'SIMULAÇÃO ATIVA' : 'SISTEMA ONLINE' }}</span>
       </div>
@@ -101,11 +132,57 @@ function handleLogout() {
   transition: all 0.3s ease;
 }
 
+
+.theme-switcher {
+  display: flex;
+  background: var(--bg-input);
+  border-radius: 0.75rem;
+  padding: 0.2rem;
+  border: 1px solid var(--border-light);
+}
+
+.theme-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 0.4rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.theme-btn:hover {
+  color: var(--text-main);
+  background: var(--bg-hover);
+}
+
+.theme-btn.active {
+  background: var(--bg-surface);
+  color: var(--accent-blue);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-light);
+}
+
+.status-demo {
+  border-color: var(--warning);
+  color: var(--warning);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.status-online {
+  border-color: var(--success);
+  color: var(--success);
+  background: rgba(16, 185, 129, 0.1);
+}
+
 .demo-toggle {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
   border: 1px solid var(--border);
   color: var(--text-muted);
   padding: 0.4rem 0.85rem;
@@ -118,7 +195,7 @@ function handleLogout() {
 }
 
 .demo-toggle:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-hover-strong);
   border-color: var(--text-muted);
 }
 
@@ -180,7 +257,7 @@ function handleLogout() {
   font-weight: 700;
   font-family: 'Fira Code', monospace;
   color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
   border: 1px solid var(--border-light);
   transition: all 0.3s ease;
 }
