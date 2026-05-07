@@ -62,6 +62,7 @@ const tabs = [
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   width: 100%;
   max-width: 430px;
   margin: 0 auto;
@@ -76,7 +77,7 @@ const tabs = [
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.4rem 1.25rem;
+  padding: calc(0.4rem + env(safe-area-inset-top)) 1.25rem 0.4rem;
   background: #0369a1;
   color: #fff;
   font-size: 0.75rem;
@@ -117,7 +118,7 @@ const tabs = [
   align-items: center;
   background: var(--bg-surface);
   border-top: 1px solid var(--border-light);
-  padding: 0.5rem 0 0.65rem;
+  padding: 0.5rem 0 calc(0.65rem + env(safe-area-inset-bottom));
   box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
 }
 .tab-item {
