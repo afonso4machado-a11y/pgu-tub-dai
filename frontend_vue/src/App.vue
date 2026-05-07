@@ -49,7 +49,7 @@ onMounted(() => {
 .pwa-wrapper {
   height: 100vh;
   overflow: hidden;
-  background: #f8fafc;
+  background: var(--bg-primary);
 }
 
 .main-content {

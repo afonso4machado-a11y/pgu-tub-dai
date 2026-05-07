@@ -276,7 +276,7 @@ onUnmounted(() => {
 }
 .map-btn {
   width: 44px; height: 44px; border-radius: 50%;
-  background: #fff; border: none; color: #0284c7;
+  background: var(--bg-surface); border: none; color: #0284c7;
   box-shadow: 0 2px 12px rgba(0,0,0,0.15);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; transition: transform 0.15s;
@@ -294,7 +294,7 @@ onUnmounted(() => {
 /* Bus Detail Card */
 .bus-detail-card {
   position: absolute; bottom: 1rem; left: 1rem; right: 1rem;
-  z-index: 600; background: #fff; border-radius: 1rem;
+  z-index: 600; background: var(--bg-surface); border-radius: 1rem;
   padding: 1.25rem; box-shadow: 0 8px 30px rgba(0,0,0,0.15);
 }
 .bdc-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
@@ -302,11 +302,11 @@ onUnmounted(() => {
   color: #fff; font-weight: 800; font-size: 0.8rem; padding: 0.35rem 0.75rem;
   border-radius: 0.5rem;
 }
-.bdc-id { font-weight: 700; color: #0f172a; font-size: 1.05rem; }
+.bdc-id { font-weight: 700; color: var(--text-main); font-size: 1.05rem; }
 .bdc-body { display: flex; flex-direction: column; gap: 0.5rem; }
-.bdc-metric { display: flex; align-items: center; gap: 0.5rem; color: #64748b; font-size: 0.9rem; }
+.bdc-metric { display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
 .bdc-lot-text { font-weight: 700; font-size: 0.85rem; }
-.bdc-bar-track { height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; margin-top: 0.35rem; }
+.bdc-bar-track { height: 6px; background: var(--bg-hover); border-radius: 3px; overflow: hidden; margin-top: 0.35rem; }
 .bdc-bar { height: 100%; border-radius: 3px; transition: width 0.5s; }
 .bdc-tip { text-align: center; color: #cbd5e1; font-size: 0.7rem; margin: 0.75rem 0 0; }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 2px; }

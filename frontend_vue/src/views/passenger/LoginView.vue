@@ -102,11 +102,11 @@ async function handleSubmit() {
 <style scoped>
 .mobile-login {
   min-height: 100vh;
-  background: #f8fafc;
+  background: var(--bg-primary);
   display: flex;
   flex-direction: column;
   padding: 2rem;
-  color: #1e293b;
+  color: var(--text-main);
 }
 
 .header {
@@ -131,11 +131,11 @@ h1 {
   font-size: 1.75rem;
   font-weight: 800;
   margin-bottom: 0.5rem;
-  color: #0f172a;
+  color: var(--text-main);
 }
 
 p {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 0.95rem;
 }
 
@@ -154,12 +154,12 @@ p {
 .onboarding-header h2 {
   font-size: 1.5rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-main);
   margin-bottom: 0.5rem;
 }
 
 .onboarding-header p {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 0.9rem;
   line-height: 1.4;
 }
@@ -168,7 +168,7 @@ p {
   text-align: center;
   margin-top: 1.5rem;
   font-size: 0.9rem;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .switch-mode a {
@@ -182,15 +182,15 @@ p {
   display: flex;
   align-items: center;
   gap: 1rem;
-  background: #f8fafc;
+  background: var(--bg-primary);
   padding: 1rem;
   border-radius: 12px;
   margin-bottom: 1rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-light);
 }
 
 .input-field svg {
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 input {
@@ -199,7 +199,7 @@ input {
   width: 100%;
   font-size: 1rem;
   outline: none;
-  color: #1e293b;
+  color: var(--text-main);
 }
 
 .error-msg {
