@@ -91,7 +91,7 @@ async function handleLogin() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at top right, #0f172a, #020617);
+  background: var(--bg-primary);
   padding: 1.5rem;
 }
 
@@ -145,7 +145,7 @@ async function handleLogin() {
 
 input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   padding: 0.85rem 1rem;

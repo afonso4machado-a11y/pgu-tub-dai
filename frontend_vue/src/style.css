@@ -17,12 +17,49 @@
   --warning: #eab308;
   --success: #10b981;
 
-  --border-light: rgba(255, 255, 255, 0.1);
+  --border-light: var(--bg-hover-strong);
   --border-focus: rgba(6, 182, 212, 0.5);
   
   --shadow-glow: 0 4px 24px -4px rgba(6, 182, 212, 0.25);
   --shadow-surface: 0 8px 16px -4px rgba(0, 0, 0, 0.5);
+
+  /* Additional UI utilities for both themes */
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --bg-hover-strong: rgba(255, 255, 255, 0.1);
+  --bg-input: rgba(0, 0, 0, 0.2);
+  --img-shadow: rgba(0, 0, 0, 0.5);
+  --glass-border: rgba(255, 255, 255, 0.1);
 }
+
+:root[data-theme='light'] {
+  --bg-primary: #f1f5f9; /* Slate 100 */
+  --bg-surface: #ffffff; /* White */
+  --bg-glass: rgba(255, 255, 255, 0.85);
+
+  --text-main: #0f172a; /* Slate 900 */
+  --text-muted: #475569; /* Slate 600 */
+
+  --accent-blue: #0284c7; /* Light Blue */
+  --accent-blue-hover: #0369a1;
+  --accent-teal: #0d9488;
+  --accent-purple: #4f46e5;
+  --danger: #dc2626;
+  --warning: #ca8a04;
+  --success: #059669;
+
+  --border-light: rgba(0, 0, 0, 0.1);
+  --border-focus: rgba(2, 132, 199, 0.5);
+
+  --shadow-glow: 0 4px 24px -4px rgba(2, 132, 199, 0.25);
+  --shadow-surface: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+
+  --bg-hover: rgba(0, 0, 0, 0.05);
+  --bg-hover-strong: rgba(0, 0, 0, 0.1);
+  --bg-input: rgba(0, 0, 0, 0.05);
+  --img-shadow: rgba(0, 0, 0, 0.1);
+  --glass-border: rgba(0, 0, 0, 0.1);
+}
+
 
 * {
   margin: 0;
@@ -147,7 +184,7 @@ button, input, select, textarea {
 .input-field {
   width: 100%;
   padding: 0.75rem 1rem;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--bg-input);
   border: 1px solid var(--border-light);
   border-radius: 0.5rem;
   color: var(--text-main);
