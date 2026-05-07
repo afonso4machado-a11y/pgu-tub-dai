@@ -2,17 +2,31 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTheme } from './composables/useTheme'
-import { onMounted } from 'vue'
+import { usePassengerTheme } from './composables/usePassengerTheme'
+import { onMounted, watch } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import TopHeader from './components/TopHeader.vue'
 
 const route = useRoute()
 const isPassengerApp = computed(() => route.path.startsWith('/app'))
 
-const { initTheme } = useTheme()
+const { initTheme: initAdminTheme } = useTheme()
+const { initTheme: initPassengerTheme } = usePassengerTheme()
 
 onMounted(() => {
-  initTheme()
+  if (isPassengerApp.value) {
+    initPassengerTheme()
+  } else {
+    initAdminTheme()
+  }
+})
+
+watch(isPassengerApp, (newVal) => {
+  if (newVal) {
+    initPassengerTheme()
+  } else {
+    initAdminTheme()
+  }
 })
 </script>
 
