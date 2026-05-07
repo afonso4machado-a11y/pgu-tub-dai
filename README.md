@@ -80,9 +80,9 @@ pgu-tub-dai/
 ├── frontend_vue/               # SPA/PWA (Vue.js 3 + Vite)
 │   ├── src/views/              # Ecrãs (Backoffice e Mobile)
 │   └── src/services/           # Clientes HTTP para a API
-├── docs/                       # Notas de requisitos e assets
-├── tools/                      # Simulador de sensores IoT e utilitários
-├── 07_Anexos_e_Historico/      # Histórico académico
+├── Wiki/                       # Documentação técnica completa (18 páginas)
+├── historico/                  # Dados históricos e ficheiros de suporte académico
+├── tools/                      # Simulador de sensores IoT
 ├── docker-compose.yml          # Orquestração (MySQL + Java + Vue)
 ├── init.sql                    # Schema MySQL com índices B-Tree
 └── pom.xml                     # Maven Root Config
@@ -113,6 +113,23 @@ pgu-tub-dai/
 - **Administrador:** Email institucional `@uminho.pt` + password mestre
 - **Passageiro:** Registo com email/password (persistido em MySQL)
 - **Modo Demo:** Funciona sem backend ativo (fallback automático com dados simulados)
+
+## 🌿 Nova Feature em Desenvolvimento
+
+A branch **`feat/theme-switcher`** contém um seletor de temas (claro / escuro / automático) para o backoffice, ainda não mergeado em `main`.
+
+| Branch | Descrição | Estado |
+|--------|-----------|--------|
+| `main` | Código de produção | ✅ Estável |
+| `feat/theme-switcher` | Seletor de tema claro/escuro/auto no backoffice | 🚧 Em revisão |
+
+Para testar a feature localmente:
+```bash
+git checkout feat/theme-switcher
+cd frontend_vue && npm run dev
+```
+
+---
 
 ## 👥 Equipa
 

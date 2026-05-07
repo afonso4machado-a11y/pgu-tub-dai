@@ -78,10 +78,12 @@ public class Sistema {
     }
 
     public boolean loginAdmin(String email, String password) {
-        // Usa variável de ambiente se disponível; senão, fallback à password original
         String adminPassword = System.getenv("PGU_ADMIN_PASSWORD");
         if (adminPassword == null || adminPassword.isBlank()) {
-            adminPassword = "tub_uminho26";
+            // Sem fallback hardcoded por segurança — a variável de ambiente é obrigatória
+            throw new IllegalStateException(
+                "[PGU] Variável de ambiente PGU_ADMIN_PASSWORD não configurada. " +
+                "Contactar o administrador do sistema.");
         }
         return email != null
                 && (email.endsWith("@uminho.pt") || email.endsWith("@um"))

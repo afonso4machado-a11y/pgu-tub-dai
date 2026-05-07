@@ -98,14 +98,15 @@ public class SecurityRateLimitFilter extends OncePerRequestFilter {
 
         RateWindow rateWindow = counters.computeIfAbsent(key, k -> new RateWindow(now, windowMs));
 
+        int current;
         synchronized (rateWindow) {
             if (now - rateWindow.windowStartMs >= rateWindow.windowDurationMs) {
                 rateWindow.windowStartMs = now;
                 rateWindow.count.set(0);
             }
+            current = rateWindow.count.incrementAndGet();
         }
 
-        int current = rateWindow.count.incrementAndGet();
         if (current > limit) {
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             response.setContentType("application/json");
