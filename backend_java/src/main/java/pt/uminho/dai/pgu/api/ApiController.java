@@ -16,16 +16,12 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -56,27 +52,6 @@ public class ApiController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", e.getMessage()));
         }
-    }
-
-    /**
-     * 🧱 Handler global para erros de validação do @Valid.
-     * Retorna HTTP 400 com lista de todos os campos inválidos e respetivas mensagens.
-     */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationErrors(MethodArgumentNotValidException ex) {
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("status", "erro");
-        response.put("mensagem", "Dados de entrada inválidos. Verifique os campos assinalados.");
-        
-        Map<String, String> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
-            .collect(Collectors.toMap(
-                FieldError::getField,
-                FieldError::getDefaultMessage,
-                (existing, replacement) -> existing // manter o primeiro erro por campo
-            ));
-        
-        response.put("erros", fieldErrors);
-        return ResponseEntity.badRequest().body(response);
     }
 
     @PostMapping("/leituras")
