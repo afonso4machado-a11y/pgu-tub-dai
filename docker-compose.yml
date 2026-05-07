@@ -27,6 +27,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/tub?allowPublicKeyRetrieval=true&useSSL=false
       - SPRING_DATASOURCE_USERNAME=tub_user
       - SPRING_DATASOURCE_PASSWORD=tub_password
+      - PGU_ADMIN_PASSWORD=${PGU_ADMIN_PASSWORD:-tub_uminho26}
     depends_on:
       - mysql
     networks:
