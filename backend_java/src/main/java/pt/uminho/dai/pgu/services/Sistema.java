@@ -3,13 +3,13 @@ import pt.uminho.dai.pgu.models.*;
 import pt.uminho.dai.pgu.repositories.*;
 
 import java.time.LocalDateTime;
-import ArrayList;
-import HashMap;
-import LinkedHashMap;
-import List;
-import Map;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
-import Optional;
+import java.util.Optional;
 
 public class Sistema {
     private final RepositorioAutocarros repositorioAutocarros;
