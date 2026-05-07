@@ -101,11 +101,17 @@ async function handleSubmit() {
 
 <style scoped>
 .mobile-login {
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background: var(--bg-primary);
   display: flex;
   flex-direction: column;
-  padding: 2rem;
+  padding: calc(2rem + env(safe-area-inset-top)) 2rem calc(2rem + env(safe-area-inset-bottom));
   color: var(--text-main);
 }
 

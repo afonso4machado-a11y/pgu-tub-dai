@@ -48,6 +48,7 @@ onMounted(() => {
 
 .pwa-wrapper {
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background: var(--bg-primary);
 }
