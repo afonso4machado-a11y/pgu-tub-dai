@@ -1,8 +1,10 @@
 <script setup>
 import { useRoute } from 'vue-router'
-import { MapPin, Ticket, Bell, User, Home, Signal, BatteryFull } from 'lucide-vue-next'
+import { MapPin, Ticket, Bell, User, Home, Signal, BatteryFull, Sun, Moon, Monitor } from 'lucide-vue-next'
+import { useTheme } from '../composables/useTheme'
 
 const route = useRoute()
+const { currentTheme, setTheme } = useTheme()
 
 const tabs = [
   { id: 'home', path: '/app', label: 'Início', icon: Home },
@@ -29,6 +31,34 @@ const tabs = [
       <div class="header-brand">
         <img src="/tublogo.png" alt="TUB" class="header-logo" />
         <span class="header-title">TUB<span class="header-accent">.</span>Go</span>
+      </div>
+
+      <!-- Theme Switcher -->
+      <div class="theme-switcher">
+        <button
+          class="theme-btn"
+          :class="{ active: currentTheme === 'light' }"
+          @click="setTheme('light')"
+          title="Modo Claro"
+        >
+          <Sun :size="14" />
+        </button>
+        <button
+          class="theme-btn"
+          :class="{ active: currentTheme === 'dark' }"
+          @click="setTheme('dark')"
+          title="Modo Escuro"
+        >
+          <Moon :size="14" />
+        </button>
+        <button
+          class="theme-btn"
+          :class="{ active: currentTheme === 'auto' }"
+          @click="setTheme('auto')"
+          title="Modo Automático"
+        >
+          <Monitor :size="14" />
+        </button>
       </div>
     </header>
 
@@ -90,9 +120,44 @@ const tabs = [
   padding: 0.85rem 1.25rem;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   box-shadow: 0 2px 12px rgba(3, 105, 161, 0.3);
 }
 .header-brand { display: flex; align-items: center; gap: 0.75rem; }
+
+/* Theme Switcher */
+.theme-switcher {
+  display: flex;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0.75rem;
+  padding: 0.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.theme-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 0.35rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.theme-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.theme-btn.active {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
 .header-logo { width: 32px; height: auto; filter: brightness(10); }
 .header-title {
   font-size: 1.35rem;
