@@ -1,10 +1,11 @@
 <script setup>
+import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { MapPin, Ticket, Bell, User, Home, Signal, BatteryFull, Sun, Moon, Monitor } from 'lucide-vue-next'
+import { MapPin, Ticket, Bell, User, Home } from 'lucide-vue-next'
 import { usePassengerTheme } from '../composables/usePassengerTheme'
 
 const route = useRoute()
-const { currentPassengerTheme, setTheme } = usePassengerTheme()
+usePassengerTheme() // Initialize theme listeners on app load
 
 const tabs = [
   { id: 'home', path: '/app', label: 'Início', icon: Home },
@@ -13,52 +14,24 @@ const tabs = [
   { id: 'alerts', path: '/app/alerts', label: 'Alertas', icon: Bell },
   { id: 'profile', path: '/app/profile', label: 'Perfil', icon: User },
 ]
+
+onMounted(() => {
+  const userAgent = navigator.userAgent || navigator.vendor || window.opera
+  if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+    document.body.classList.add('is-ios')
+  } else if (/android/i.test(userAgent)) {
+    document.body.classList.add('is-android')
+  }
+})
 </script>
 
 <template>
   <div class="pwa-shell">
-    <!-- Status Bar -->
-    <div class="status-bar">
-      <span class="status-time">{{ new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) }}</span>
-      <div class="status-icons">
-        <Signal :size="14" />
-        <BatteryFull :size="14" />
-      </div>
-    </div>
-
     <!-- App Header -->
     <header class="app-header">
       <div class="header-brand">
         <img src="/tublogo.png" alt="TUB" class="header-logo" />
         <span class="header-title">TUB<span class="header-accent">.</span>Go</span>
-      </div>
-
-      <!-- Theme Switcher -->
-      <div class="theme-switcher">
-        <button
-          class="theme-btn"
-          :class="{ active: currentPassengerTheme === 'light' }"
-          @click="setTheme('light')"
-          title="Modo Claro"
-        >
-          <Sun :size="14" />
-        </button>
-        <button
-          class="theme-btn"
-          :class="{ active: currentPassengerTheme === 'dark' }"
-          @click="setTheme('dark')"
-          title="Modo Escuro"
-        >
-          <Moon :size="14" />
-        </button>
-        <button
-          class="theme-btn"
-          :class="{ active: currentPassengerTheme === 'auto' }"
-          @click="setTheme('auto')"
-          title="Modo Automático"
-        >
-          <Monitor :size="14" />
-        </button>
       </div>
     </header>
 
@@ -102,63 +75,22 @@ const tabs = [
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Status Bar */
-.status-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: calc(0.4rem + env(safe-area-inset-top)) 1.25rem 0.4rem;
-  background: #0369a1;
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-.status-icons { display: flex; gap: 0.4rem; font-size: 0.7rem; }
-
 /* Header */
 .app-header {
   background: linear-gradient(135deg, #0369a1, #0284c7);
-  padding: 0.85rem 1.25rem;
+  padding: calc(0.85rem + env(safe-area-inset-top)) 1.25rem 0.85rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   box-shadow: 0 2px 12px rgba(3, 105, 161, 0.3);
 }
+
+:global(.is-android) .app-header {
+  padding-top: 1.2rem;
+}
+
 .header-brand { display: flex; align-items: center; gap: 0.75rem; }
 
-/* Theme Switcher */
-.theme-switcher {
-  display: flex;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 0.75rem;
-  padding: 0.2rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.theme-btn {
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.6);
-  padding: 0.35rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.theme-btn:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.theme-btn.active {
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
 .header-logo { width: 32px; height: auto; filter: brightness(10); }
 .header-title {
   font-size: 1.35rem;
@@ -185,6 +117,10 @@ const tabs = [
   border-top: 1px solid var(--border-light);
   padding: 0.5rem 0 calc(0.65rem + env(safe-area-inset-bottom));
   box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+}
+
+:global(.is-android) .tab-bar {
+  padding-bottom: 1.25rem;
 }
 .tab-item {
   display: flex;

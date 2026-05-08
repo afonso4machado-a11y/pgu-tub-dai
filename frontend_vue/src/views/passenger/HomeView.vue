@@ -375,21 +375,21 @@ function lotLabel(pct) {
 .greeting-sub { color: var(--text-muted); font-size: 0.95rem; margin: 0.25rem 0 0; }
 
 /* Quick Actions */
-.quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem; }
+.quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 1.5rem; }
 .qa-card {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 0.5rem; padding: 1.25rem; border-radius: 1rem; text-decoration: none;
-  font-weight: 700; font-size: 0.9rem; transition: transform 0.15s;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  gap: 0.5rem; padding: 1.25rem; border-radius: 1.25rem; text-decoration: none;
+  font-weight: 700; font-size: 0.95rem; transition: transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 .qa-card:active { transform: scale(0.97); }
-.qa-map { background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: #0369a1; }
-.qa-ticket { background: linear-gradient(135deg, #ede9fe, #ddd6fe); color: #6d28d9; }
+.qa-map { background: linear-gradient(135deg, #e0f2fe, #bae6fd); color: #0369a1; }
+.qa-ticket { background: linear-gradient(135deg, #f3e8ff, #e9d5ff); color: #6d28d9; }
 
 /* Trip Planner */
 .trip-planner {
-  background: var(--bg-surface); border-radius: 1rem; padding: 1.25rem;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.06); margin-bottom: 1.5rem;
+  background: var(--bg-surface); border-radius: 1.25rem; padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 1.5rem;
 }
 .section-title {
   display: flex; align-items: center; gap: 0.5rem;
@@ -445,14 +445,14 @@ function lotLabel(pct) {
 
 
 /* Section */
-.section { margin-bottom: 1.5rem; }
+.section { margin-bottom: 1.75rem; }
 
 /* Bus List */
-.bus-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.bus-list { display: flex; flex-direction: column; gap: 0.75rem; }
 .bus-card {
   display: flex; justify-content: space-between; align-items: center;
-  background: var(--bg-surface); padding: 0.85rem 1rem; border-radius: 0.85rem;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  background: var(--bg-surface); padding: 1rem 1.25rem; border-radius: 1.25rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 .bus-left { display: flex; align-items: center; gap: 0.75rem; }
 .bus-linha {
@@ -468,11 +468,11 @@ function lotLabel(pct) {
 .lot-bar { height: 100%; border-radius: 2px; transition: width 0.4s; }
 
 /* Favorites */
-.fav-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.fav-list { display: flex; flex-direction: column; gap: 0.75rem; }
 .fav-card {
   display: flex; justify-content: space-between; align-items: center;
-  background: var(--bg-surface); padding: 0.85rem 1rem; border-radius: 0.85rem;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  background: var(--bg-surface); padding: 1rem 1.25rem; border-radius: 1.25rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 .fav-left { display: flex; align-items: center; gap: 0.75rem; }
 .fav-badge {
@@ -483,11 +483,11 @@ function lotLabel(pct) {
 .fav-arrow { color: #cbd5e1; }
 
 /* Stats */
-.stats-section { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.stats-section { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
 .mini-stat {
   display: flex; align-items: center; gap: 0.75rem;
-  background: var(--bg-surface); padding: 1rem; border-radius: 0.85rem;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  background: var(--bg-surface); padding: 1.25rem; border-radius: 1.25rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 .stat-icon { color: #0284c7; }
 .stat-val { font-size: 1.15rem; font-weight: 800; color: var(--text-main); display: block; }

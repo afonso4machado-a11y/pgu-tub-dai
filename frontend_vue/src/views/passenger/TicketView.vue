@@ -182,15 +182,15 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
 /* Ticket Card */
 .ticket-card {
   background: linear-gradient(145deg, #0284c7, #0369a1);
-  border-radius: 1.25rem;
+  border-radius: 1.5rem;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(3, 105, 161, 0.35);
+  box-shadow: 0 12px 32px rgba(3, 105, 161, 0.25);
   color: #fff;
 }
 
 .tc-header {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 1.25rem 1.5rem 0;
+  padding: 1.5rem 1.75rem 0;
 }
 .tc-brand { display: flex; align-items: center; gap: 0.5rem; font-weight: 800; font-size: 1rem; }
 .tc-status {
@@ -199,12 +199,12 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
   border-radius: 2rem; font-size: 0.75rem; font-weight: 700;
 }
 
-.tc-body { padding: 1.25rem 1.5rem; }
-.tc-type { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.25rem; }
-.tc-zone { font-size: 0.9rem; opacity: 0.85; margin-bottom: 0.5rem; }
-.tc-holder { font-size: 0.85rem; opacity: 0.7; font-weight: 500; }
+.tc-body { padding: 1.25rem 1.75rem; }
+.tc-type { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.25rem; }
+.tc-zone { font-size: 0.95rem; opacity: 0.85; margin-bottom: 0.5rem; }
+.tc-holder { font-size: 0.9rem; opacity: 0.7; font-weight: 500; }
 
-.tc-footer { display: flex; gap: 2rem; padding: 0 1.5rem 1.25rem; }
+.tc-footer { display: flex; gap: 2rem; padding: 0 1.75rem 1.5rem; }
 .tc-detail { display: flex; flex-direction: column; }
 .tc-label { font-size: 0.7rem; opacity: 0.6; text-transform: uppercase; font-weight: 600; letter-spacing: 0.04em; }
 .tc-value { font-size: 0.95rem; font-weight: 700; }
@@ -266,13 +266,13 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
 }
 
 /* Actions */
-.ticket-actions { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; }
+.ticket-actions { display: flex; flex-direction: column; gap: 0.85rem; margin-top: 1.75rem; }
 .action-btn {
   display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-  padding: 0.95rem; border-radius: 0.85rem; font-weight: 700; font-size: 0.9rem;
-  border: none; cursor: pointer; transition: all 0.15s;
+  padding: 1.15rem; border-radius: 1.25rem; font-weight: 700; font-size: 0.95rem;
+  border: none; cursor: pointer; transition: all 0.15s, box-shadow 0.2s;
 }
 .action-btn:active { transform: scale(0.98); }
-.action-btn.primary { background: var(--accent-blue); color: #fff; box-shadow: 0 2px 12px rgba(2,132,199,0.3); }
-.action-btn.secondary { background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border-light); }
+.action-btn.primary { background: var(--accent-blue); color: #fff; box-shadow: 0 4px 16px rgba(2,132,199,0.3); }
+.action-btn.secondary { background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border-light); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 </style>
