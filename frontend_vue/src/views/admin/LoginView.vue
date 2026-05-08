@@ -10,7 +10,11 @@ const password = ref('')
 const error = ref('')
 const loading = ref(false)
 
-const isValidEmail = (e) => e.endsWith('@uminho.pt') || e.endsWith('@um')
+const isValidEmail = (e) => {
+  if (!e) return false
+  const normalized = e.trim().toLowerCase()
+  return normalized.endsWith('@uminho.pt') || normalized.endsWith('@um')
+}
 
 async function handleLogin() {
   if (!isValidEmail(email.value)) {
