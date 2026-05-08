@@ -138,16 +138,16 @@ const unreadCount = computed(() => alerts.value.filter(a => !a.lido).length)
 }
 
 /* Alert List */
-.alerts-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.alerts-list { display: flex; flex-direction: column; gap: 0.85rem; }
 
 .alert-card {
   display: flex; align-items: flex-start; gap: 0.85rem;
-  background: var(--bg-surface); padding: 1rem; border-radius: 0.85rem;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-  transition: all 0.2s; position: relative;
+  background: var(--bg-surface); padding: 1.25rem; border-radius: 1.25rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  transition: all 0.2s, box-shadow 0.2s; position: relative;
 }
-.alert-card:active { transform: scale(0.99); }
-.alert-unread { background: #f0f9ff; border-left: 3px solid #0284c7; }
+.alert-card:active { transform: scale(0.98); }
+.alert-unread { background: #f0f9ff; border-left: 4px solid #0284c7; }
 
 .ac-icon {
   width: 36px; height: 36px; border-radius: 50%;
@@ -161,7 +161,7 @@ const unreadCount = computed(() => alerts.value.filter(a => !a.lido).length)
   background: var(--bg-hover); padding: 0.15rem 0.5rem; border-radius: 0.3rem;
   font-size: 0.7rem; font-weight: 700; color: #334155;
 }
-.ac-msg { margin: 0; font-size: 0.88rem; color: #334155; line-height: 1.45; }
+.ac-msg { margin: 0; font-size: 0.95rem; color: #334155; line-height: 1.5; font-weight: 500; }
 .ac-time {
   display: flex; align-items: center; gap: 0.3rem;
   font-size: 0.72rem; color: var(--text-muted); margin-top: 0.4rem;
@@ -177,10 +177,10 @@ const unreadCount = computed(() => alerts.value.filter(a => !a.lido).length)
 
 .settings-hint {
   display: flex; align-items: center; gap: 0.5rem;
-  margin-top: 1.5rem; padding: 1rem;
-  background: var(--bg-surface); border-radius: 0.85rem;
-  color: var(--text-muted); font-size: 0.85rem; font-weight: 500;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  margin-top: 2rem; padding: 1.25rem;
+  background: var(--bg-surface); border-radius: 1.25rem;
+  color: var(--text-muted); font-size: 0.9rem; font-weight: 600;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 .settings-hint span { flex: 1; }
 </style>

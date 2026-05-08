@@ -2,10 +2,13 @@
 import { ref, onMounted } from 'vue'
 import {
   User, CreditCard, Clock, MapPin, Star, Settings, ChevronRight,
-  LogOut, Shield, Bell, Bus
+  LogOut, Shield, Bell, Bus, Sun, Moon, Monitor
 } from 'lucide-vue-next'
 
 import { authService } from '../../services/auth'
+import { usePassengerTheme } from '../../composables/usePassengerTheme'
+
+const { currentPassengerTheme, setTheme } = usePassengerTheme()
 
 const user = ref(authService.getUser() || {
   nome: 'Convidado',
@@ -105,6 +108,37 @@ const menuItems = [
       </div>
     </div>
 
+    <!-- Theme Switcher -->
+    <div class="section">
+      <h3 class="section-title"><Moon :size="18" /> Aparência</h3>
+      <div class="theme-card">
+        <button
+          class="theme-option"
+          :class="{ active: currentPassengerTheme === 'light' }"
+          @click="setTheme('light')"
+        >
+          <Sun :size="20" class="theme-icon" />
+          <span>Claro</span>
+        </button>
+        <button
+          class="theme-option"
+          :class="{ active: currentPassengerTheme === 'dark' }"
+          @click="setTheme('dark')"
+        >
+          <Moon :size="20" class="theme-icon" />
+          <span>Escuro</span>
+        </button>
+        <button
+          class="theme-option"
+          :class="{ active: currentPassengerTheme === 'auto' }"
+          @click="setTheme('auto')"
+        >
+          <Monitor :size="20" class="theme-icon" />
+          <span>Automático</span>
+        </button>
+      </div>
+    </div>
+
     <!-- Menu Items -->
     <div class="section">
       <h3 class="section-title"><Settings :size="18" /> Configurações</h3>
@@ -158,10 +192,10 @@ const menuItems = [
 }
 
 /* Stats */
-.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-bottom: 1.5rem; }
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.85rem; margin-bottom: 1.75rem; }
 .stat-card {
-  background: var(--bg-surface); border-radius: 0.85rem; padding: 1rem;
-  text-align: center; box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  background: var(--bg-surface); border-radius: 1.25rem; padding: 1.25rem 0.75rem;
+  text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 .stat-num { display: block; font-size: 1.35rem; font-weight: 800; color: #0284c7; }
 .stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.04em; }
@@ -173,12 +207,26 @@ const menuItems = [
   font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.85rem;
 }
 
+/* Theme Switcher */
+.theme-card {
+  display: flex; background: var(--bg-surface); padding: 0.5rem; border-radius: 1rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04); gap: 0.5rem;
+}
+.theme-option {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 0.4rem; padding: 0.85rem 0.5rem; background: transparent; border: none; border-radius: 0.75rem;
+  color: var(--text-muted); cursor: pointer; transition: all 0.2s ease;
+}
+.theme-option span { font-size: 0.75rem; font-weight: 600; }
+.theme-option.active { background: var(--bg-primary); color: #0284c7; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.theme-option.active .theme-icon { filter: drop-shadow(0 0 4px rgba(2, 132, 199, 0.4)); }
+
 /* Trip List */
-.trip-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.trip-list { display: flex; flex-direction: column; gap: 0.75rem; }
 .trip-card {
   display: flex; justify-content: space-between; align-items: center;
-  background: var(--bg-surface); padding: 0.85rem 1rem; border-radius: 0.75rem;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  background: var(--bg-surface); padding: 1rem 1.25rem; border-radius: 1.25rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 .trip-left { display: flex; align-items: center; gap: 0.75rem; }
 .trip-linha {
@@ -191,11 +239,11 @@ const menuItems = [
 .trip-arrow { color: #cbd5e1; }
 
 /* Menu */
-.menu-list { display: flex; flex-direction: column; gap: 0.4rem; }
+.menu-list { display: flex; flex-direction: column; gap: 0.6rem; }
 .menu-item {
-  display: flex; align-items: center; gap: 0.85rem;
-  background: var(--bg-surface); padding: 0.95rem 1rem; border-radius: 0.75rem;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  display: flex; align-items: center; gap: 1rem;
+  background: var(--bg-surface); padding: 1.1rem 1.25rem; border-radius: 1.25rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 .menu-icon { color: #0284c7; flex-shrink: 0; }
 .menu-text { flex: 1; display: flex; flex-direction: column; }
@@ -206,10 +254,10 @@ const menuItems = [
 /* Logout */
 .logout-btn {
   display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-  width: 100%; padding: 0.95rem; border-radius: 0.85rem;
+  width: 100%; padding: 1.15rem; border-radius: 1.25rem; margin-top: 2rem;
   background: #fef2f2; color: #ef4444; border: 1px solid #fecaca;
-  font-weight: 700; font-size: 0.9rem; cursor: pointer;
-  transition: all 0.15s;
+  font-weight: 700; font-size: 0.95rem; cursor: pointer;
+  transition: all 0.15s, box-shadow 0.2s; box-shadow: 0 4px 20px rgba(0,0,0,0.02);
 }
 .logout-btn:active { background: #fee2e2; transform: scale(0.98); }
 </style>
