@@ -40,6 +40,7 @@ const tabs = [
           :class="{ active: currentPassengerTheme === 'light' }"
           @click="setTheme('light')"
           title="Modo Claro"
+          aria-label="Modo Claro"
         >
           <Sun :size="14" />
         </button>
@@ -48,6 +49,7 @@ const tabs = [
           :class="{ active: currentPassengerTheme === 'dark' }"
           @click="setTheme('dark')"
           title="Modo Escuro"
+          aria-label="Modo Escuro"
         >
           <Moon :size="14" />
         </button>
@@ -56,6 +58,7 @@ const tabs = [
           :class="{ active: currentPassengerTheme === 'auto' }"
           @click="setTheme('auto')"
           title="Modo Automático"
+          aria-label="Modo Automático"
         >
           <Monitor :size="14" />
         </button>
