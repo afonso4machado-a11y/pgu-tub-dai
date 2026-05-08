@@ -1,8 +1,10 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { Users, Locate } from 'lucide-vue-next'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { Users, Locate, Layers } from 'lucide-vue-next'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import LiveMap3D from '../../components/LiveMap3D.vue'
+import { isWebGLAvailable } from '../../utils/webgl'
 
 const apiUrl = '/api'
 let map = null
@@ -10,6 +12,19 @@ let markersLayer = null
 let timer = null
 const autocarros = ref([])
 const selectedBus = ref(null)
+
+const webglSupported = ref(false)
+const viewMode = ref('2D')
+
+const toggleViewMode = async () => {
+  if (viewMode.value === '2D' && webglSupported.value) {
+    viewMode.value = '3D'
+  } else {
+    viewMode.value = '2D'
+    await nextTick()
+    if (map) map.invalidateSize()
+  }
+}
 
 // Cache de posições estáveis por ID (calculada uma vez com hash determinístico)
 const positionsCache = new Map()
@@ -211,7 +226,12 @@ function centerMap() {
 
 function dismissCard() { selectedBus.value = null }
 
-onMounted(() => { initMap(); fetchBuses(); timer = setInterval(fetchBuses, 5000) })
+onMounted(() => {
+  webglSupported.value = isWebGLAvailable()
+  initMap()
+  fetchBuses()
+  timer = setInterval(fetchBuses, 5000)
+})
 onUnmounted(() => {
   if (timer) clearInterval(timer)
   markersCache.clear()
@@ -223,10 +243,21 @@ onUnmounted(() => {
 
 <template>
   <div class="map-page">
-    <div id="passenger-map" class="map-container"></div>
+    <div v-show="viewMode === '2D'" id="passenger-map" class="map-container"></div>
+
+    <LiveMap3D
+      v-if="viewMode === '3D'"
+      context="passenger"
+      :autocarros="autocarros"
+      :paragens="paragens"
+      :selectedBusId="selectedBus?.id"
+    />
 
     <!-- Map Controls -->
     <div class="map-controls">
+      <button v-if="webglSupported" class="map-btn" @click="toggleViewMode" title="Alternar 2D/3D">
+        <Layers :size="20" :class="{'text-blue-500': viewMode === '3D'}" />
+      </button>
       <button class="map-btn" @click="centerMap"><Locate :size="20" /></button>
     </div>
 

@@ -1,8 +1,10 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
-import { MapPin, Route, Settings2, Bus, Users, AlertTriangle, Radio, Locate } from 'lucide-vue-next'
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
+import { MapPin, Route, Settings2, Bus, Users, AlertTriangle, Radio, Locate, Layers } from 'lucide-vue-next'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import LiveMap3D from '../components/LiveMap3D.vue'
+import { isWebGLAvailable } from '../utils/webgl'
 
 const apiUrl = '/api'
 let map = null
@@ -14,6 +16,26 @@ const selectedBus = ref(null)
 const loading = ref(true)
 const filterLine = ref('')
 const showOnlyCritical = ref(false)
+
+const webglSupported = ref(false)
+const viewMode = ref('2D')
+
+const toggleViewMode = async () => {
+  if (viewMode.value === '2D' && webglSupported.value) {
+    viewMode.value = '3D'
+  } else {
+    viewMode.value = '2D'
+    await nextTick()
+    if (map) map.invalidateSize()
+  }
+}
+
+const handleBusClick3D = (busId) => {
+  const bus = filteredBuses.value.find(b => b.id === busId)
+  if (bus) {
+    selectedBus.value = bus
+  }
+}
 
 // Cache de posições estáveis por ID (nunca muda após primeiro cálculo)
 const positionsCache = new Map()
@@ -297,6 +319,7 @@ function centerMap() {
 }
 
 onMounted(() => {
+  webglSupported.value = isWebGLAvailable()
   initMap()
   fetchFleet()
   timer = setInterval(fetchFleet, 5000)
@@ -319,6 +342,9 @@ onUnmounted(() => {
         <p class="panel-desc">Monitorização geoespacial em tempo real da frota</p>
       </div>
       <div class="toolbar-controls">
+        <button v-if="webglSupported" class="btn btn-secondary btn-sm" @click="toggleViewMode" title="Alternar Vista">
+          <Layers :size="16" /> {{ viewMode === '2D' ? 'Vista 3D' : 'Vista 2D' }}
+        </button>
         <select v-model="filterLine" class="map-select">
           <option value="">Todas as Linhas</option>
           <option v-for="l in availableLines" :key="l" :value="l">Linha {{ l }}</option>
@@ -336,7 +362,17 @@ onUnmounted(() => {
     <div class="map-layout">
       <!-- Mapa -->
       <div class="map-wrapper glass-panel">
-        <div id="fleet-map" class="leaflet-container-dark"></div>
+        <div v-show="viewMode === '2D'" id="fleet-map" class="leaflet-container-dark"></div>
+
+        <LiveMap3D
+          v-if="viewMode === '3D'"
+          context="admin"
+          :autocarros="filteredBuses"
+          :paragens="paragens"
+          :selectedBusId="selectedBus?.id"
+          @bus-click="handleBusClick3D"
+        />
+
         <!-- Overlay Stats -->
         <div class="map-overlay-stats">
           <div class="ov-stat">
