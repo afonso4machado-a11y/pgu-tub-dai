@@ -92,9 +92,13 @@ public class Sistema {
         if (adminPassword == null || adminPassword.isBlank()) {
             return false;
         }
-        return email != null
-                && (email.endsWith("@uminho.pt") || email.endsWith("@um"))
-                && password != null
+
+        if (email == null || password == null) {
+            return false;
+        }
+
+        String normalizedEmail = email.trim().toLowerCase();
+        return (normalizedEmail.endsWith("@uminho.pt") || normalizedEmail.endsWith("@um"))
                 && java.security.MessageDigest.isEqual(
                     adminPassword.getBytes(java.nio.charset.StandardCharsets.UTF_8),
                     password.getBytes(java.nio.charset.StandardCharsets.UTF_8));
