@@ -22,6 +22,10 @@ public class Sistema {
     private final RepositorioCorrelacao repositorioCorrelacao;
     private final ThresholdsAlerta thresholdsAlerta;
 
+    private Map<String, Object> dashboardCache = null;
+    private long lastDashboardCacheTime = 0;
+    private static final long DASHBOARD_CACHE_TTL_MS = 30000;
+
     public Sistema() {
         this(new ThresholdsAlerta());
     }
@@ -221,7 +225,12 @@ public class Sistema {
         return sb.toString();
     }
 
-    public Map<String, Object> obterDadosDashboard() {
+    public synchronized Map<String, Object> obterDadosDashboard() {
+        long now = System.currentTimeMillis();
+        if (dashboardCache != null && (now - lastDashboardCacheTime) < DASHBOARD_CACHE_TTL_MS) {
+            return dashboardCache;
+        }
+
         Map<String, Object> dashboard = new HashMap<>();
 
         double somaTaxas = 0.0;
@@ -260,6 +269,8 @@ public class Sistema {
         dashboard.put("autocarrosCriticos", autocarrosCriticos);
         dashboard.put("avisosRecentes", avisos);
 
+        dashboardCache = dashboard;
+        lastDashboardCacheTime = now;
         return dashboard;
     }
 
