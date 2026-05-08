@@ -39,3 +39,4 @@ frontend_deploy.zip
 *.vpp.bak*
 
 .agent/
+tools/
