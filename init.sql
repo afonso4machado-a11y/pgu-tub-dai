@@ -107,3 +107,20 @@ CREATE INDEX idx_viagens_linha ON viagens(linha_id);
 CREATE INDEX idx_horarios_viagem ON horarios(viagem_id);
 CREATE INDEX idx_leituras_timestamp ON leituras(timestamp);
 CREATE INDEX idx_alertas_timestamp ON alertas(timestamp);
+
+-- Tabela de bilhetes comprados via Stripe
+CREATE TABLE IF NOT EXISTS bilhetes (
+    id VARCHAR(50) PRIMARY KEY,                        -- UUID gerado no backend
+    cliente_id VARCHAR(50) NOT NULL,
+    tipo VARCHAR(50) NOT NULL,                         -- 'simples' | 'passe'
+    nome_tipo VARCHAR(100) NOT NULL,                   -- 'Bilhete Simples' | 'Passe Mensal'
+    data_compra DATETIME NOT NULL,
+    data_validade DATETIME NOT NULL,
+    estado VARCHAR(20) NOT NULL DEFAULT 'Ativo',       -- 'Ativo', 'Utilizado', 'Expirado'
+    preco DECIMAL(10, 2) NOT NULL,
+    payment_intent_id VARCHAR(200) NOT NULL UNIQUE,    -- ID do Stripe PaymentIntent
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+);
+
+CREATE INDEX idx_bilhetes_cliente ON bilhetes(cliente_id);
+CREATE INDEX idx_bilhetes_payment_intent ON bilhetes(payment_intent_id);

@@ -12,8 +12,8 @@ const user = authService.getUser()
 const currentStep = ref(1)
 
 const ticketTypes = [
-  { id: 'simples', name: 'Bilhete Simples', price: 1.55, description: 'Válido para 1 viagem em toda a rede TUB.' },
-  { id: 'passe', name: 'Passe Mensal', price: 30.00, description: 'Válido para viagens ilimitadas durante 30 dias.' }
+  { id: 'simples', name: 'Bilhete Simples', price: 1.55, description: 'Valido para 1 viagem em toda a rede TUB.' },
+  { id: 'passe',   name: 'Passe Mensal',    price: 30.00, description: 'Valido para viagens ilimitadas durante 30 dias.' }
 ]
 
 const selectedTicket = ref(ticketTypes[0].id)
@@ -26,8 +26,6 @@ let elements = null
 const paymentElementContainer = ref(null)
 
 onMounted(async () => {
-  // Chave pública Stripe via variável de ambiente Vite (VITE_STRIPE_PUBLIC_KEY)
-  // Nunca usar chaves privadas no frontend. A chave pública é safe no cliente.
   const stripeKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_TYooMQauvdEDq54NiTphI7jx'
   stripe = await loadStripe(stripeKey)
 })
@@ -35,6 +33,7 @@ onMounted(async () => {
 const goBack = () => {
   if (currentStep.value === 2) {
     currentStep.value = 1
+    elements = null
   } else {
     router.push('/app/ticket')
   }
@@ -47,30 +46,38 @@ const proceedToPayment = async () => {
   errorMessage.value = ''
 
   try {
-    // 1. O ideal seria: await fetch('/api/payments/create-intent', ...)
-    // Como a API real não existe (está documentada no BACKEND_INSTRUCTIONS.md), usamos
-    // modo elements client-side-only mode de demonstração apenas para inicializar a UI com Stripe Elements Real
-    // Em produção, deve ser substituído pelo clientSecret do backend
-    elements = stripe.elements({
-      mode: 'payment',
-      amount: Math.round(ticketTypes.find(t => t.id === selectedTicket.value)?.price * 100),
-      currency: 'eur',
-      appearance: { theme: 'flat' }
+    // 1. Obter clientSecret do backend (preco autoritativo no servidor)
+    const res = await fetch('/api/payments/create-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tipoId: selectedTicket.value,
+        clienteId: user?.id || 'anonimo'
+      })
     })
 
+    if (!res.ok) {
+      const err = await res.json()
+      throw new Error(err.mensagem || 'Erro ao inicializar pagamento.')
+    }
+
+    const { clientSecret } = await res.json()
+
+    // 2. Inicializar Stripe Elements com o clientSecret real
+    elements = stripe.elements({ clientSecret, appearance: { theme: 'flat' } })
     const paymentElement = elements.create('payment')
 
-    // Aguardamos que o elemento seja montado no DOM e fazemos mount()
+    // Montar no DOM
     setTimeout(() => {
       if (paymentElementContainer.value) {
         paymentElement.mount(paymentElementContainer.value)
       }
     }, 100)
 
-    isProcessing.value = false
-
-  } catch (error) {
-    errorMessage.value = 'Falha ao inicializar Stripe. Tente novamente.'
+  } catch (err) {
+    errorMessage.value = err.message || 'Falha ao inicializar pagamento.'
+    currentStep.value = 1
+  } finally {
     isProcessing.value = false
   }
 }
@@ -82,22 +89,33 @@ const confirmPayment = async () => {
   errorMessage.value = ''
 
   try {
-    // Opcional: Submeter os elementos se as validações the UI estiverem ativas (Stripe lida com isto)
+    // Validar o form do Stripe
     const { error: submitError } = await elements.submit()
     if (submitError) {
       errorMessage.value = submitError.message
-      isProcessing.value = false
       return
     }
 
-    // Em produção, chamaria stripe.confirmPayment() enviando o secret retornado do backend
-    // Como o backend ainda não processa, simulamos o tempo que demoraria
-    await new Promise(r => setTimeout(r, 2000))
+    // Confirmar o pagamento real via Stripe
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        // URL de retorno apos pagamento (Stripe redireciona para ca em alguns metodos)
+        return_url: window.location.origin + '/app/ticket'
+      },
+      redirect: 'if_required' // Nao redirecionar se nao for necessario (cartao)
+    })
 
+    if (error) {
+      errorMessage.value = error.message || 'Pagamento recusado. Tente outro metodo.'
+      return
+    }
+
+    // Pagamento confirmado — bilhete emitido via webhook no backend
     currentStep.value = 3
 
-  } catch (error) {
-    errorMessage.value = 'Falha na comunicação com o provedor de pagamento.'
+  } catch (err) {
+    errorMessage.value = 'Erro de comunicacao. Verifique a sua ligacao e tente novamente.'
   } finally {
     isProcessing.value = false
   }
