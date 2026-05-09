@@ -4,9 +4,12 @@ import pt.uminho.dai.pgu.services.*;
 
 import java.sql.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RepositorioClientes {
-    private final Map<String, Cliente> clientes = new LinkedHashMap<>();
+    private final Map<String, Cliente> clientesById = new ConcurrentHashMap<>();
+    private final Map<String, Cliente> clientesByEmail = new ConcurrentHashMap<>();
+    private volatile boolean isLoaded = false;
 
     public RepositorioClientes() {
         carregarDaBD();
@@ -27,15 +30,26 @@ public class RepositorioClientes {
                 String password = rs.getString("password");
                 String nif = rs.getString("nif");
                 boolean passeMensal = rs.getBoolean("passe_mensal");
-                clientes.put(id, new Cliente(id, nome, email, password, nif, passeMensal));
+                
+                Cliente cliente = new Cliente(id, nome, email, password, nif, passeMensal);
+                clientesById.put(id, cliente);
+                if (email != null) {
+                    clientesByEmail.put(email.toLowerCase(), cliente);
+                }
             }
+            isLoaded = true;
+            System.out.println("[DB] Clientes carregados: " + clientesById.size());
         } catch (SQLException e) {
             System.err.println("Erro ao carregar clientes: " + e.getMessage());
         }
     }
 
     public void guardar(Cliente cliente) {
-        clientes.put(cliente.getId(), cliente);
+        clientesById.put(cliente.getId(), cliente);
+        if (cliente.getEmail() != null) {
+            clientesByEmail.put(cliente.getEmail().toLowerCase(), cliente);
+        }
+        
         try (Connection conn = DatabaseConnection.obterConexao();
              PreparedStatement ps = conn.prepareStatement(
                 "INSERT INTO clientes (id, nome, email, password, nif, passe_mensal) VALUES (?, ?, ?, ?, ?, ?) " +
@@ -53,16 +67,15 @@ public class RepositorioClientes {
     }
 
     public Optional<Cliente> procurarPorId(String id) {
-        return Optional.ofNullable(clientes.get(id));
+        return Optional.ofNullable(clientesById.get(id));
     }
 
     public Optional<Cliente> procurarPorEmail(String email) {
-        return clientes.values().stream()
-                .filter(c -> email.equalsIgnoreCase(c.getEmail()))
-                .findFirst();
+        if (email == null) return Optional.empty();
+        return Optional.ofNullable(clientesByEmail.get(email.toLowerCase()));
     }
 
     public Collection<Cliente> listarTodos() {
-        return clientes.values();
+        return new ArrayList<>(clientesById.values());
     }
 }
