@@ -166,7 +166,7 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
 
     <!-- Actions -->
     <div class="ticket-actions">
-      <button class="action-btn primary">
+      <button class="action-btn primary" @click="$router.push('/app/buy-ticket')">
         <Ticket :size="18" /> Comprar Novo Bilhete
       </button>
       <button class="action-btn secondary">

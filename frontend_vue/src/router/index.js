@@ -17,6 +17,7 @@ import PaxMap from '../views/passenger/LiveMapView.vue'
 import PaxTicket from '../views/passenger/TicketView.vue'
 import PaxAlerts from '../views/passenger/AlertsView.vue'
 import PaxProfile from '../views/passenger/ProfileView.vue'
+import BuyTicketView from '../views/passenger/BuyTicketView.vue'
 
 import AdminLogin from '../views/admin/LoginView.vue'
 import PaxLogin from '../views/passenger/LoginView.vue'
@@ -90,6 +91,7 @@ const router = createRouter({
         { path: '', name: 'pax-home', component: PaxHome },
         { path: 'map', name: 'pax-map', component: PaxMap },
         { path: 'ticket', name: 'pax-ticket', component: PaxTicket },
+        { path: 'buy-ticket', name: 'pax-buy-ticket', component: BuyTicketView },
         { path: 'alerts', name: 'pax-alerts', component: PaxAlerts },
         { path: 'profile', name: 'pax-profile', component: PaxProfile },
       ]

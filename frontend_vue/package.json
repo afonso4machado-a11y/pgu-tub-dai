@@ -10,6 +10,7 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "@stripe/stripe-js": "^9.4.0",
     "@tresjs/cientos": "^5.7.0",
     "@tresjs/core": "^5.8.0",
     "chart.js": "^4.5.1",
