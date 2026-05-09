@@ -1,11 +1,9 @@
 package pt.uminho.dai.pgu.api;
 
-import pt.uminho.dai.pgu.services.Sistema;
+import pt.uminho.dai.pgu.core.Sistema;
 import org.springframework.context.annotation.Bean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -49,17 +47,20 @@ public class SpringConfig implements WebMvcConfigurer {
         return sistema;
     }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
     @Override
     public void addCorsMappings(CorsRegistry registry) {
+        // Prioridade: CORS_ALLOWED_ORIGINS (env) → @Value do application.properties
+        String origins = System.getenv("CORS_ALLOWED_ORIGINS");
+        if (origins == null || origins.isBlank()) {
+            origins = corsAllowedOrigins;
+        }
+        
         registry.addMapping("/api/**")
-                .allowedOrigins(corsAllowedOrigins.split(","))
+                .allowedOrigins(origins.split(","))
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
+                .allowedHeaders("Content-Type", "Authorization")
+                .exposedHeaders("Authorization")
+                .allowCredentials(true)
                 .maxAge(3600);
     }
 }

@@ -4,7 +4,6 @@ import pt.uminho.dai.pgu.models.Alerta;
 import pt.uminho.dai.pgu.models.Autocarro;
 import pt.uminho.dai.pgu.services.Sistema;
 import org.springframework.stereotype.Service;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.HashMap;
 import java.util.List;
@@ -14,11 +13,9 @@ import java.util.Map;
 public class SistemaService {
 
     private final Sistema sistema;
-    private final PasswordEncoder passwordEncoder;
 
-    public SistemaService(Sistema sistema, PasswordEncoder passwordEncoder) {
+    public SistemaService(Sistema sistema) {
         this.sistema = sistema;
-        this.passwordEncoder = passwordEncoder;
     }
 
     public void registarAutocarro(String id, int capacidade, String matricula, String marca, String modelo) throws Exception {
@@ -91,13 +88,12 @@ public class SistemaService {
 
     public Map<String, Object> signupCliente(String nome, String email, String password) throws Exception {
         String id = java.util.UUID.randomUUID().toString();
-        sistema.registarCliente(id, nome, email, passwordEncoder.encode(password));
+        sistema.registarCliente(id, nome, email, password);
         return Map.of("id", id, "nome", nome, "email", email);
     }
 
     public Map<String, Object> loginCliente(String email, String password) throws Exception {
-        return sistema.procurarClientePorEmail(email)
-                .filter(c -> passwordEncoder.matches(password, c.getPassword()))
+        return sistema.loginCliente(email, password)
                 .map(c -> Map.of(
                     "id", (Object)c.getId(), 
                     "nome", (Object)c.getNome(), 
@@ -148,15 +144,15 @@ public class SistemaService {
         }).toList();
     }
 
-    public Map<String, Object> atualizarPerfilCliente(String id, pt.uminho.dai.pgu.api.dto.AtualizarPerfilDTO dto) throws Exception {
+    public Map<String, Object> atualizarPerfilCliente(String id, Map<String, Object> dados) throws Exception {
         var cliente = sistema.procurarClientePorId(id)
                 .orElseThrow(() -> new Exception("Cliente não encontrado"));
         
-        if (dto.getNif() != null) {
-            cliente.setNif(dto.getNif());
+        if (dados.containsKey("nif")) {
+            cliente.setNif((String) dados.get("nif"));
         }
-        if (dto.getPasseMensal() != null) {
-            cliente.setPasseMensal(dto.getPasseMensal());
+        if (dados.containsKey("passeMensal")) {
+            cliente.setPasseMensal((Boolean) dados.get("passeMensal"));
         }
         // Persistir alterações
         sistema.atualizarCliente(cliente);
