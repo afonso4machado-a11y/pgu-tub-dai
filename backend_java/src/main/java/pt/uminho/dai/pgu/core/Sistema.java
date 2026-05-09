@@ -121,8 +121,18 @@ public class Sistema {
         repositorioLeituras.guardar(autocarroId, leitura);
         List<Long> alertaIds = repositorioAlertas.guardarTodos(alertas);
 
-        for (Cliente cliente : repositorioClientes.listarTodos()) {
-            repositorioClientesAlertas.guardar(cliente.getId(), alertaIds);
+        // ⚡ OPTIMIZAÇÃO: Distribuição de alertas em thread separada para não bloquear a resposta HTTP
+        if (!alertaIds.isEmpty()) {
+            java.util.List<String> clienteIds = repositorioClientes.listarTodos().stream()
+                .map(Cliente::getId).toList();
+            // Executa em background (desacoplado da thread HTTP)
+            new Thread(() -> {
+                try {
+                    repositorioClientesAlertas.guardarEmLote(clienteIds, alertaIds);
+                } catch (Exception e) {
+                    System.err.println("[ASYNC] Erro ao distribuir alertas: " + e.getMessage());
+                }
+            }, "alerta-distributor").start();
         }
 
         repositorioAutocarros.atualizarEstado(autocarro);
@@ -143,17 +153,27 @@ public class Sistema {
         }
     }
 
+    /**
+     * Dashboard textual para consola (debugging).
+     * ⚡ OPTIMIZADO: 1 única cópia de listarTodos(), 1 único loop.
+     */
     public String obterDashboardAnalitico() {
         StringBuilder sb = new StringBuilder();
         sb.append("\n=== DASHBOARD ANALITICO (TUB) ===\n");
 
+        // ⚡ 1 única cópia da coleção (antes eram 4)
+        java.util.Collection<Autocarro> frota = repositorioAutocarros.listarTodos();
+        int totalAutocarros = frota.size();
         double somaTaxas = 0.0;
         int volumeTotalPassageiros = 0;
-        int totalAutocarros = repositorioAutocarros.listarTodos().size();
+        java.util.List<Autocarro> criticos = new java.util.ArrayList<>();
 
-        for (Autocarro a : repositorioAutocarros.listarTodos()) {
+        for (Autocarro a : frota) {
             somaTaxas += a.getTaxaOcupacao();
             volumeTotalPassageiros += a.getTotalPassageirosTransportados();
+            if (a.getTaxaOcupacao() >= thresholdsAlerta.getLimiteOcupacao()) {
+                criticos.add(a);
+            }
         }
 
         double taxaOcupacaoMedia = totalAutocarros == 0 ? 0 : (somaTaxas / totalAutocarros) * 100;
@@ -161,7 +181,7 @@ public class Sistema {
         sb.append("-> Volume Total de Passageiros Transportados: ").append(volumeTotalPassageiros).append("\n");
 
         sb.append("\n--- VOLUME DE PASSAGEIROS POR LINHA E HORA ---\n");
-        for (Autocarro a : repositorioAutocarros.listarTodos()) {
+        for (Autocarro a : frota) {
             sb.append(" -> Veiculo/Linha: ").append(a.getId()).append("\n");
             java.util.Map<Integer, Integer> volumePorHora = a.obterVolumePorHora();
             if (volumePorHora.isEmpty()) {
@@ -174,52 +194,56 @@ public class Sistema {
             }
         }
 
-        sb.append("\n--- VEICULOS EM LOTAÇAO CRITICA ---\n");
-        boolean temCriticos = false;
-        for (Autocarro a : repositorioAutocarros.listarTodos()) {
-            if (a.getTaxaOcupacao() >= thresholdsAlerta.getLimiteOcupacao()) {
+        sb.append("\n--- VEICULOS EM LOTA\u00c7AO CRITICA ---\n");
+        if (criticos.isEmpty()) {
+            sb.append(" (Nenhum veiculo em estado critico neste momento)\n");
+        } else {
+            for (Autocarro a : criticos) {
                 sb.append(String.format(" [!] %s (Lotacao a %.0f%%)\n",
                         a.getId(), a.getTaxaOcupacao() * 100));
-                temCriticos = true;
             }
-        }
-        if (!temCriticos) {
-            sb.append(" (Nenhum veiculo em estado critico neste momento)\n");
         }
 
         sb.append("=================================\n");
         return sb.toString();
     }
 
+    /**
+     * Dashboard JSON para o frontend.
+     * ⚡ OPTIMIZADO: 1 única cópia, 1 único loop (antes: 2 cópias, 2 loops).
+     */
     public java.util.Map<String, Object> obterDadosDashboard() {
         java.util.Map<String, Object> dashboard = new java.util.HashMap<>();
 
+        // ⚡ 1 única cópia snapshot da coleção
+        java.util.Collection<Autocarro> frota = repositorioAutocarros.listarTodos();
+        int totalAutocarros = frota.size();
+
         double somaTaxas = 0.0;
         int volumeTotalPassageiros = 0;
-        int totalAutocarros = repositorioAutocarros.listarTodos().size();
-
         java.util.List<java.util.Map<String, Object>> autocarrosCriticos = new java.util.ArrayList<>();
 
-        for (Autocarro a : repositorioAutocarros.listarTodos()) {
+        // ⚡ 1 único loop para calcular tudo
+        for (Autocarro a : frota) {
             somaTaxas += a.getTaxaOcupacao();
             volumeTotalPassageiros += a.getTotalPassageirosTransportados();
 
             if (a.getTaxaOcupacao() >= thresholdsAlerta.getLimiteOcupacao()) {
-                java.util.Map<String, Object> critico = new java.util.HashMap<>();
-                critico.put("id", a.getId());
-                critico.put("taxaOcupacao", a.getTaxaOcupacao() * 100);
-                autocarrosCriticos.add(critico);
+                autocarrosCriticos.add(java.util.Map.of(
+                    "id", a.getId(),
+                    "taxaOcupacao", a.getTaxaOcupacao() * 100
+                ));
             }
         }
 
         java.util.List<java.util.Map<String, Object>> avisos = new java.util.ArrayList<>();
         for (Alerta alerta : repositorioAlertas.listarAlertasRecentes(15)) {
-            java.util.Map<String, Object> aviso = new java.util.HashMap<>();
-            aviso.put("autocarroId", alerta.getAutocarroId());
-            aviso.put("mensagem", alerta.getMensagem());
-            aviso.put("tipo", alerta.getTipo().toString());
-            aviso.put("timestamp", alerta.getTimestamp().toString());
-            avisos.add(aviso);
+            avisos.add(java.util.Map.of(
+                "autocarroId", alerta.getAutocarroId(),
+                "mensagem", alerta.getMensagem(),
+                "tipo", alerta.getTipo().toString(),
+                "timestamp", alerta.getTimestamp().toString()
+            ));
         }
 
         double taxaOcupacaoMedia = totalAutocarros == 0 ? 0 : (somaTaxas / totalAutocarros) * 100;

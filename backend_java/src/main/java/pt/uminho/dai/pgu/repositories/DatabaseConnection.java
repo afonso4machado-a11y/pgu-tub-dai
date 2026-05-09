@@ -90,12 +90,14 @@ public class DatabaseConnection {
         config.setPassword(pass);
         config.setMaximumPoolSize(Integer.parseInt(maxPoolSize));
         config.setMinimumIdle(Integer.parseInt(poolSize));
-        config.setConnectionTimeout(5000);
-        config.setIdleTimeout(600000);
-        config.setMaxLifetime(1800000);
+        config.setConnectionTimeout(3000);   // ⚡ Fail-fast: 3s (era 5s)
+        config.setIdleTimeout(300000);        // ⚡ Liberta idle mais cedo: 5min (era 10min)
+        config.setMaxLifetime(900000);        // ⚡ Recicla conexões: 15min (era 30min)
         config.setAutoCommit(true);
         config.setLeakDetectionThreshold(15000);
         config.setPoolName("PGU-TUB-Pool");
+        config.setValidationTimeout(1000);    // ⚡ NOVO: Valida conexão em 1s
+        config.setConnectionTestQuery("SELECT 1"); // ⚡ NOVO: Health check antes de entregar conexão
 
         dataSource = new HikariDataSource(config);
         System.out.println("[DB] HikariCP initialized with pool size: " + poolSize + ", max: " + maxPoolSize);
