@@ -5,10 +5,10 @@ services:
     image: mysql:8.0
     container_name: tub_mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME:-tub}
-      MYSQL_USER: ${DB_USER:-tub_user}
-      MYSQL_PASSWORD: ${DB_PASS:-tub_password}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
     ports:
       - "3306:3306"
     volumes:
@@ -24,10 +24,10 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/tub?allowPublicKeyRetrieval=true&useSSL=false
-      - SPRING_DATASOURCE_USERNAME=tub_user
-      - SPRING_DATASOURCE_PASSWORD=tub_password
-      - PGU_ADMIN_PASSWORD=${PGU_ADMIN_PASSWORD:-tub_uminho26}
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${DB_NAME:-tub}?allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASS}
+      - PGU_ADMIN_PASSWORD=${PGU_ADMIN_PASSWORD}
     depends_on:
       - mysql
     networks:

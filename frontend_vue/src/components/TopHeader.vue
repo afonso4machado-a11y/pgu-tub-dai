@@ -39,6 +39,7 @@ function handleLogout() {
           :class="{ active: currentTheme === 'light' }"
           @click="setTheme('light')"
           title="Modo Claro"
+          aria-label="Modo Claro"
         >
           <Sun :size="16" />
         </button>
@@ -47,6 +48,7 @@ function handleLogout() {
           :class="{ active: currentTheme === 'dark' }"
           @click="setTheme('dark')"
           title="Modo Escuro"
+          aria-label="Modo Escuro"
         >
           <Moon :size="16" />
         </button>
@@ -55,6 +57,7 @@ function handleLogout() {
           :class="{ active: currentTheme === 'auto' }"
           @click="setTheme('auto')"
           title="Modo Automático"
+          aria-label="Modo Automático"
         >
           <Monitor :size="16" />
         </button>
@@ -81,12 +84,12 @@ function handleLogout() {
         <span class="fira-code">{{ isDemo ? 'SIMULAÇÃO ATIVA' : 'SISTEMA ONLINE' }}</span>
       </div>
       
-      <button class="icon-btn">
+      <button class="icon-btn" aria-label="Notificações">
         <Bell :size="20" />
         <span class="notification-dot"></span>
       </button>
 
-      <button class="icon-btn logout-btn" @click="handleLogout" title="Sair do Sistema">
+      <button class="icon-btn logout-btn" @click="handleLogout" title="Sair do Sistema" aria-label="Sair do Sistema">
         <LogOut :size="20" />
       </button>
     </div>

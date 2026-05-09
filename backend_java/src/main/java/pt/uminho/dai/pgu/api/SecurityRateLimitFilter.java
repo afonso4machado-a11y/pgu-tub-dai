@@ -1,12 +1,9 @@
 package pt.uminho.dai.pgu.api;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
+import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Map;
@@ -14,117 +11,72 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Rate Limiting Filter — protege contra brute-force e abuso de API.
- *
- * Limites configurados:
- *   - Login (POST /api/auth/login*):  5 tentativas por 15 minutos (anti brute-force)
- *   - Auth geral (/api/auth/*):       12 pedidos por 1 minuto
- *   - API geral (/api/*):            120 pedidos por 1 minuto
- *
- * Inclui limpeza periódica para evitar memory leak sob DDoS.
+ * Filtro de Segurança Anti-Brute Force e Anti-Spam.
+ * Implementa Zero-Trust a nível da rede interna limitando pedidos por IP.
+ * Este é um mecanismo em memória. Em produção, recomenda-se Redis + Bucket4j ou API Gateway.
  */
 @Component
-public class SecurityRateLimitFilter extends OncePerRequestFilter {
-    // Janelas temporais
-    private static final long GENERAL_WINDOW_MS = 60_000L;        // 1 minuto
-    private static final long LOGIN_WINDOW_MS = 900_000L;         // 15 minutos
+public class SecurityRateLimitFilter implements Filter {
 
-    // Limites por janela
-    private static final int LOGIN_LIMIT = 5;                     // 5 tentativas / 15 min
-    private static final int AUTH_LIMIT_PER_MIN = 12;             // 12 req / min
-    private static final int API_LIMIT_PER_MIN = 120;             // 120 req / min
+    private static final int MAX_REQUESTS_PER_MINUTE = 60; // Rate Limit Geral
+    private static final int MAX_LOGIN_ATTEMPTS = 5;       // Anti-Brute Force
 
-    // Limpeza periódica
-    private static final long CLEANUP_INTERVAL_MS = 300_000L;     // 5 min
-    private volatile long lastCleanup = System.currentTimeMillis();
-
-    private final Map<String, RateWindow> counters = new ConcurrentHashMap<>();
-
-    private static final class RateWindow {
-        volatile long windowStartMs;
-        volatile long windowDurationMs;
-        final AtomicInteger count;
-
-        private RateWindow(long nowMs, long windowDurationMs) {
-            this.windowStartMs = nowMs;
-            this.windowDurationMs = windowDurationMs;
-            this.count = new AtomicInteger(0);
-        }
-    }
+    private final Map<String, TokenBucket> requestCounts = new ConcurrentHashMap<>();
+    private final Map<String, TokenBucket> loginAttempts = new ConcurrentHashMap<>();
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
-        // Limpeza periódica de entradas expiradas — previne memory leak sob DDoS
-        long now = System.currentTimeMillis();
-        if (now - lastCleanup > CLEANUP_INTERVAL_MS) {
-            lastCleanup = now;
-            counters.entrySet().removeIf(e ->
-                now - e.getValue().windowStartMs > e.getValue().windowDurationMs * 2);
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
+        
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        HttpServletResponse httpResponse = (HttpServletResponse) response;
+
+        String ip = request.getRemoteAddr();
+        String path = httpRequest.getRequestURI();
+
+        // 1. Prevenção de Brute Force nos endpoints de Login
+        if (path.contains("/auth/login") || path.contains("/auth/admin/login")) {
+            TokenBucket loginBucket = loginAttempts.computeIfAbsent(ip, k -> new TokenBucket(System.currentTimeMillis()));
+            if (!loginBucket.tryConsume(MAX_LOGIN_ATTEMPTS, 15 * 60 * 1000)) { // 15 minutos de lockout
+                httpResponse.setStatus(429);
+                httpResponse.setContentType("application/json;charset=UTF-8");
+                httpResponse.getWriter().write("{\"status\":\"erro\",\"mensagem\":\"Múltiplas tentativas falhadas. Conta bloqueada temporariamente. Política de Zero-Trust aplicada.\"}");
+                return;
+            }
         }
 
-        String path = request.getRequestURI();
-        String method = request.getMethod();
-
-        if (!path.startsWith("/api/")) {
-            filterChain.doFilter(request, response);
+        // 2. Rate Limiting Geral para Prevenção de DoS
+        TokenBucket generalBucket = requestCounts.computeIfAbsent(ip, k -> new TokenBucket(System.currentTimeMillis()));
+        if (!generalBucket.tryConsume(MAX_REQUESTS_PER_MINUTE, 60 * 1000)) { // 1 minuto de janela
+            httpResponse.setStatus(429);
+            httpResponse.setContentType("application/json;charset=UTF-8");
+            httpResponse.getWriter().write("{\"status\":\"erro\",\"mensagem\":\"Muitos pedidos simultâneos (Rate Limit Exceeded). Tente mais tarde.\"}");
             return;
         }
 
-        String clientIp = request.getRemoteAddr();
+        chain.doFilter(request, response);
+    }
 
-        // Determinar categoria do pedido e limites aplicáveis
-        boolean isLoginAttempt = path.startsWith("/api/auth/login") && "POST".equalsIgnoreCase(method);
-        boolean isAuthEndpoint = path.startsWith("/api/auth/");
+    private static class TokenBucket {
+        private final AtomicInteger tokens = new AtomicInteger(0);
+        private long windowStart;
 
-        int limit;
-        long windowMs;
-        String key;
-
-        if (isLoginAttempt) {
-            // Brute-force protection: 5 tentativas por 15 minutos
-            limit = LOGIN_LIMIT;
-            windowMs = LOGIN_WINDOW_MS;
-            key = "LOGIN:" + clientIp;
-        } else if (isAuthEndpoint) {
-            limit = AUTH_LIMIT_PER_MIN;
-            windowMs = GENERAL_WINDOW_MS;
-            key = "AUTH:" + clientIp;
-        } else {
-            limit = API_LIMIT_PER_MIN;
-            windowMs = GENERAL_WINDOW_MS;
-            key = "API:" + clientIp;
+        public TokenBucket(long windowStart) {
+            this.windowStart = windowStart;
         }
 
-        RateWindow rateWindow = counters.computeIfAbsent(key, k -> new RateWindow(now, windowMs));
-
-        int current;
-        synchronized (rateWindow) {
-            if (now - rateWindow.windowStartMs >= rateWindow.windowDurationMs) {
-                rateWindow.windowStartMs = now;
-                rateWindow.count.set(0);
+        public synchronized boolean tryConsume(int limit, long windowSizeMillis) {
+            long now = System.currentTimeMillis();
+            if (now - windowStart > windowSizeMillis) {
+                // Reset da janela de tempo
+                tokens.set(0);
+                windowStart = now;
             }
-            current = rateWindow.count.incrementAndGet();
-        }
 
-        if (current > limit) {
-            response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-            response.setContentType("application/json");
-
-            long retryAfterSeconds = (rateWindow.windowDurationMs - (now - rateWindow.windowStartMs)) / 1000;
-            response.setHeader("Retry-After", String.valueOf(Math.max(retryAfterSeconds, 1)));
-
-            if (isLoginAttempt) {
-                response.getWriter().write(
-                    "{\"status\":\"erro\",\"mensagem\":\"Demasiadas tentativas de login. Tente novamente em " +
-                    Math.max(retryAfterSeconds / 60, 1) + " minuto(s).\"}");
-            } else {
-                response.getWriter().write(
-                    "{\"status\":\"erro\",\"mensagem\":\"Rate limit excedido. Tente novamente em instantes.\"}");
+            if (tokens.incrementAndGet() > limit) {
+                return false;
             }
-            return;
+            return true;
         }
-
-        filterChain.doFilter(request, response);
     }
 }

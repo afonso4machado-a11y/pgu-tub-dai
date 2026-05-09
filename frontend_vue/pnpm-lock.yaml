@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@stripe/stripe-js':
-        specifier: ^9.4.0
-        version: 9.4.0
       '@tresjs/cientos':
         specifier: ^5.7.0
         version: 5.7.0(@tresjs/core@5.8.0(three@0.184.0)(vue@3.5.34))(@types/three@0.184.1)(three@0.184.0)(vue@3.5.34)
@@ -221,10 +218,6 @@ packages:
 
   '@rolldown/pluginutils@1.0.0-rc.18':
     resolution: {integrity: sha512-CUY5Mnhe64xQBGZEEXQ5WyZwsc1JU3vAZLIxtrsBt3LO6UOb+C8GunVKqe9sT8NeWb4lqSaoJtp2xo6GxT1MNw==}
-
-  '@stripe/stripe-js@9.4.0':
-    resolution: {integrity: sha512-zXG86DnoLU5nH2U18tX5ApTE3IAm+txoiPm4YFyEtRS0K5y7ZDH9M8e1Le/cZyI6wvW3BkJn2daZe2FqZOrSSg==}
-    engines: {node: '>=12.16'}
 
   '@tresjs/cientos@5.7.0':
     resolution: {integrity: sha512-w57PfD4WNwa23YwDsiQa/j4j202sYW0eZre2jdsb3QT165baGaFn9LMIEJt1t4Y7p4Ecw4jlTiUCE6JdRYAbIg==}
@@ -1183,8 +1176,6 @@ snapshots:
   '@rolldown/pluginutils@1.0.0-rc.13': {}
 
   '@rolldown/pluginutils@1.0.0-rc.18': {}
-
-  '@stripe/stripe-js@9.4.0': {}
 
   '@tresjs/cientos@5.7.0(@tresjs/core@5.8.0(three@0.184.0)(vue@3.5.34))(@types/three@0.184.1)(three@0.184.0)(vue@3.5.34)':
     dependencies:

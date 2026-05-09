@@ -24,17 +24,31 @@ export const authService = {
   },
 
   async loginAdmin(email, password) {
-    const res = await fetch('/api/auth/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    })
-    const data = await res.json()
-    if (data.status === 'sucesso') {
-      this._setAdminSession(data.nome || email.split('@')[0], email)
-      return true
+    // Validação de formato apenas (sem expor credenciais no frontend)
+    const isInstitutional = email.endsWith('@uminho.pt') || email.endsWith('@um');
+    if (!isInstitutional) {
+      throw new Error('Acesso restrito a emails institucionais (@uminho.pt).')
     }
-    throw new Error(data.mensagem || 'Credenciais inválidas')
+    if (!password || password.length < 6) {
+      throw new Error('Password inválida.')
+    }
+
+    try {
+      const res = await fetch('/api/auth/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      })
+      const data = await res.json()
+      if (data.status === 'sucesso') {
+        this._setAdminSession(data.nome || email.split('@')[0], email)
+        return true
+      }
+      throw new Error(data.mensagem)
+    } catch (e) {
+      // Sem fallback: autenticação é exclusivamente server-side (Zero-Trust)
+      throw new Error('Servidor indisponível. Tente novamente em instantes.')
+    }
   },
 
   _setAdminSession(nome, email) {

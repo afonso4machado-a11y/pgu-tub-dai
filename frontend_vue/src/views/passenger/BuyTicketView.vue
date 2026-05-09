@@ -26,8 +26,10 @@ let elements = null
 const paymentElementContainer = ref(null)
 
 onMounted(async () => {
-  // Substituir por uma chave pública real nas Variáveis de Ambiente no futuro
-  stripe = await loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx')
+  // Chave pública Stripe via variável de ambiente Vite (VITE_STRIPE_PUBLIC_KEY)
+  // Nunca usar chaves privadas no frontend. A chave pública é safe no cliente.
+  const stripeKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_TYooMQauvdEDq54NiTphI7jx'
+  stripe = await loadStripe(stripeKey)
 })
 
 const goBack = () => {

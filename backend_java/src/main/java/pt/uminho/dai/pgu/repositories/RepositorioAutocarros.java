@@ -5,9 +5,10 @@ import pt.uminho.dai.pgu.services.*;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RepositorioAutocarros {
-    private final Map<String, Autocarro> autocarros = new LinkedHashMap<>();
+    private final Map<String, Autocarro> autocarros = new ConcurrentHashMap<>();
 
     public RepositorioAutocarros() {
         carregarDaBD();
@@ -42,6 +43,7 @@ public class RepositorioAutocarros {
                 a.setUltimaLeitura(ultimaLeitura);
                 autocarros.put(id, a);
             }
+            System.out.println("[DB] Autocarros carregados: " + autocarros.size());
         } catch (SQLException e) {
             System.err.println("Erro ao carregar autocarros: " + e.getMessage());
         }
@@ -98,6 +100,6 @@ public class RepositorioAutocarros {
     }
 
     public Collection<Autocarro> listarTodos() {
-        return autocarros.values();
+        return new ArrayList<>(autocarros.values());
     }
 }

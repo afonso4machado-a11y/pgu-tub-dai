@@ -1,15 +1,11 @@
-package pt.uminho.dai.pgu.services;
+package pt.uminho.dai.pgu.core;
+
 import pt.uminho.dai.pgu.models.*;
 import pt.uminho.dai.pgu.repositories.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 public class Sistema {
     private final RepositorioAutocarros repositorioAutocarros;
@@ -21,10 +17,6 @@ public class Sistema {
     private final RepositorioParagens repositorioParagens;
     private final RepositorioCorrelacao repositorioCorrelacao;
     private final ThresholdsAlerta thresholdsAlerta;
-
-    private Map<String, Object> dashboardCache = null;
-    private long lastDashboardCacheTime = 0;
-    private static final long DASHBOARD_CACHE_TTL_MS = 30000;
 
     public Sistema() {
         this(new ThresholdsAlerta());
@@ -73,24 +65,21 @@ public class Sistema {
         repositorioLinhas.guardar(new Linha(id, nome));
     }
 
-    public Optional<Cliente> loginCliente(String email, String password) {
+    public java.util.Optional<Cliente> loginCliente(String email, String password) {
         return repositorioClientes.procurarPorEmail(email)
                 .filter(c -> password.equals(c.getPassword()));
     }
 
-    public Optional<Cliente> procurarClientePorEmail(String email) {
-        return repositorioClientes.procurarPorEmail(email);
-    }
-
-    public Optional<Cliente> procurarClientePorId(String id) {
+    public java.util.Optional<Cliente> procurarClientePorId(String id) {
         return repositorioClientes.procurarPorId(id);
     }
 
     public boolean loginAdmin(String email, String password) {
-        // 🛡️ Sentinel: Falha segura se a variável de ambiente não existir
+        // 🛡️ DEPRECATED: Esta classe não deve ser usada. Use pt.uminho.dai.pgu.services.Sistema
+        // A autenticação deve ser feita via variáveis de ambiente (Zero-Trust)
         String adminPassword = System.getenv("PGU_ADMIN_PASSWORD");
         if (adminPassword == null || adminPassword.isBlank()) {
-            return false; // Fail-safe: Bloqueia login se a variável não estiver segura no ambiente
+            return false;
         }
 
         if (email == null || password == null) {
@@ -132,8 +121,18 @@ public class Sistema {
         repositorioLeituras.guardar(autocarroId, leitura);
         List<Long> alertaIds = repositorioAlertas.guardarTodos(alertas);
 
-        for (Cliente cliente : repositorioClientes.listarTodos()) {
-            repositorioClientesAlertas.guardar(cliente.getId(), alertaIds);
+        // ⚡ OPTIMIZAÇÃO: Distribuição de alertas em thread separada para não bloquear a resposta HTTP
+        if (!alertaIds.isEmpty()) {
+            java.util.List<String> clienteIds = repositorioClientes.listarTodos().stream()
+                .map(Cliente::getId).toList();
+            // Executa em background (desacoplado da thread HTTP)
+            new Thread(() -> {
+                try {
+                    repositorioClientesAlertas.guardarEmLote(clienteIds, alertaIds);
+                } catch (Exception e) {
+                    System.err.println("[ASYNC] Erro ao distribuir alertas: " + e.getMessage());
+                }
+            }, "alerta-distributor").start();
         }
 
         repositorioAutocarros.atualizarEstado(autocarro);
@@ -154,17 +153,27 @@ public class Sistema {
         }
     }
 
+    /**
+     * Dashboard textual para consola (debugging).
+     * ⚡ OPTIMIZADO: 1 única cópia de listarTodos(), 1 único loop.
+     */
     public String obterDashboardAnalitico() {
         StringBuilder sb = new StringBuilder();
         sb.append("\n=== DASHBOARD ANALITICO (TUB) ===\n");
 
+        // ⚡ 1 única cópia da coleção (antes eram 4)
+        java.util.Collection<Autocarro> frota = repositorioAutocarros.listarTodos();
+        int totalAutocarros = frota.size();
         double somaTaxas = 0.0;
         int volumeTotalPassageiros = 0;
-        int totalAutocarros = repositorioAutocarros.listarTodos().size();
+        java.util.List<Autocarro> criticos = new java.util.ArrayList<>();
 
-        for (Autocarro a : repositorioAutocarros.listarTodos()) {
+        for (Autocarro a : frota) {
             somaTaxas += a.getTaxaOcupacao();
             volumeTotalPassageiros += a.getTotalPassageirosTransportados();
+            if (a.getTaxaOcupacao() >= thresholdsAlerta.getLimiteOcupacao()) {
+                criticos.add(a);
+            }
         }
 
         double taxaOcupacaoMedia = totalAutocarros == 0 ? 0 : (somaTaxas / totalAutocarros) * 100;
@@ -172,97 +181,69 @@ public class Sistema {
         sb.append("-> Volume Total de Passageiros Transportados: ").append(volumeTotalPassageiros).append("\n");
 
         sb.append("\n--- VOLUME DE PASSAGEIROS POR LINHA E HORA ---\n");
-        Map<String, Map<Integer, Integer>> volumePorLinha = new java.util.TreeMap<>();
-
-        for (Autocarro a : repositorioAutocarros.listarTodos()) {
-            String linhaId = a.getLinhaId();
-            String nomeLinha = "Sem Linha";
-            if (linhaId != null) {
-                Optional<Linha> linhaOpt = repositorioLinhas.procurarPorId(linhaId);
-                if (linhaOpt.isPresent()) {
-                    nomeLinha = "Linha " + linhaOpt.get().getNome() + " (" + linhaId + ")";
-                } else {
-                    nomeLinha = "Linha " + linhaId;
+        for (Autocarro a : frota) {
+            sb.append(" -> Veiculo/Linha: ").append(a.getId()).append("\n");
+            java.util.Map<Integer, Integer> volumePorHora = a.obterVolumePorHora();
+            if (volumePorHora.isEmpty()) {
+                sb.append("    (Sem registos)\n");
+            } else {
+                for (java.util.Map.Entry<Integer, Integer> entry : volumePorHora.entrySet()) {
+                    sb.append(String.format("    %02dh00 - %02dh59: %d passageiros\n",
+                            entry.getKey(), entry.getKey(), entry.getValue()));
                 }
-            }
-
-            volumePorLinha.putIfAbsent(nomeLinha, new java.util.TreeMap<>());
-            Map<Integer, Integer> volumeDaLinha = volumePorLinha.get(nomeLinha);
-
-            Map<Integer, Integer> volumeDoAutocarro = a.obterVolumePorHora();
-            for (Map.Entry<Integer, Integer> entry : volumeDoAutocarro.entrySet()) {
-                volumeDaLinha.put(entry.getKey(), volumeDaLinha.getOrDefault(entry.getKey(), 0) + entry.getValue());
             }
         }
 
-        if (volumePorLinha.isEmpty()) {
-            sb.append("    (Sem registos)\n");
+        sb.append("\n--- VEICULOS EM LOTA\u00c7AO CRITICA ---\n");
+        if (criticos.isEmpty()) {
+            sb.append(" (Nenhum veiculo em estado critico neste momento)\n");
         } else {
-            for (Map.Entry<String, Map<Integer, Integer>> entryLinha : volumePorLinha.entrySet()) {
-                sb.append(" -> ").append(entryLinha.getKey()).append("\n");
-                Map<Integer, Integer> volumePorHora = entryLinha.getValue();
-                if (volumePorHora.isEmpty()) {
-                    sb.append("    (Sem registos)\n");
-                } else {
-                    for (Map.Entry<Integer, Integer> entry : volumePorHora.entrySet()) {
-                        sb.append(String.format("    %02dh00 - %02dh59: %d passageiros\n",
-                                entry.getKey(), entry.getKey(), entry.getValue()));
-                    }
-                }
-            }
-        }
-
-        sb.append("\n--- VEICULOS EM LOTAÇAO CRITICA ---\n");
-        boolean temCriticos = false;
-        for (Autocarro a : repositorioAutocarros.listarTodos()) {
-            if (a.getTaxaOcupacao() >= thresholdsAlerta.getLimiteOcupacao()) {
+            for (Autocarro a : criticos) {
                 sb.append(String.format(" [!] %s (Lotacao a %.0f%%)\n",
                         a.getId(), a.getTaxaOcupacao() * 100));
-                temCriticos = true;
             }
-        }
-        if (!temCriticos) {
-            sb.append(" (Nenhum veiculo em estado critico neste momento)\n");
         }
 
         sb.append("=================================\n");
         return sb.toString();
     }
 
-    public synchronized Map<String, Object> obterDadosDashboard() {
-        long now = System.currentTimeMillis();
-        if (dashboardCache != null && (now - lastDashboardCacheTime) < DASHBOARD_CACHE_TTL_MS) {
-            return dashboardCache;
-        }
+    /**
+     * Dashboard JSON para o frontend.
+     * ⚡ OPTIMIZADO: 1 única cópia, 1 único loop (antes: 2 cópias, 2 loops).
+     */
+    public java.util.Map<String, Object> obterDadosDashboard() {
+        java.util.Map<String, Object> dashboard = new java.util.HashMap<>();
 
-        Map<String, Object> dashboard = new HashMap<>();
+        // ⚡ 1 única cópia snapshot da coleção
+        java.util.Collection<Autocarro> frota = repositorioAutocarros.listarTodos();
+        int totalAutocarros = frota.size();
 
         double somaTaxas = 0.0;
         int volumeTotalPassageiros = 0;
-        int totalAutocarros = repositorioAutocarros.listarTodos().size();
+        java.util.List<java.util.Map<String, Object>> autocarrosCriticos = new java.util.ArrayList<>();
 
-        List<Map<String, Object>> autocarrosCriticos = new ArrayList<>();
-
-        for (Autocarro a : repositorioAutocarros.listarTodos()) {
+        // ⚡ 1 único loop para calcular tudo
+        for (Autocarro a : frota) {
             somaTaxas += a.getTaxaOcupacao();
             volumeTotalPassageiros += a.getTotalPassageirosTransportados();
 
             if (a.getTaxaOcupacao() >= thresholdsAlerta.getLimiteOcupacao()) {
-                Map<String, Object> critico = new HashMap<>();
-                critico.put("id", a.getId());
-                critico.put("taxaOcupacao", a.getTaxaOcupacao() * 100);
-                autocarrosCriticos.add(critico);
+                autocarrosCriticos.add(java.util.Map.of(
+                    "id", a.getId(),
+                    "taxaOcupacao", a.getTaxaOcupacao() * 100
+                ));
             }
         }
 
-        List<Map<String, Object>> avisos = new ArrayList<>();
+        java.util.List<java.util.Map<String, Object>> avisos = new java.util.ArrayList<>();
         for (Alerta alerta : repositorioAlertas.listarAlertasRecentes(15)) {
-            Map<String, Object> aviso = new HashMap<>();
-            aviso.put("autocarroId", alerta.getAutocarroId());
-            aviso.put("mensagem", alerta.getMensagem());
-            aviso.put("tipo", alerta.getTipo().toString());
-            aviso.put("timestamp", alerta.getTimestamp().toString());
-            avisos.add(aviso);
+            avisos.add(java.util.Map.of(
+                "autocarroId", alerta.getAutocarroId(),
+                "mensagem", alerta.getMensagem(),
+                "tipo", alerta.getTipo().toString(),
+                "timestamp", alerta.getTimestamp().toString()
+            ));
         }
 
         double taxaOcupacaoMedia = totalAutocarros == 0 ? 0 : (somaTaxas / totalAutocarros) * 100;
@@ -273,20 +254,18 @@ public class Sistema {
         dashboard.put("autocarrosCriticos", autocarrosCriticos);
         dashboard.put("avisosRecentes", avisos);
 
-        dashboardCache = dashboard;
-        lastDashboardCacheTime = now;
         return dashboard;
     }
 
     public List<Autocarro> obterTodosAutocarros() {
-        return new ArrayList<>(repositorioAutocarros.listarTodos());
+        return new java.util.ArrayList<>(repositorioAutocarros.listarTodos());
     }
 
     public List<String> obterTodasParagens() {
         return repositorioParagens.listarTodas();
     }
 
-    public Map<String, Map<String, Map<String, Integer>>> obterHistoricoPorDia() {
+    public java.util.Map<String, java.util.Map<String, java.util.Map<String, Integer>>> obterHistoricoPorDia() {
         return repositorioLeituras.obterHistoricoPorDia();
     }
 
@@ -295,23 +274,23 @@ public class Sistema {
      * Cruza dados de contagem de passageiros (leituras) com dados operacionais
      * (viagens GTFS) e bilhética simulada. Produz métricas de Procura vs Oferta.
      */
-    public Map<String, Object> obterDadosCorrelacao(String dataInicio, String dataFim) {
-        Map<String, Object> resultado = new LinkedHashMap<>();
+    public java.util.Map<String, Object> obterDadosCorrelacao(String dataInicio, String dataFim) {
+        java.util.Map<String, Object> resultado = new java.util.LinkedHashMap<>();
 
         // ── 1. Contagem Real (Procura) ──
-        List<Map<String, Object>> procuraPorLinha = 
+        java.util.List<java.util.Map<String, Object>> procuraPorLinha = 
             repositorioCorrelacao.obterProcuraPorLinha(dataInicio, dataFim);
 
         // ── 2. Oferta Planeada ──
-        List<Map<String, Object>> ofertaPorLinha = 
+        java.util.List<java.util.Map<String, Object>> ofertaPorLinha = 
             repositorioCorrelacao.obterOfertaPlaneada();
 
         // ── 3. Distribuição Horária ──
-        List<Map<String, Object>> procuraPorHora = 
+        java.util.List<java.util.Map<String, Object>> procuraPorHora = 
             repositorioCorrelacao.obterProcuraPorHora(dataInicio, dataFim);
 
         // ── 4. Bilhética Simulada ──
-        Map<String, Integer> bilheticaSimulada = new LinkedHashMap<>();
+        java.util.Map<String, Integer> bilheticaSimulada = new java.util.LinkedHashMap<>();
         int totalEntradasGeral = procuraPorLinha.stream()
             .mapToInt(m -> (int) m.get("totalEntradas")).sum();
 
@@ -330,7 +309,7 @@ public class Sistema {
             ratioProcuraOferta = (double) totalEntradasGeral / totalViagens;
         }
 
-        Map<String, Object> metricas = new LinkedHashMap<>();
+        java.util.Map<String, Object> metricas = new java.util.LinkedHashMap<>();
         metricas.put("totalPassageirosContados", totalEntradasGeral);
         metricas.put("totalViagensProgramadas", totalViagens);
         metricas.put("ratioProcuraOferta", Math.round(ratioProcuraOferta * 100.0) / 100.0);
@@ -352,7 +331,7 @@ public class Sistema {
     }
 
     public List<Linha> obterTodasLinhas() {
-        return new ArrayList<>(repositorioLinhas.listarTodas());
+        return new java.util.ArrayList<>(repositorioLinhas.listarTodas());
     }
 
     public void atualizarCliente(Cliente cliente) {
