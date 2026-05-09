@@ -24,10 +24,13 @@ export const authService = {
   },
 
   async loginAdmin(email, password) {
-    // Regra local redundante para segurança e rapidez
+    // Validação de formato apenas (sem expor credenciais no frontend)
     const isInstitutional = email.endsWith('@uminho.pt') || email.endsWith('@um');
-    if (!isInstitutional || password !== 'tub_uminho26') {
-      throw new Error('Acesso restrito. Use email institucional (@uminho.pt ou @um) e a password mestre.')
+    if (!isInstitutional) {
+      throw new Error('Acesso restrito a emails institucionais (@uminho.pt).')
+    }
+    if (!password || password.length < 6) {
+      throw new Error('Password inválida.')
     }
 
     try {
@@ -43,14 +46,8 @@ export const authService = {
       }
       throw new Error(data.mensagem)
     } catch (e) {
-      // Fallback para demo se backend estiver offline mas credenciais estiverem certas
-      const isInstitutional = email.endsWith('@uminho.pt') || email.endsWith('@um');
-      if (isInstitutional && password === 'tub_uminho26') {
-        const nome = email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1)
-        this._setAdminSession(nome, email)
-        return true
-      }
-      throw e
+      // Sem fallback: autenticação é exclusivamente server-side (Zero-Trust)
+      throw new Error('Servidor indisponível. Tente novamente em instantes.')
     }
   },
 
