@@ -1,493 +1,521 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { loadStripe } from '@stripe/stripe-js'
-import { Ticket, ArrowLeft, CreditCard, CheckCircle, Loader2 } from 'lucide-vue-next'
+import { ArrowLeft, Shield, CheckCircle, Loader2, CreditCard, Smartphone, Ticket } from 'lucide-vue-next'
 import { authService } from '../../services/auth'
 
 const router = useRouter()
 const user = authService.getUser()
 
-// Step control: 1 = Select Ticket, 2 = Payment, 3 = Success
-const currentStep = ref(1)
-
-const ticketTypes = [
-  { id: 'simples', name: 'Bilhete Simples', price: 1.55, description: 'Valido para 1 viagem em toda a rede TUB.' },
-  { id: 'passe',   name: 'Passe Mensal',    price: 30.00, description: 'Valido para viagens ilimitadas durante 30 dias.' }
-]
-
-const selectedTicket = ref(ticketTypes[0].id)
+// Flow: 'select' -> 'checkout' -> 'processing' -> 'success'
+const step = ref('select')
+const selectedId = ref('simples')
+const paymentMethod = ref('card') // 'card' | 'mbway' | 'apple'
+const mbwayPhone = ref('')
 const isProcessing = ref(false)
 const errorMessage = ref('')
 
-// Stripe Elements
 let stripe = null
 let elements = null
-const paymentElementContainer = ref(null)
+const stripeContainer = ref(null)
+
+const catalog = [
+  { id: 'simples', name: 'Bilhete Simples', price: 1.55, desc: 'Valido para 1 viagem em qualquer linha TUB.', badge: 'Viagem unica' },
+  { id: 'passe', name: 'Passe Mensal', price: 30.00, desc: 'Viagens ilimitadas durante 30 dias em toda a rede.', badge: 'Mais popular' }
+]
+
+const selected = computed(() => catalog.find(t => t.id === selectedId.value))
+const formattedPrice = computed(() => selected.value?.price.toFixed(2).replace('.', ',') + ' EUR')
+const ctaLabel = computed(() => {
+  if (isProcessing.value) return ''
+  const price = selected.value?.price.toFixed(2).replace('.', ',')
+  if (paymentMethod.value === 'mbway') return `Pagar ${price} EUR com MB WAY`
+  if (paymentMethod.value === 'apple') return `Pagar com Apple Pay`
+  return `Pagar ${price} EUR`
+})
 
 onMounted(async () => {
-  const stripeKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_TYooMQauvdEDq54NiTphI7jx'
-  stripe = await loadStripe(stripeKey)
+  const key = import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_51TV9cB2Zu827UzcHZ0e3PHKZLWVChT3Vag39Mkv4bsXj6B4C4g6POPhGSps7AovYNYpHZg39uoendvmZBYZKeJCa0079Gpuisx'
+  stripe = await loadStripe(key)
 })
 
 const goBack = () => {
-  if (currentStep.value === 2) {
-    currentStep.value = 1
-    elements = null
-  } else {
-    router.push('/app/ticket')
-  }
+  if (step.value === 'checkout') { step.value = 'select'; elements = null; errorMessage.value = '' }
+  else router.push('/app/ticket')
 }
 
-const proceedToPayment = async () => {
-  if (!stripe) return
-  currentStep.value = 2
-  isProcessing.value = true
+const goToCheckout = async () => {
+  step.value = 'checkout'
   errorMessage.value = ''
+  await mountStripeElements()
+}
 
+const mountStripeElements = async () => {
+  if (!stripe) return
+  isProcessing.value = true
   try {
-    // 1. Obter clientSecret do backend (preco autoritativo no servidor)
     const res = await fetch('/api/payments/create-intent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tipoId: selectedTicket.value,
-        clienteId: user?.id || 'anonimo'
-      })
+      body: JSON.stringify({ tipoId: selectedId.value, clienteId: user?.id || 'anonimo' })
     })
-
-    if (!res.ok) {
-      const err = await res.json()
-      throw new Error(err.mensagem || 'Erro ao inicializar pagamento.')
-    }
-
+    if (!res.ok) { const e = await res.json(); throw new Error(e.mensagem || 'Erro ao inicializar.') }
     const { clientSecret } = await res.json()
 
-    // 2. Inicializar Stripe Elements com o clientSecret real
-    elements = stripe.elements({ clientSecret, appearance: { theme: 'flat' } })
-    const paymentElement = elements.create('payment')
+    const root = document.documentElement
+    const isDark = !root.getAttribute('data-theme') || root.getAttribute('data-theme') === 'dark'
 
-    // Montar no DOM
-    setTimeout(() => {
-      if (paymentElementContainer.value) {
-        paymentElement.mount(paymentElementContainer.value)
+    elements = stripe.elements({
+      clientSecret,
+      appearance: {
+        theme: isDark ? 'night' : 'flat',
+        variables: {
+          colorPrimary: isDark ? '#06b6d4' : '#0284c7',
+          colorBackground: isDark ? '#1a1a1a' : '#ffffff',
+          colorText: isDark ? '#f8fafc' : '#0f172a',
+          colorDanger: '#ef4444',
+          fontFamily: 'Inter, sans-serif',
+          borderRadius: '12px',
+          spacingUnit: '4px'
+        },
+        rules: {
+          '.Input': { border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, padding: '14px 16px', fontSize: '16px' },
+          '.Input:focus': { borderColor: isDark ? '#06b6d4' : '#0284c7', boxShadow: `0 0 0 3px ${isDark ? 'rgba(6,182,212,0.25)' : 'rgba(2,132,199,0.25)'}` },
+          '.Label': { fontSize: '13px', fontWeight: '500', marginBottom: '6px' }
+        }
       }
-    }, 100)
-
+    })
+    const el = elements.create('payment', { layout: { type: 'tabs', defaultCollapsed: false } })
+    setTimeout(() => { if (stripeContainer.value) el.mount(stripeContainer.value) }, 80)
   } catch (err) {
     errorMessage.value = err.message || 'Falha ao inicializar pagamento.'
-    currentStep.value = 1
+    step.value = 'select'
   } finally {
     isProcessing.value = false
   }
 }
 
-const confirmPayment = async () => {
+const pay = async () => {
   if (!stripe || !elements) return
-
   isProcessing.value = true
   errorMessage.value = ''
+  step.value = 'processing'
 
   try {
-    // Validar o form do Stripe
-    const { error: submitError } = await elements.submit()
-    if (submitError) {
-      errorMessage.value = submitError.message
-      return
-    }
+    const { error: submitErr } = await elements.submit()
+    if (submitErr) { errorMessage.value = submitErr.message; step.value = 'checkout'; return }
 
-    // Confirmar o pagamento real via Stripe
     const { error } = await stripe.confirmPayment({
       elements,
-      confirmParams: {
-        // URL de retorno apos pagamento (Stripe redireciona para ca em alguns metodos)
-        return_url: window.location.origin + '/app/ticket'
-      },
-      redirect: 'if_required' // Nao redirecionar se nao for necessario (cartao)
+      confirmParams: { return_url: window.location.origin + '/app/ticket' },
+      redirect: 'if_required'
     })
-
-    if (error) {
-      errorMessage.value = error.message || 'Pagamento recusado. Tente outro metodo.'
-      return
-    }
-
-    // Pagamento confirmado — bilhete emitido via webhook no backend
-    currentStep.value = 3
-
-  } catch (err) {
-    errorMessage.value = 'Erro de comunicacao. Verifique a sua ligacao e tente novamente.'
+    if (error) { errorMessage.value = error.message || 'Pagamento recusado.'; step.value = 'checkout'; return }
+    step.value = 'success'
+  } catch (e) {
+    errorMessage.value = 'Erro de comunicacao. Verifique a ligacao.'
+    step.value = 'checkout'
   } finally {
     isProcessing.value = false
   }
-}
-
-const finishPurchase = () => {
-  router.push('/app/ticket')
 }
 </script>
 
 <template>
-  <div class="buy-ticket-page">
-    <div class="top-nav">
-      <button v-if="currentStep < 3" @click="goBack" class="back-btn" aria-label="Voltar">
-        <ArrowLeft :size="24" />
+  <div class="checkout-page">
+
+    <!-- Header -->
+    <header class="checkout-header">
+      <button v-if="step !== 'success' && step !== 'processing'" @click="goBack" class="header-back" aria-label="Voltar">
+        <ArrowLeft :size="20" />
       </button>
-      <h1 class="page-title">Comprar Bilhete</h1>
-    </div>
+      <div class="header-center">
+        <h1 v-if="step === 'select'">Comprar Bilhete</h1>
+        <h1 v-else-if="step === 'checkout'">Finalizar Compra</h1>
+        <h1 v-else-if="step === 'processing'">A processar...</h1>
+        <h1 v-else>Pagamento Concluido</h1>
+      </div>
+      <div class="header-spacer"></div>
+    </header>
 
-    <!-- Step 1: Selection -->
-    <div v-if="currentStep === 1" class="step-container">
-      <p class="instruction">Selecione o tipo de bilhete pretendido:</p>
+    <!-- Step: Select Ticket -->
+    <div v-if="step === 'select'" class="checkout-body fade-up">
+      <p class="section-label">Selecione o seu titulo de transporte</p>
 
-      <div class="ticket-options">
-        <div
-          v-for="ticket in ticketTypes"
-          :key="ticket.id"
-          class="ticket-option"
-          :class="{ 'selected': selectedTicket === ticket.id }"
-          @click="selectedTicket = ticket.id"
+      <div class="ticket-cards">
+        <button
+          v-for="t in catalog" :key="t.id"
+          class="ticket-card"
+          :class="{ active: selectedId === t.id }"
+          @click="selectedId = t.id"
         >
-          <div class="ticket-info">
-            <Ticket :size="24" class="ticket-icon" />
-            <div class="ticket-text">
-              <h3>{{ ticket.name }}</h3>
-              <p>{{ ticket.description }}</p>
-            </div>
-          </div>
-          <div class="ticket-price">
-            {{ ticket.price.toFixed(2).replace('.', ',') }}€
-          </div>
-        </div>
+          <div class="tc-badge" :class="{ popular: t.id === 'passe' }">{{ t.badge }}</div>
+          <div class="tc-icon"><Ticket :size="28" /></div>
+          <div class="tc-name">{{ t.name }}</div>
+          <div class="tc-price">{{ t.price.toFixed(2).replace('.', ',') }}<span>EUR</span></div>
+          <div class="tc-desc">{{ t.desc }}</div>
+          <div class="tc-radio"><div class="tc-radio-dot"></div></div>
+        </button>
       </div>
 
-      <button class="action-btn primary mt-auto" @click="proceedToPayment">
-        Avançar para Pagamento
-      </button>
+      <div class="checkout-footer">
+        <button class="cta-btn" @click="goToCheckout">
+          Continuar <span class="cta-price">{{ formattedPrice }}</span>
+        </button>
+      </div>
     </div>
 
-    <!-- Step 2: Payment -->
-    <div v-if="currentStep === 2" class="step-container">
-      <div class="summary-card">
-        <h3>Resumo da Compra</h3>
-        <div class="summary-row">
-          <span>{{ ticketTypes.find(t => t.id === selectedTicket)?.name }}</span>
-          <strong>{{ ticketTypes.find(t => t.id === selectedTicket)?.price.toFixed(2).replace('.', ',') }}€</strong>
+    <!-- Step: Checkout -->
+    <div v-if="step === 'checkout'" class="checkout-body fade-up">
+      <!-- Order Summary Mini -->
+      <div class="order-summary">
+        <div class="os-left">
+          <Ticket :size="20" class="os-icon" />
+          <div>
+            <div class="os-name">{{ selected?.name }}</div>
+            <div class="os-desc">Rede TUB completa</div>
+          </div>
         </div>
+        <div class="os-price">{{ selected?.price.toFixed(2).replace('.', ',') }} EUR</div>
       </div>
 
-      <div class="payment-section">
-        <h3 class="payment-title"><CreditCard :size="18" /> Dados de Pagamento</h3>
-
-        <div v-if="isProcessing && errorMessage === ''" class="loading-state">
-          <Loader2 class="spinner" :size="32" />
-          <p>A preparar pagamento seguro...</p>
+      <!-- Stripe Payment Element -->
+      <div class="payment-card">
+        <div class="pc-title">
+          <CreditCard :size="18" />
+          <span>Dados de Pagamento</span>
         </div>
 
-        <div v-show="!isProcessing && errorMessage === ''" class="stripe-payment-form">
-          <!-- Stripe Elements Injection Point -->
-          <div ref="paymentElementContainer" id="payment-element" class="demo-card-input"></div>
-          <p class="stripe-badge">Pagamento Seguro gerido por Stripe</p>
+        <div v-if="isProcessing && !errorMessage" class="stripe-loading">
+          <Loader2 class="spin" :size="28" />
+          <span>A preparar pagamento seguro...</span>
         </div>
 
-        <div v-if="errorMessage" class="error-msg">{{ errorMessage }}</div>
+        <div v-show="!isProcessing" ref="stripeContainer" class="stripe-mount"></div>
+
+        <div v-if="errorMessage" class="pay-error">{{ errorMessage }}</div>
       </div>
 
-      <button
-        class="action-btn primary mt-auto"
-        :disabled="isProcessing"
-        @click="confirmPayment"
-      >
-        <Loader2 v-if="isProcessing" class="spinner" :size="18" />
-        <span v-else>Pagar {{ ticketTypes.find(t => t.id === selectedTicket)?.price.toFixed(2).replace('.', ',') }}€</span>
-      </button>
+      <!-- Trust Indicators -->
+      <div class="trust-row">
+        <Shield :size="14" />
+        <span>Pagamento 100% seguro e encriptado. Compativel com PCI-DSS.</span>
+      </div>
+
+      <!-- CTA -->
+      <div class="checkout-footer">
+        <button class="cta-btn" :disabled="isProcessing" @click="pay">
+          <Loader2 v-if="isProcessing" class="spin" :size="20" />
+          <template v-else>
+            <Shield :size="16" />
+            {{ ctaLabel }}
+          </template>
+        </button>
+      </div>
     </div>
 
-    <!-- Step 3: Success -->
-    <div v-if="currentStep === 3" class="step-container success-state">
-      <div class="success-icon-wrapper">
-        <CheckCircle :size="64" class="success-icon" />
-      </div>
-      <h2>Pagamento Concluído!</h2>
-      <p>O seu <strong>{{ ticketTypes.find(t => t.id === selectedTicket)?.name }}</strong> foi adicionado ao seu perfil e está pronto a ser utilizado.</p>
+    <!-- Step: Processing -->
+    <div v-if="step === 'processing'" class="checkout-body processing-state fade-up">
+      <div class="proc-spinner"><Loader2 class="spin" :size="48" /></div>
+      <h2>A processar pagamento</h2>
+      <p>Nao feche esta pagina...</p>
+    </div>
 
-      <button class="action-btn primary mt-auto" @click="finishPurchase">
-        Ver o meu Bilhete
-      </button>
+    <!-- Step: Success -->
+    <div v-if="step === 'success'" class="checkout-body success-state fade-up">
+      <div class="success-ring">
+        <CheckCircle :size="56" />
+      </div>
+      <h2>Pagamento Concluido</h2>
+      <p>O seu <strong>{{ selected?.name }}</strong> foi adicionado ao perfil e esta pronto a usar.</p>
+
+      <div class="success-receipt">
+        <div class="sr-row"><span>Titulo</span><strong>{{ selected?.name }}</strong></div>
+        <div class="sr-row"><span>Valor</span><strong>{{ formattedPrice }}</strong></div>
+        <div class="sr-row"><span>Estado</span><strong class="sr-active">Ativo</strong></div>
+      </div>
+
+      <div class="checkout-footer">
+        <button class="cta-btn" @click="router.push('/app/ticket')">Ver o meu Bilhete</button>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.buy-ticket-page {
-  padding: 1.25rem;
-  height: 100%;
+/* ── Page Shell ──────────────────────────────────── */
+.checkout-page {
   display: flex;
   flex-direction: column;
+  min-height: 100dvh;
+  background: var(--bg-primary);
+  position: relative;
 }
 
-.top-nav {
+/* ── Header ──────────────────────────────────────── */
+.checkout-header {
   display: flex;
   align-items: center;
-  margin-bottom: 2rem;
-  gap: 1rem;
-}
-
-.back-btn {
-  background: none;
-  border: none;
-  color: var(--text-main);
-  padding: 0.5rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background 0.2s;
-}
-
-.back-btn:active {
-  background: var(--bg-hover);
-}
-
-.page-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0;
-  color: var(--text-main);
-}
-
-.step-container {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  gap: 1.5rem;
-}
-
-.instruction {
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  margin: 0;
-}
-
-.ticket-options {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.ticket-option {
-  display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 1.25rem;
+  padding: 16px 20px 12px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-primary);
+}
+.header-back {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
   background: var(--bg-surface);
-  border: 2px solid var(--border-light);
-  border-radius: 1rem;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  color: var(--text-main);
   cursor: pointer;
   transition: all 0.2s;
 }
+.header-back:active { transform: scale(0.92); }
+.header-center h1 { font-size: 1.125rem; font-weight: 700; margin: 0; }
+.header-spacer { width: 40px; }
 
-.ticket-option.selected {
-  border-color: var(--accent-blue);
-  background: rgba(2, 132, 199, 0.05);
-}
-
-.ticket-info {
+/* ── Body ────────────────────────────────────────── */
+.checkout-body {
+  flex: 1;
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  flex-direction: column;
+  padding: 0 20px 24px;
+  gap: 20px;
 }
 
-.ticket-icon {
-  color: var(--accent-blue);
+/* ── Animations ──────────────────────────────────── */
+.fade-up {
+  animation: fadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-
-.ticket-text h3 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.1rem;
-  color: var(--text-main);
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
+.spin { animation: spin360 0.8s linear infinite; }
+@keyframes spin360 { to { transform: rotate(360deg); } }
 
-.ticket-text p {
-  margin: 0;
+/* ── Section Label ───────────────────────────────── */
+.section-label {
   font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
-  max-width: 200px;
+  margin: 4px 0 0;
 }
 
-.ticket-price {
-  font-weight: 800;
-  font-size: 1.2rem;
-  color: var(--text-main);
-}
+/* ── Ticket Cards ────────────────────────────────── */
+.ticket-cards { display: flex; flex-direction: column; gap: 14px; }
 
-.mt-auto {
-  margin-top: auto;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 1.15rem;
-  border-radius: 1rem;
-  font-weight: 700;
-  font-size: 1.05rem;
-  border: none;
+.ticket-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 2px 14px;
+  padding: 20px;
+  background: var(--bg-surface);
+  border: 2px solid var(--border-light);
+  border-radius: 16px;
   cursor: pointer;
-  transition: all 0.15s;
-  width: 100%;
+  text-align: left;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+.ticket-card:active { transform: scale(0.98); }
+.ticket-card.active {
+  border-color: var(--accent-blue);
+  background: var(--bg-surface);
+  box-shadow: 0 0 0 3px var(--border-focus), var(--shadow-glow);
 }
 
-.action-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+.tc-badge {
+  position: absolute;
+  top: -9px; right: 16px;
+  padding: 2px 10px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 6px;
+  background: var(--bg-hover-strong);
+  color: var(--text-muted);
 }
-
-.action-btn.primary {
+.tc-badge.popular {
   background: var(--accent-blue);
   color: #fff;
-  box-shadow: 0 4px 16px rgba(2,132,199,0.3);
 }
-
-.action-btn:active:not(:disabled) {
-  transform: scale(0.98);
+.tc-icon {
+  grid-row: 1 / 3;
+  display: flex; align-items: center; justify-content: center;
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  background: var(--bg-hover);
+  color: var(--accent-blue);
 }
-
-/* Payment Step */
-.summary-card {
-  background: var(--bg-surface);
-  padding: 1.25rem;
-  border-radius: 1rem;
-  border: 1px solid var(--border-light);
+.tc-name { font-size: 1rem; font-weight: 700; color: var(--text-main); align-self: end; }
+.tc-desc { font-size: 0.78rem; color: var(--text-muted); line-height: 1.35; }
+.tc-price {
+  grid-row: 1 / 3;
+  align-self: center;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
 }
-
-.summary-card h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1rem;
+.tc-price span {
+  font-size: 0.65rem;
+  font-weight: 600;
   color: var(--text-muted);
+  margin-left: 3px;
+  vertical-align: super;
 }
+.tc-radio { display: none; }
 
-.summary-row {
+/* ── Order Summary ───────────────────────────────── */
+.order-summary {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  font-size: 1.1rem;
-  color: var(--text-main);
-}
-
-.payment-section {
-  flex: 1;
-}
-
-.payment-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.1rem;
-  margin: 0 0 1rem 0;
-  color: var(--text-main);
-}
-
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 0;
-  color: var(--text-muted);
-  gap: 1rem;
-}
-
-.spinner {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.demo-card-input {
+  padding: 16px 18px;
   background: var(--bg-surface);
-  padding: 1.5rem;
-  border-radius: 1rem;
   border: 1px solid var(--border-light);
+  border-radius: 14px;
+}
+.os-left { display: flex; align-items: center; gap: 12px; }
+.os-icon { color: var(--accent-blue); flex-shrink: 0; }
+.os-name { font-size: 0.95rem; font-weight: 700; color: var(--text-main); }
+.os-desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; }
+.os-price { font-size: 1.1rem; font-weight: 800; color: var(--text-main); white-space: nowrap; }
+
+/* ── Payment Card ────────────────────────────────── */
+.payment-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 16px;
 }
-
-.input-group label {
-  display: block;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin-bottom: 0.5rem;
-}
-
-.fake-input {
-  background: var(--bg-primary);
-  padding: 0.875rem 1rem;
-  border-radius: 0.5rem;
-  font-family: monospace;
-  font-size: 1.1rem;
+.pc-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.95rem; font-weight: 700;
   color: var(--text-main);
-  border: 1px solid var(--border-light);
 }
-
-.input-row {
-  display: flex;
-  gap: 1rem;
+.stripe-mount { min-height: 120px; }
+.stripe-loading {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 12px; padding: 32px 0;
+  color: var(--text-muted); font-size: 0.85rem;
 }
-
-.input-row .input-group {
-  flex: 1;
-}
-
-.stripe-badge {
+.pay-error {
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+  font-size: 0.85rem;
   text-align: center;
-  font-size: 0.75rem;
+}
+
+/* ── Trust Row ───────────────────────────────────── */
+.trust-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px;
+  font-size: 0.72rem;
   color: var(--text-muted);
-  margin-top: 1rem;
-}
-
-.error-msg {
-  color: #ef4444;
-  font-size: 0.9rem;
+  opacity: 0.7;
   text-align: center;
-  margin-top: 1rem;
-  padding: 0.75rem;
-  background: rgba(239, 68, 68, 0.1);
-  border-radius: 0.5rem;
 }
 
-/* Success Step */
+/* ── CTA Footer ──────────────────────────────────── */
+.checkout-footer {
+  margin-top: auto;
+  padding-top: 8px;
+  position: sticky;
+  bottom: 0;
+  padding-bottom: env(safe-area-inset-bottom, 8px);
+  background: linear-gradient(to top, var(--bg-primary) 80%, transparent);
+}
+.cta-btn {
+  width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 16px 24px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent-blue);
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 20px -4px rgba(6, 182, 212, 0.4);
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: hidden;
+}
+.cta-btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+.cta-btn:active:not(:disabled) { transform: scale(0.97); }
+.cta-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.cta-price { opacity: 0.85; font-weight: 500; margin-left: 2px; }
+
+/* ── Processing State ────────────────────────────── */
+.processing-state {
+  align-items: center; justify-content: center; text-align: center;
+  padding-top: 20vh;
+}
+.proc-spinner { color: var(--accent-blue); margin-bottom: 20px; }
+.processing-state h2 { font-size: 1.25rem; margin-bottom: 8px; }
+.processing-state p { color: var(--text-muted); font-size: 0.9rem; }
+
+/* ── Success State ───────────────────────────────── */
 .success-state {
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding-top: 2rem;
+  align-items: center; text-align: center;
+  padding-top: 10vh;
 }
-
-.success-icon-wrapper {
-  color: #10b981;
-  margin-bottom: 1rem;
-  animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+.success-ring {
+  width: 88px; height: 88px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+  margin-bottom: 20px;
+  animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
-
-@keyframes scaleIn {
-  0% { transform: scale(0); opacity: 0; }
+@keyframes popIn {
+  0%   { transform: scale(0); opacity: 0; }
   100% { transform: scale(1); opacity: 1; }
 }
+.success-state h2 { font-size: 1.35rem; margin-bottom: 8px; }
+.success-state p { color: var(--text-muted); line-height: 1.5; max-width: 300px; margin-bottom: 24px; }
 
-.success-state h2 {
-  margin: 0 0 1rem 0;
-  color: var(--text-main);
+.success-receipt {
+  width: 100%;
+  max-width: 320px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 8px;
 }
-
-.success-state p {
+.sr-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0;
+  font-size: 0.85rem;
   color: var(--text-muted);
-  line-height: 1.5;
-  margin: 0;
+  border-bottom: 1px solid var(--border-light);
 }
+.sr-row:last-child { border-bottom: none; }
+.sr-row strong { color: var(--text-main); }
+.sr-active { color: var(--success) !important; }
 </style>
