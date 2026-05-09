@@ -176,7 +176,7 @@ function lotLabel(pct) {
     </div>
 
     <!-- Floating Demo Toggle (discreet) -->
-    <button class="fab-demo" @click="toggleDemo" :class="{ active: isDemo }">
+    <button class="fab-demo" @click="toggleDemo" :class="{ active: isDemo }" aria-label="Alternar Modo Demo">
       <FlaskConical v-if="isDemo" :size="20" />
       <Database v-else :size="20" />
     </button>
