@@ -12,16 +12,11 @@ import java.sql.SQLException;
  * Prioridade de configuração:
  *   1. Variáveis de ambiente do sistema (Azure App Service → Configuration)
  *   2. Ficheiro .env local (desenvolvimento)
- *   3. Defaults (localhost/tub para Docker local)
  * 
  * Quando o host não é localhost, ativa SSL/TLS automaticamente
  * para comunicação segura com Azure MySQL Flexible Server.
  */
 public class DatabaseConnection {
-    private static final String DEFAULT_HOST = "localhost";
-    private static final String DEFAULT_DB = "tub";
-    private static final String DEFAULT_USER = "tub_user";
-    private static final String DEFAULT_PASS = "tub_pass";
 
     // Cache do .env — carregado uma única vez no arranque
     private static final java.util.Map<String, String> envCache = new java.util.HashMap<>();
@@ -31,9 +26,9 @@ public class DatabaseConnection {
 
     /**
      * Resolve uma variável de configuração com fallback:
-     * System.getenv → .env file → default
+     * System.getenv → .env file
      */
-    private static synchronized String getEnv(String key, String def) {
+    private static synchronized String getEnvOrThrow(String key) {
         // Carregar .env apenas uma vez
         if (!envLoaded) {
             envLoaded = true;
@@ -57,10 +52,13 @@ public class DatabaseConnection {
             }
         }
 
-        // Prioridade: System env (Azure) → .env file → default
+        // Prioridade: System env (Azure) → .env file
         String val = System.getenv(key);
         if (val == null || val.isBlank()) val = envCache.get(key);
-        return (val != null && !val.isBlank()) ? val : def;
+        if (val == null || val.isBlank()) {
+            throw new IllegalStateException("Variável de ambiente " + key + " não configurada.");
+        }
+        return val;
     }
 
     /**
@@ -72,10 +70,10 @@ public class DatabaseConnection {
      * - allowPublicKeyRetrieval necessário para autenticação caching_sha2_password
      */
     public static Connection obterConexao() throws SQLException {
-        String host = getEnv("DB_HOST", DEFAULT_HOST);
-        String dbName = getEnv("DB_NAME", DEFAULT_DB);
-        String user = getEnv("DB_USER", DEFAULT_USER);
-        String pass = getEnv("DB_PASS", DEFAULT_PASS);
+        String host = getEnvOrThrow("DB_HOST");
+        String dbName = getEnvOrThrow("DB_NAME");
+        String user = getEnvOrThrow("DB_USER");
+        String pass = getEnvOrThrow("DB_PASS");
 
         StringBuilder url = new StringBuilder();
         url.append("jdbc:mysql://").append(host).append(":3306/").append(dbName);
