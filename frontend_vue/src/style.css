@@ -2,9 +2,9 @@
 
 :root {
   /* TUB Dark Mode Premium Theme */
-  --bg-primary: #020617; /* Slate 950 */
-  --bg-surface: #0f172a; /* Slate 900 */
-  --bg-glass: rgba(15, 23, 42, 0.75);
+  --bg-primary: #121212; /* Slate 950 */
+  --bg-surface: #1a1a1a; /* Slate 900 */
+  --bg-glass: rgba(26, 26, 26, 0.75);
   
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
