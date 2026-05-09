@@ -1,9 +1,8 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted, computed, shallowRef } from 'vue'
-import { TresCanvas, useLoop } from '@tresjs/core'
+import { TresCanvas } from '@tresjs/core'
 import { OrbitControls } from '@tresjs/cientos'
 import * as THREE from 'three'
-import gsap from 'gsap'
 
 const props = defineProps({
   context: { type: String, required: true }, // 'passenger' | 'admin'
@@ -27,31 +26,34 @@ const dpr = computed(() => isPassenger.value ? Math.min(window.devicePixelRatio,
 
 // Constantes geográficas (Centro de Braga para normalização)
 const mapCenter = { lat: 41.5503, lng: -8.4227 }
-const scaleFactor = 3000 // Aumentar escala para espalhar os objetos
+const scaleFactor = 3000
 
 // Converte Lng/Lat para X/Z
 const geoToWorld = (lat, lng) => {
   const x = (lng - mapCenter.lng) * scaleFactor
-  const z = -(lat - mapCenter.lat) * scaleFactor // Inverter lat para o eixo Z (norte = -z em WebGL)
+  const z = -(lat - mapCenter.lat) * scaleFactor
   return new THREE.Vector3(x, 0, z)
 }
 
 // Lotação -> Cor
 function getBusColor(ocupacao) {
-  if (ocupacao > 80) return '#ef4444' // Lotado
-  if (ocupacao > 60) return '#eab308' // Moderado
-  return '#10b981' // Livre
+  if (ocupacao > 80) return '#ef4444'
+  if (ocupacao > 60) return '#eab308'
+  return '#10b981'
 }
 
-const { onLoop } = useLoop()
-
-onLoop(({ delta, elapsed }) => {
-  if (isPassenger.value && controlsRef.value) {
-    // Interpolação suave para a câmara (Tracking do Autocarro)
-    activeCameraTarget.lerp(cameraTarget, 5 * delta)
-    controlsRef.value.value.target.copy(activeCameraTarget)
+// Loop de animação manual (substitui useLoop que causa crash fora do TresCanvas)
+let animFrame = null
+function startLoop() {
+  const tick = () => {
+    if (isPassenger.value && controlsRef.value?.value) {
+      activeCameraTarget.lerp(cameraTarget, 0.08)
+      controlsRef.value.value.target.copy(activeCameraTarget)
+    }
+    animFrame = requestAnimationFrame(tick)
   }
-})
+  animFrame = requestAnimationFrame(tick)
+}
 
 // Observa mudanças no autocarro selecionado (Tracking câmara)
 watch(() => props.selectedBusId, (newId) => {
@@ -62,7 +64,6 @@ watch(() => props.selectedBusId, (newId) => {
       cameraTarget.copy(pos)
     }
   } else {
-    // Reset para centro
     cameraTarget.set(0, 0, 0)
   }
 })
@@ -73,24 +74,26 @@ watch(() => props.autocarros, (newBuses) => {
     const mesh = busMeshes.value.get(bus.id)
     if (mesh) {
       const targetPos = geoToWorld(bus.lat || 41.5503, bus.lng || -8.4227)
-      // Animação da posição
-      gsap.to(mesh.position, {
-        x: targetPos.x,
-        z: targetPos.z,
-        duration: 1,
-        ease: 'power2.out'
-      })
+      // Interpolação suave manual (sem gsap para evitar dependência problemática)
+      const lerp = (a, b, t) => a + (b - a) * t
+      const doLerp = () => {
+        mesh.position.x = lerp(mesh.position.x, targetPos.x, 0.05)
+        mesh.position.z = lerp(mesh.position.z, targetPos.z, 0.05)
+      }
+      // Lerp durante ~1s (60 frames)
+      let frames = 0
+      const anim = () => {
+        doLerp()
+        if (++frames < 60) requestAnimationFrame(anim)
+      }
+      requestAnimationFrame(anim)
 
-      // Atualiza cor se mudou
+      // Atualiza cor
       const newColor = new THREE.Color(getBusColor(bus.ocupacao || 0))
-      gsap.to(mesh.material.color, {
-        r: newColor.r,
-        g: newColor.g,
-        b: newColor.b,
-        duration: 0.5
-      })
+      if (mesh.material) {
+        mesh.material.color.copy(newColor)
+      }
 
-      // Update tracking target if this is the selected bus
       if (props.selectedBusId === bus.id && isPassenger.value) {
         cameraTarget.copy(targetPos)
       }
@@ -102,26 +105,27 @@ const onBusPointerDown = (intersection, busId) => {
   emit('bus-click', busId)
 }
 
-// Inicialização de Meshes manuais para performance / referência
-const onMapReady = () => {
-  // Inicialização adicional se necessário
-}
+// Tema Claro/Escuro
+const isDarkMode = ref(false)
+const groundColor = computed(() => isDarkMode.value ? '#1e293b' : '#e2e8f0')
 
-// Tema Claro/Escuro (observa classe no DOM)
-const isDarkMode = ref(document.documentElement.classList.contains('dark-theme'))
-const bgColor = computed(() => isDarkMode.value ? '#0f172a' : '#f8fafc') // Slate 900 vs Slate 50
-const groundColor = computed(() => isDarkMode.value ? '#1e293b' : '#e2e8f0') // Slate 800 vs Slate 200
-
+let observer = null
 onMounted(() => {
-  const observer = new MutationObserver(() => {
-    isDarkMode.value = document.documentElement.classList.contains('dark-theme') ||
-                       document.body.classList.contains('dark-theme') ||
+  isDarkMode.value = !document.documentElement.getAttribute('data-theme') ||
+                     document.documentElement.getAttribute('data-theme') === 'dark'
+
+  observer = new MutationObserver(() => {
+    isDarkMode.value = !document.documentElement.getAttribute('data-theme') ||
                        document.documentElement.getAttribute('data-theme') === 'dark'
   })
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] })
-  observer.observe(document.body, { attributes: true, attributeFilter: ['class'] })
 
-  onUnmounted(() => observer.disconnect())
+  startLoop()
+})
+
+onUnmounted(() => {
+  if (observer) observer.disconnect()
+  if (animFrame) cancelAnimationFrame(animFrame)
 })
 </script>
 
@@ -132,7 +136,6 @@ onMounted(() => {
       :pixel-ratio="dpr"
       alpha
       ref="canvasRef"
-      @ready="onMapReady"
     >
       <TresPerspectiveCamera
         v-if="isPassenger"
@@ -187,7 +190,6 @@ onMounted(() => {
 
       <!-- Autocarros -->
       <TresGroup>
-        <!-- Usamos ref de array para manter track -->
         <TresMesh
           v-for="bus in autocarros"
           :key="bus.id"
@@ -196,7 +198,6 @@ onMounted(() => {
           @pointer-down="(e) => onBusPointerDown(e, bus.id)"
           cast-shadow
         >
-          <!-- Box: Autocarro -->
           <TresBoxGeometry :args="[2, 3, 5]" />
           <TresMeshStandardMaterial :color="getBusColor(bus.ocupacao)" />
 
@@ -220,8 +221,5 @@ onMounted(() => {
   left: 0;
   background: var(--bg-surface, #f8fafc);
   z-index: 10;
-}
-:global(.dark-theme) .tres-container {
-  background: #0f172a;
 }
 </style>

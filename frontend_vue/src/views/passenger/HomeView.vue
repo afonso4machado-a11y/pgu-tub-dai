@@ -164,10 +164,7 @@ function lotLabel(pct) {
 
 <template>
   <div class="home-page">
-    <!-- Demo Banner -->
-    <div v-if="isDemo" class="demo-banner">
-      <Zap :size="14" /> MODO SIMULAÇÃO ATIVO
-    </div>
+
 
     <!-- Greeting -->
     <div class="greeting-section">
@@ -175,10 +172,10 @@ function lotLabel(pct) {
       <p class="greeting-sub">Pronto para a tua viagem?</p>
     </div>
 
-    <!-- Floating Demo Toggle (discreet) -->
-    <button class="fab-demo" @click="toggleDemo" :class="{ active: isDemo }" aria-label="Alternar Modo Demo">
-      <FlaskConical v-if="isDemo" :size="20" />
-      <Database v-else :size="20" />
+    <!-- Floating Data Source Toggle -->
+    <button class="fab-demo" @click="toggleDemo" :class="{ active: !isDemo }" aria-label="Alternar fonte de dados">
+      <Database :size="16" />
+      <span class="fab-label">{{ isDemo ? 'Demo' : 'Real' }}</span>
     </button>
 
     <!-- Quick Actions -->
@@ -329,44 +326,35 @@ function lotLabel(pct) {
 <style scoped>
 .home-page { padding: 1.25rem; padding-bottom: 2rem; position: relative; }
 
-/* Demo Mode UI */
-.demo-banner {
-  background: #fef3c7;
-  color: #92400e;
-  padding: 0.5rem 1rem;
-  border-radius: 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 800;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: 1px solid #fde68a;
-}
-
+/* Data Source Toggle */
 .fab-demo {
   position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: none;
+  bottom: 5.5rem;
+  right: 1rem;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border-light);
   background: var(--bg-surface);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
   z-index: 9999;
   cursor: pointer;
   color: var(--text-muted);
-  transition: all 0.3s ease;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: all 0.25s ease;
 }
-
+.fab-label { white-space: nowrap; }
 .fab-demo.active {
-  background: #f59e0b;
+  background: var(--accent-blue);
   color: #fff;
-  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+  border-color: var(--accent-blue);
+  box-shadow: 0 2px 12px rgba(6,182,212,0.3);
 }
 
 /* Greeting */

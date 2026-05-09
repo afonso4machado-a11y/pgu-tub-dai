@@ -54,6 +54,7 @@ const goToCheckout = async () => {
 const mountStripeElements = async () => {
   if (!stripe) return
   isProcessing.value = true
+  errorMessage.value = ''
   try {
     const res = await fetch('/api/payments/create-intent', {
       method: 'POST',
@@ -89,8 +90,8 @@ const mountStripeElements = async () => {
     const el = elements.create('payment', { layout: { type: 'tabs', defaultCollapsed: false } })
     setTimeout(() => { if (stripeContainer.value) el.mount(stripeContainer.value) }, 80)
   } catch (err) {
-    errorMessage.value = err.message || 'Falha ao inicializar pagamento.'
-    step.value = 'select'
+    errorMessage.value = err.message || 'Falha ao inicializar pagamento. Verifique a sua ligacao.'
+    // Mantém o utilizador no checkout (não volta para select)
   } finally {
     isProcessing.value = false
   }
@@ -194,7 +195,10 @@ const pay = async () => {
 
         <div v-show="!isProcessing" ref="stripeContainer" class="stripe-mount"></div>
 
-        <div v-if="errorMessage" class="pay-error">{{ errorMessage }}</div>
+        <div v-if="errorMessage" class="pay-error">
+          {{ errorMessage }}
+          <button class="retry-btn" @click="mountStripeElements">Tentar novamente</button>
+        </div>
       </div>
 
       <!-- Trust Indicators -->
@@ -205,7 +209,7 @@ const pay = async () => {
 
       <!-- CTA -->
       <div class="checkout-footer">
-        <button class="cta-btn" :disabled="isProcessing" @click="pay">
+        <button v-if="!errorMessage" class="cta-btn" :disabled="isProcessing" @click="pay">
           <Loader2 v-if="isProcessing" class="spin" :size="20" />
           <template v-else>
             <Shield :size="16" />
@@ -414,14 +418,29 @@ const pay = async () => {
   color: var(--text-muted); font-size: 0.85rem;
 }
 .pay-error {
-  padding: 12px 16px;
+  padding: 16px;
   border-radius: 10px;
   background: rgba(239, 68, 68, 0.08);
   border: 1px solid rgba(239, 68, 68, 0.2);
   color: var(--danger);
   font-size: 0.85rem;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
+.retry-btn {
+  padding: 10px 20px;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  background: var(--bg-surface);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.retry-btn:active { transform: scale(0.97); }
 
 /* ── Trust Row ───────────────────────────────────── */
 .trust-row {

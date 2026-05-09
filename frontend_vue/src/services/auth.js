@@ -10,7 +10,7 @@
  */
 
 // ── Tempo de Expiração (Passageiro) ──
-const PASSENGER_SESSION_TTL = 7 * 24 * 60 * 60 * 1000  // 7 dias (em ms)
+const PASSENGER_SESSION_TTL = 24 * 60 * 60 * 1000  // 24 horas (em ms)
 
 export const authService = {
 
