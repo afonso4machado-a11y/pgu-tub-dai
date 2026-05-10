@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://backend-pgu-tub-2026.azurewebsites.net/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

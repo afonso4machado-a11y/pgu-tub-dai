@@ -1,0 +1,29 @@
+package pt.uminho.dai.pgu.api.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Pattern;
+
+public class RegistarLeituraDTO {
+    @NotBlank(message = "ID do autocarro é obrigatório.")
+    @Pattern(regexp = "^[A-Za-z0-9\\-]+$", message = "ID do autocarro contém caracteres inválidos. Potencial code injection bloqueado.")
+    private String id;
+
+    @Min(value = 0, message = "Entradas não podem ser negativas.")
+    @Max(value = 10000, message = "Entradas excedem o máximo permitido (10000).")
+    private int entradas;
+
+    @Min(value = 0, message = "Saídas não podem ser negativas.")
+    @Max(value = 10000, message = "Saídas excedem o máximo permitido (10000).")
+    private int saidas;
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+
+    public int getEntradas() { return entradas; }
+    public void setEntradas(int entradas) { this.entradas = entradas; }
+
+    public int getSaidas() { return saidas; }
+    public void setSaidas(int saidas) { this.saidas = saidas; }
+}
