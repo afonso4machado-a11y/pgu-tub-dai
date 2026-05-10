@@ -1,0 +1,3 @@
+## 2025-05-10 - Accessibility for Form Labels and Validation
+**Learning:** Proper linkage between labels and inputs (`for`/`id`) is missing in form structures such as LoginView. It is crucial to map errors correctly utilizing `aria-invalid` and `aria-describedby` when conditionally rendering validation hints. Also, wrapping the error component in a `role="alert"` and utilizing `aria-live="assertive"` ensures that error messages are immediately spoken by screen readers.
+**Action:** When adding or auditing inputs, ALWAYS verify that `for`/`id` mapping is established and that ARIA feedback attributes (`aria-invalid`, `aria-describedby`, `role="alert"`, `aria-busy`) are utilized for any dynamic validation state.

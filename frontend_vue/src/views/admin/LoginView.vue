@@ -49,22 +49,26 @@ async function handleLogin() {
 
       <form @submit.prevent="handleLogin" class="login-form">
         <div class="input-group">
-          <label><Mail :size="16" /> Email Institucional</label>
+          <label for="email"><Mail :size="16" /> Email Institucional</label>
           <input 
+            id="email"
             type="email" 
             v-model="email" 
             placeholder="exemplo@uminho.pt" 
             :class="{ 'invalid-email': email && !isValidEmail(email) }"
+            :aria-invalid="email && !isValidEmail(email)"
+            :aria-describedby="email && !isValidEmail(email) ? 'email-error' : null"
             required 
           />
-          <span v-if="email && !isValidEmail(email)" class="hint-error">
+          <span v-if="email && !isValidEmail(email)" id="email-error" class="hint-error" role="alert">
             Apenas emails @uminho.pt ou @um são permitidos.
           </span>
         </div>
 
         <div class="input-group">
-          <label><Lock :size="16" /> Palavra-passe</label>
+          <label for="password"><Lock :size="16" /> Palavra-passe</label>
           <input 
+            id="password"
             type="password" 
             v-model="password" 
             placeholder="••••••••" 
@@ -72,11 +76,11 @@ async function handleLogin() {
           />
         </div>
 
-        <div v-if="error" class="error-msg fade-in">
+        <div v-if="error" class="error-msg fade-in" role="alert" aria-live="assertive">
           {{ error }}
         </div>
 
-        <button type="submit" class="btn-login" :disabled="loading">
+        <button type="submit" class="btn-login" :disabled="loading" :aria-busy="loading">
           <span>{{ loading ? 'A verificar...' : 'Entrar no Sistema' }}</span>
           <ArrowRight v-if="!loading" :size="18" />
         </button>
