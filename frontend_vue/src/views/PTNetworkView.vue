@@ -4,6 +4,7 @@ import { MapPin, Route, Settings2, Bus, Users, AlertTriangle, Radio, Locate, Lay
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
+import { apiFetch } from '../services/api.js'
 const apiUrl = '/api'
 let map = null
 let markersLayer = null
@@ -272,8 +273,7 @@ watch([filterLine, showOnlyCritical], () => {
 
 async function fetchFleet() {
   try {
-    const res = await fetch(`${apiUrl}/autocarros`)
-    const data = await res.json()
+    const { data } = await apiFetch('/autocarros')
     if (data.status === 'sucesso') {
       const newBuses = data.autocarros || []
       // Fingerprint: só atualizar se os dados realmente mudaram

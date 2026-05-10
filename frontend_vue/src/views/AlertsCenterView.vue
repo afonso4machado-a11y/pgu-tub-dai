@@ -5,7 +5,7 @@ import {
   Filter, Download, Bus, RefreshCw, ShieldAlert, Activity
 } from 'lucide-vue-next'
 
-const apiUrl = '/api'
+import { apiFetch } from '../services/api.js'
 const alerts = ref([])
 const loading = ref(true)
 const filterType = ref('')
@@ -18,8 +18,7 @@ const acknowledgeNotes = ref({})
 
 async function fetchAlerts() {
   try {
-    const res = await fetch(`${apiUrl}/dashboard`)
-    const data = await res.json()
+    const { data } = await apiFetch('/dashboard')
     if (data.status === 'sucesso') {
       const raw = data.dashboard?.avisosRecentes || []
       alerts.value = raw.map((a, i) => ({

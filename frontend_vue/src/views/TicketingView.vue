@@ -6,7 +6,7 @@ import { Ticket, CreditCard, AlertTriangle, TrendingUp, Download, RefreshCw } fr
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement)
 
-const apiUrl = '/api'
+import { apiFetch } from '../services/api.js'
 const loading = ref(true)
 const bilhetica = ref(null)
 const metricas = ref(null)
@@ -14,8 +14,7 @@ const metricas = ref(null)
 async function fetchBilhetica() {
   loading.value = true
   try {
-    const res = await fetch(`${apiUrl}/correlacao`)
-    const data = await res.json()
+    const { data } = await apiFetch('/correlacao')
     if (data.status === 'sucesso') {
       bilhetica.value = data.correlacao.bilheticaSimulada || {}
       metricas.value = data.correlacao.metricas || {}

@@ -1,7 +1,10 @@
 /**
  * API Service — PGU-TUB
- * Fornece dados simulados realistas para demonstração da aplicação.
+ * Tenta ligar ao backend Java. Se falhar, retorna dados de demonstração
+ * realistas para permitir demonstrações completas de todas as funcionalidades.
  */
+
+// ────────────────────── DADOS DE DEMONSTRAÇÃO ──────────────────────
 
 const DEMO_AUTOCARROS = [
   { id: 'TUB-101', capacidadeMaxima: 80, passageirosAtuais: 34, ocupacao: 42.5, linhaId: 'L7', marca: 'Mercedes', modelo: 'Citaro', matricula: '23-AB-45', ultimaLeitura: new Date().toISOString(), totalPassageirosTransportados: 1240 },
@@ -76,7 +79,7 @@ const DEMO_CORRELACAO = {
 const DEMO_HISTORICO = (() => {
   const h = {}
   const today = new Date()
-  for (let d = 0; d < 15; d++) {
+  for (let d = 0; d < 30; d++) {
     const dt = new Date(today)
     dt.setDate(dt.getDate() - d)
     const key = dt.toISOString().split('T')[0]
@@ -91,9 +94,36 @@ const DEMO_HISTORICO = (() => {
   return h
 })()
 
+const DEMO_PARAGENS = [
+  "S. Mamede d' Este", "Avenida da Liberdade", "Igreja S Lázaro", "Celeirós",
+  "Rua 25 de Abril", "Parque Infantil", "Hospital", "Rua Egídio Guimarães",
+  "Avenida Central", "Rua Mário de Almeida", "Estação C.P.", "U.Minho",
+  "Universidade do Minho", "Terminal Intermodal", "São Vítor", "Maximinos",
+  "Bom Jesus", "Nogueiró", "Gualtar", "Braga Parque", "Estádio Municipal",
+]
+
+// ────────────────────── ESTADO GLOBAL ──────────────────────
+
+/** Flag reativa: true quando a app está a usar dados de demonstração */
+let _isDemo = false
+
 /**
- * Faz fetch à API. Se falhar (backend indisponível), retorna dados de demonstração.
+ * Verifica se a app está a funcionar em modo de demonstração.
+ * @returns {boolean}
+ */
+export function isDemoMode() {
+  return _isDemo
+}
+
+// ────────────────────── FETCH PRINCIPAL ──────────────────────
+
+/**
+ * Faz fetch à API real. Se falhar (backend indisponível), retorna dados de demonstração.
  * O servidor Express (server.js) faz proxy de /api → backend Java.
+ * 
+ * @param {string} endpoint — caminho relativo (ex: '/dashboard')
+ * @param {object} options — opções para o fetch (method, headers, body, etc.)
+ * @returns {{ live: boolean, data: object }}
  */
 export async function apiFetch(endpoint, options = {}) {
   const baseUrl = '/api'
@@ -101,14 +131,21 @@ export async function apiFetch(endpoint, options = {}) {
   try {
     const res = await fetch(`${baseUrl}${endpoint}`, { ...options, signal: AbortSignal.timeout(4000) })
     const data = await res.json()
-    if (data.status === 'sucesso') return { live: true, data }
+    if (data.status === 'sucesso') {
+      _isDemo = false
+      return { live: true, data }
+    }
     throw new Error('API error')
   } catch (e) {
+    _isDemo = true
     return { live: false, data: getDemoData(endpoint) }
   }
 }
 
+// ────────────────────── DADOS DEMO POR ENDPOINT ──────────────────────
+
 function getDemoData(endpoint) {
+  // Endpoint individual: /autocarros/TUB-101
   if (endpoint.startsWith('/autocarros/')) {
     const id = endpoint.split('/')[2]
     const bus = DEMO_AUTOCARROS.find(a => a.id === id)
@@ -116,7 +153,9 @@ function getDemoData(endpoint) {
     return { status: 'erro', mensagem: 'Autocarro não encontrado' }
   }
 
-  switch (endpoint.split('?')[0]) {
+  const path = endpoint.split('?')[0]
+
+  switch (path) {
     case '/dashboard':
       return { status: 'sucesso', dashboard: DEMO_DASHBOARD }
     case '/autocarros':
@@ -125,9 +164,14 @@ function getDemoData(endpoint) {
       return { status: 'sucesso', correlacao: DEMO_CORRELACAO }
     case '/historico':
       return { status: 'sucesso', historico: DEMO_HISTORICO }
+    case '/paragens':
+      return { status: 'sucesso', paragens: DEMO_PARAGENS }
+    case '/leituras':
+      return { status: 'sucesso', mensagem: 'Leitura registada com sucesso (demonstração).', alertas: [] }
     default:
-      return { status: 'sucesso' }
+      // POST /autocarros, POST /linhas/Lx/autocarros, etc.
+      return { status: 'sucesso', mensagem: 'Operação simulada com sucesso (demonstração).' }
   }
 }
 
-export { DEMO_AUTOCARROS, DEMO_ALERTAS, DEMO_DASHBOARD, DEMO_CORRELACAO }
+export { DEMO_AUTOCARROS, DEMO_ALERTAS, DEMO_DASHBOARD, DEMO_CORRELACAO, DEMO_HISTORICO, DEMO_PARAGENS }

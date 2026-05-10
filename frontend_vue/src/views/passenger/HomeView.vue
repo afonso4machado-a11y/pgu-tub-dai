@@ -4,7 +4,7 @@ import { MapPin, Navigation, Clock, Bus, ChevronRight, Zap, Star, TrendingUp } f
 import { useRouter } from 'vue-router'
 import { authService } from '../../services/auth'
 
-const apiUrl = '/api'
+import { apiFetch } from '../../services/api.js'
 const router = useRouter()
 const currentUser = ref(authService.getUser())
 const greeting = ref('')
@@ -109,29 +109,22 @@ onMounted(async () => {
   else greeting.value = 'Boa noite'
 
   try {
-    const res = await fetch(`${apiUrl}/dashboard`)
-    const data = await res.json()
+    const { data } = await apiFetch('/dashboard')
     if (data.status === 'sucesso') {
       busCount.value = data.dashboard?.totalAutocarros || 0
       avgOcc.value = Math.round(data.dashboard?.taxaOcupacaoMedia || 0)
     }
 
-    // Fetch Paragens reais
-    const pRes = await fetch(`${apiUrl}/paragens`)
-    const pData = await pRes.json()
-    if (pData.status === 'sucesso' && pData.paragens.length > 0) {
+    // Fetch Paragens
+    const { data: pData } = await apiFetch('/paragens')
+    if (pData.status === 'sucesso' && pData.paragens?.length > 0) {
       paragensBraga.value = pData.paragens
     } else {
-      // Fallback: paragens reais das linhas TUB (07H, 40H, 43H)
       paragensBraga.value = [
-        // Linha 07H
         "S. Mamede d' Este", "Avenida da Liberdade", "Igreja S Lázaro", "Celeirós",
         "Rua 25 de Abril", "Parque Infantil",
-        // Linha 40H
         "Hospital", "Rua Egídio Guimarães", "Avenida Central", "Rua Mário de Almeida",
-        // Linha 43H
         "Estação C.P.", "U.Minho", "Universidade do Minho",
-        // Referências urbanas comuns
         "Terminal Intermodal", "São Vítor", "Maximinos", "Bom Jesus",
         "Nogueiró", "Gualtar", "Braga Parque", "Estádio Municipal",
       ]

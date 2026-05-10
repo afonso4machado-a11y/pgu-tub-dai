@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { Search, Bus, Info, AlertTriangle, Activity, ShieldCheck } from 'lucide-vue-next'
 
+import { apiFetch } from '../services/api.js'
 const apiUrl = '/api'
 const autoId = ref('')
 const autoCap = ref('')
@@ -169,8 +170,7 @@ async function handleRegistarAutocarro() {
 
 async function handleConsulta() {
   try {
-    const req = await fetch(`${apiUrl}/autocarros/${consId.value}`)
-    const res = await req.json()
+    const { data: res } = await apiFetch(`/autocarros/${consId.value}`)
     if(res.status === 'sucesso') {
       consRes.value = res
     } else alert(res.mensagem)

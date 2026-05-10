@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { Activity, Radio, AlertOctagon, Calendar, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
-const apiUrl = '/api'
+import { apiFetch } from '../services/api.js'
 const telemetries = ref([])
 const criticalBus = ref(null)
 let timer = null
@@ -76,8 +76,7 @@ function nextMonth() {
 // ---- Telemetria em tempo real ----
 async function fetchData() {
   try {
-    const req = await fetch(`${apiUrl}/autocarros`)
-    const res = await req.json()
+    const { data: res } = await apiFetch('/autocarros')
     if (res.status === 'sucesso') {
       telemetries.value = res.autocarros.map(a => ({
         id: a.id,
@@ -95,8 +94,7 @@ async function fetchData() {
 // ---- Histórico ----
 async function fetchHistorico() {
   try {
-    const req = await fetch(`${apiUrl}/historico`)
-    const res = await req.json()
+    const { data: res } = await apiFetch('/historico')
     if (res.status === 'sucesso') historico.value = res.historico
   } catch (e) { console.error("Erro histórico:", e) }
 }

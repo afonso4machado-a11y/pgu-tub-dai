@@ -4,6 +4,7 @@ import { Users, Locate } from 'lucide-vue-next'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
+import { apiFetch } from '../../services/api.js'
 const apiUrl = '/api'
 let map = null
 let markersLayer = null
@@ -190,8 +191,7 @@ function updateMarkers() {
 
 async function fetchBuses() {
   try {
-    const res = await fetch(`${apiUrl}/autocarros`)
-    const data = await res.json()
+    const { data } = await apiFetch('/autocarros')
     if (data.status === 'sucesso') {
       const newBuses = data.autocarros || []
       // Só atualizar se os dados mudaram (evita re-render idle)

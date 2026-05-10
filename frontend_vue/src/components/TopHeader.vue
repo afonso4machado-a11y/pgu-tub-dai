@@ -1,14 +1,22 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { Bell, ShieldCheck, LogOut, Sun, Moon, Monitor } from 'lucide-vue-next'
 import { useTheme } from '../composables/useTheme'
 import { authService } from '../services/auth'
+import { isDemoMode } from '../services/api'
 
 const adminUser = ref(null)
+const isDemo = ref(false)
 const { currentTheme, setTheme } = useTheme()
+let demoChecker = null
 
 onMounted(() => {
   adminUser.value = authService.getAdminUser()
+  demoChecker = setInterval(() => { isDemo.value = isDemoMode() }, 2000)
+})
+
+onUnmounted(() => {
+  if (demoChecker) clearInterval(demoChecker)
 })
 
 function handleLogout() {
@@ -60,9 +68,9 @@ function handleLogout() {
         <span class="admin-email">{{ adminUser.email }}</span>
       </div>
 
-      <div class="status-badge status-online">
+      <div class="status-badge" :class="isDemo ? 'status-demo' : 'status-online'">
         <ShieldCheck :size="16" class="status-icon" />
-        <span class="fira-code">SISTEMA ONLINE</span>
+        <span class="fira-code">{{ isDemo ? 'SIMULAÇÃO ATIVA' : 'SISTEMA ONLINE' }}</span>
       </div>
       
       <button class="icon-btn" aria-label="Notificações">
@@ -148,6 +156,12 @@ function handleLogout() {
   color: var(--accent-blue);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border: 1px solid var(--border-light);
+}
+
+.status-demo {
+  border-color: var(--warning);
+  color: var(--warning);
+  background: rgba(245, 158, 11, 0.1);
 }
 
 .status-online {

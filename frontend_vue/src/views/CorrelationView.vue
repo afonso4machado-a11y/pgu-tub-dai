@@ -2,7 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { GitCompare, TrendingUp, Calendar, BarChart3, Users, Bus, AlertTriangle, Download } from 'lucide-vue-next'
 
-const apiUrl = '/api'
+import { apiFetch } from '../services/api.js'
 const loading = ref(false)
 const err = ref('')
 const correlacao = ref(null)
@@ -24,8 +24,7 @@ async function carregarCorrelacao() {
   loading.value = true
   err.value = ''
   try {
-    const res = await fetch(`${apiUrl}/correlacao?dataInicio=${dataInicio.value}&dataFim=${dataFim.value}`)
-    const data = await res.json()
+    const { data } = await apiFetch(`/correlacao?dataInicio=${dataInicio.value}&dataFim=${dataFim.value}`)
     if (data.status === 'sucesso') {
       correlacao.value = data.correlacao
     } else {

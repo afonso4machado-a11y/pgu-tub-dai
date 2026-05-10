@@ -2,7 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { Bell, AlertTriangle, Info, Clock, Star, Settings, ChevronRight } from 'lucide-vue-next'
 
-const apiUrl = '/api'
+import { apiFetch } from '../../services/api.js'
 const alerts = ref([])
 const linhaFavorita = ref('L43')
 
@@ -16,8 +16,7 @@ const sampleAlerts = [
 onMounted(async () => {
   // Merge real alerts from API with sample passenger-facing alerts
   try {
-    const res = await fetch(`${apiUrl}/dashboard`)
-    const data = await res.json()
+    const { data } = await apiFetch('/dashboard')
     if (data.status === 'sucesso') {
       const apiAlerts = (data.dashboard?.avisosRecentes || []).map((a, i) => ({
         id: 100 + i,
