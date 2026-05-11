@@ -48,7 +48,8 @@ public class ApiController {
             );
             return ResponseEntity.ok(Map.of("status", "sucesso", "mensagem", "Autocarro registado com sucesso!"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", "Pedido inválido."));
         }
     }
 
@@ -83,7 +84,8 @@ public class ApiController {
             response.put("alertas", alertas);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", "Pedido inválido."));
         }
     }
 
@@ -95,7 +97,8 @@ public class ApiController {
             response.put("status", "sucesso");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(404).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.status(404).body(Map.of("status", "erro", "mensagem", "Recurso não encontrado."));
         }
     }
 
@@ -105,7 +108,8 @@ public class ApiController {
             List<Map<String, Object>> lista = sistemaService.listarAutocarros();
             return ResponseEntity.ok(Map.of("status", "sucesso", "autocarros", lista));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("status", "erro", "mensagem", "Erro interno no servidor."));
         }
     }
 
@@ -114,7 +118,8 @@ public class ApiController {
         try {
             return ResponseEntity.ok(Map.of("status", "sucesso", "dashboard", sistemaService.obterDadosDashboard()));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("status", (Object)"erro", "mensagem", (Object)e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("status", (Object)"erro", "mensagem", (Object)"Erro interno no servidor."));
         }
     }
 
@@ -123,7 +128,8 @@ public class ApiController {
         try {
             return ResponseEntity.ok(Map.of("status", "sucesso", "historico", sistemaService.obterHistoricoPorDia()));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("status", (Object)"erro", "mensagem", (Object)e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("status", (Object)"erro", "mensagem", (Object)"Erro interno no servidor."));
         }
     }
 
@@ -133,7 +139,8 @@ public class ApiController {
             sistemaService.registarLinha(dto.getId(), dto.getNome());
             return ResponseEntity.ok(Map.of("status", "sucesso", "mensagem", "Linha resolvida"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", "Pedido inválido."));
         }
     }
 
@@ -144,7 +151,8 @@ public class ApiController {
             sistemaService.adicionarParagemALinha(dto.getLinhaId() != null ? dto.getLinhaId() : id, dto.getParagem());
             return ResponseEntity.ok(Map.of("status", "sucesso", "mensagem", "Paragem inserida com sucesso"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", "Pedido inválido."));
         }
     }
 
@@ -155,7 +163,8 @@ public class ApiController {
             sistemaService.associarAutocarroALinha(dto.getAutocarroId(), dto.getLinhaId() != null ? dto.getLinhaId() : id);
             return ResponseEntity.ok(Map.of("status", "sucesso", "mensagem", "Associação concluida."));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", "Pedido inválido."));
         }
     }
 
@@ -170,7 +179,8 @@ public class ApiController {
             response.put("correlacao", dados);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("status", (Object)"erro", "mensagem", (Object)e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("status", (Object)"erro", "mensagem", (Object)"Erro interno no servidor."));
         }
     }
 
@@ -184,7 +194,8 @@ public class ApiController {
             );
             return ResponseEntity.ok(Map.of("status", "sucesso", "user", user));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", "Pedido inválido."));
         }
     }
 
@@ -194,7 +205,8 @@ public class ApiController {
             Map<String, Object> user = sistemaService.obterPerfilCliente(id);
             return ResponseEntity.ok(Map.of("status", "sucesso", "user", user));
         } catch (Exception e) {
-            return ResponseEntity.status(404).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.status(404).body(Map.of("status", "erro", "mensagem", "Recurso não encontrado."));
         }
     }
 
@@ -207,7 +219,8 @@ public class ApiController {
             );
             return ResponseEntity.ok(Map.of("status", "sucesso", "user", user));
         } catch (Exception e) {
-            return ResponseEntity.status(401).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.status(401).body(Map.of("status", "erro", "mensagem", "Não autorizado."));
         }
     }
 
@@ -227,7 +240,8 @@ public class ApiController {
             List<String> paragens = sistemaService.listarParagens();
             return ResponseEntity.ok(Map.of("status", "sucesso", "paragens", paragens));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("status", "erro", "mensagem", "Erro interno no servidor."));
         }
     }
 
@@ -240,7 +254,8 @@ public class ApiController {
             List<Map<String, Object>> alertas = sistemaService.listarAlertasRecentes(limite);
             return ResponseEntity.ok(Map.of("status", "sucesso", "alertas", alertas));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("status", "erro", "mensagem", "Erro interno no servidor."));
         }
     }
 
@@ -252,7 +267,8 @@ public class ApiController {
             List<Map<String, Object>> linhas = sistemaService.listarLinhas();
             return ResponseEntity.ok(Map.of("status", "sucesso", "linhas", linhas));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("status", "erro", "mensagem", "Erro interno no servidor."));
         }
     }
 
@@ -265,7 +281,8 @@ public class ApiController {
             Map<String, Object> user = sistemaService.atualizarPerfilCliente(id, payload);
             return ResponseEntity.ok(Map.of("status", "sucesso", "user", user));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", "Pedido inválido."));
         }
     }
 
