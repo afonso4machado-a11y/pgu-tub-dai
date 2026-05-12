@@ -1,8 +1,8 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { loadStripe } from '@stripe/stripe-js'
-import { ArrowLeft, Shield, CheckCircle, Loader2, CreditCard, Smartphone, Ticket } from 'lucide-vue-next'
+import { ArrowLeft, Shield, CheckCircle, Loader2, CreditCard, Ticket } from 'lucide-vue-next'
 import { authService } from '../../services/auth'
 
 const router = useRouter()
@@ -11,8 +11,7 @@ const user = authService.getUser()
 // Flow: 'select' -> 'checkout' -> 'processing' -> 'success'
 const step = ref('select')
 const selectedId = ref('simples')
-const paymentMethod = ref('card') // 'card' | 'mbway' | 'apple'
-const mbwayPhone = ref('')
+const paymentMethod = ref('card')
 const isProcessing = ref(false)
 const errorMessage = ref('')
 
@@ -35,12 +34,42 @@ const ctaLabel = computed(() => {
   return `Pagar ${price} EUR`
 })
 
+// Chaves de sessionStorage — isoladas por utilizador, expiram ao fechar o browser.
+// sessionStorage e NAO localStorage: mais seguro, nao persiste indefinidamente.
+const SESSION_KEY = `pgu_payment_done_${user?.id || 'anon'}`
+const PENDING_KEY  = `pgu_pending_intent_${user?.id || 'anon'}`
+
 onMounted(async () => {
   const key = import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_51TV9cB2Zu827UzcHZ0e3PHKZLWVChT3Vag39Mkv4bsXj6B4C4g6POPhGSps7AovYNYpHZg39uoendvmZBYZKeJCa0079Gpuisx'
   stripe = await loadStripe(key)
+
+  // Proteccao anti-"Voltar" no browser:
+  // Se existe registo de pagamento concluido nesta sessao, verificar no servidor.
+  const savedPayment = sessionStorage.getItem(SESSION_KEY)
+  if (savedPayment) {
+    try {
+      const data = JSON.parse(savedPayment)
+      if (data.paymentIntentId) {
+        const res = await fetch(`/api/payments/check-intent/${encodeURIComponent(data.paymentIntentId)}`)
+        if (res.ok) {
+          const json = await res.json()
+          if (json.pago === true) {
+            // Confirmado no servidor: mostrar ecra de sucesso directamente
+            selectedId.value = data.tipoId || 'simples'
+            step.value = 'success'
+            return
+          }
+        }
+      }
+    } catch (_) { /* silent */ }
+    // Nao confirmado: limpar e deixar fluxo normal
+    sessionStorage.removeItem(SESSION_KEY)
+  }
 })
 
 const goBack = () => {
+  // No ecra de sucesso, voltar leva sempre para os bilhetes (nunca ao checkout)
+  if (step.value === 'success') { router.push('/app/ticket'); return }
   if (step.value === 'checkout') { step.value = 'select'; elements = null; errorMessage.value = '' }
   else router.push('/app/ticket')
 }
@@ -52,7 +81,10 @@ const goToCheckout = async () => {
 }
 
 const mountStripeElements = async () => {
-  if (!stripe) return
+  if (!stripe) {
+    errorMessage.value = 'O sistema de pagamento ainda nao carregou. Aguarde uns segundos e tente novamente.'
+    return
+  }
   isProcessing.value = true
   errorMessage.value = ''
   try {
@@ -61,8 +93,16 @@ const mountStripeElements = async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tipoId: selectedId.value, clienteId: user?.id || 'anonimo' })
     })
-    if (!res.ok) { const e = await res.json(); throw new Error(e.mensagem || 'Erro ao inicializar.') }
-    const { clientSecret } = await res.json()
+    if (!res.ok) {
+      let errMsg = 'Erro ao inicializar o pagamento.'
+      try { const e = await res.json(); errMsg = e.mensagem || errMsg } catch (_) {}
+      throw new Error(errMsg)
+    }
+    const payload = await res.json()
+    const { clientSecret, paymentIntentId } = payload
+
+    // Guardar o paymentIntentId para uso na confirmacao e verificacao posterior
+    if (paymentIntentId) sessionStorage.setItem(PENDING_KEY, paymentIntentId)
 
     const root = document.documentElement
     const isDark = !root.getAttribute('data-theme') || root.getAttribute('data-theme') === 'dark'
@@ -90,8 +130,16 @@ const mountStripeElements = async () => {
     const el = elements.create('payment', { layout: { type: 'tabs', defaultCollapsed: false } })
     setTimeout(() => { if (stripeContainer.value) el.mount(stripeContainer.value) }, 80)
   } catch (err) {
-    errorMessage.value = err.message || 'Falha ao inicializar pagamento. Verifique a sua ligacao.'
-    // Mantém o utilizador no checkout (não volta para select)
+    // Diagnostico diferenciado por tipo de erro
+    const msg = err.message || ''
+    if (!msg || msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('network')) {
+      errorMessage.value = 'Sem ligacao ao servidor. Verifique a sua internet e tente novamente.'
+    } else if (msg.includes('timeout') || msg.includes('AbortError')) {
+      errorMessage.value = 'O servidor demorou muito a responder. Tente novamente.'
+    } else {
+      errorMessage.value = msg || 'Nao foi possivel inicializar o pagamento. Tente novamente.'
+    }
+    // Manter o utilizador no checkout (nao volta para select)
   } finally {
     isProcessing.value = false
   }
@@ -107,15 +155,35 @@ const pay = async () => {
     const { error: submitErr } = await elements.submit()
     if (submitErr) { errorMessage.value = submitErr.message; step.value = 'checkout'; return }
 
-    const { error } = await stripe.confirmPayment({
+    const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: { return_url: window.location.origin + '/app/ticket' },
       redirect: 'if_required'
     })
     if (error) { errorMessage.value = error.message || 'Pagamento recusado.'; step.value = 'checkout'; return }
+
+    // Pagamento concluido com sucesso!
+    // Persistir estado em sessionStorage para proteger contra navegacao "para tras":
+    // se o utilizador carregar "Voltar" no browser, o ecra de sucesso e sempre
+    // apresentado (verificando no servidor que o pagamento e real).
+    const intentId = paymentIntent?.id || sessionStorage.getItem(PENDING_KEY) || ''
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+      paymentIntentId: intentId,
+      tipoId: selectedId.value,
+      nomeTipo: selected.value?.name,
+      preco: selected.value?.price,
+      ts: Date.now()
+    }))
+    sessionStorage.removeItem(PENDING_KEY)
+
     step.value = 'success'
   } catch (e) {
-    errorMessage.value = 'Erro de comunicacao. Verifique a ligacao.'
+    const msg = e.message || ''
+    if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+      errorMessage.value = 'Sem ligacao durante o pagamento. Verifique os seus bilhetes antes de tentar novamente — o pagamento pode ter sido processado.'
+    } else {
+      errorMessage.value = 'Erro inesperado. Verifique os seus bilhetes antes de tentar novamente.'
+    }
     step.value = 'checkout'
   } finally {
     isProcessing.value = false
@@ -128,7 +196,7 @@ const pay = async () => {
 
     <!-- Header -->
     <header class="checkout-header">
-      <button v-if="step !== 'success' && step !== 'processing'" @click="goBack" class="header-back" aria-label="Voltar">
+      <button v-if="step !== 'processing'" @click="goBack" class="header-back" aria-label="Voltar">
         <ArrowLeft :size="20" />
       </button>
       <div class="header-center">
@@ -193,7 +261,7 @@ const pay = async () => {
           <span>A preparar pagamento seguro...</span>
         </div>
 
-        <div v-show="!isProcessing" ref="stripeContainer" class="stripe-mount"></div>
+        <div v-show="!isProcessing && !errorMessage" ref="stripeContainer" class="stripe-mount"></div>
 
         <div v-if="errorMessage" class="pay-error">
           {{ errorMessage }}
@@ -248,7 +316,7 @@ const pay = async () => {
 </template>
 
 <style scoped>
-/* ── Page Shell ──────────────────────────────────── */
+/* -- Page Shell -------------------------------------------------------- */
 .checkout-page {
   display: flex;
   flex-direction: column;
@@ -257,7 +325,7 @@ const pay = async () => {
   position: relative;
 }
 
-/* ── Header ──────────────────────────────────────── */
+/* -- Header ------------------------------------------------------------ */
 .checkout-header {
   display: flex;
   align-items: center;
@@ -282,7 +350,7 @@ const pay = async () => {
 .header-center h1 { font-size: 1.125rem; font-weight: 700; margin: 0; }
 .header-spacer { width: 40px; }
 
-/* ── Body ────────────────────────────────────────── */
+/* -- Body -------------------------------------------------------------- */
 .checkout-body {
   flex: 1;
   display: flex;
@@ -291,7 +359,7 @@ const pay = async () => {
   gap: 20px;
 }
 
-/* ── Animations ──────────────────────────────────── */
+/* -- Animations -------------------------------------------------------- */
 .fade-up {
   animation: fadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -302,7 +370,7 @@ const pay = async () => {
 .spin { animation: spin360 0.8s linear infinite; }
 @keyframes spin360 { to { transform: rotate(360deg); } }
 
-/* ── Section Label ───────────────────────────────── */
+/* -- Section Label ----------------------------------------------------- */
 .section-label {
   font-size: 0.8rem;
   font-weight: 600;
@@ -312,7 +380,7 @@ const pay = async () => {
   margin: 4px 0 0;
 }
 
-/* ── Ticket Cards ────────────────────────────────── */
+/* -- Ticket Cards ------------------------------------------------------ */
 .ticket-cards { display: flex; flex-direction: column; gap: 14px; }
 
 .ticket-card {
@@ -380,7 +448,7 @@ const pay = async () => {
 }
 .tc-radio { display: none; }
 
-/* ── Order Summary ───────────────────────────────── */
+/* -- Order Summary ----------------------------------------------------- */
 .order-summary {
   display: flex;
   align-items: center;
@@ -396,7 +464,7 @@ const pay = async () => {
 .os-desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; }
 .os-price { font-size: 1.1rem; font-weight: 800; color: var(--text-main); white-space: nowrap; }
 
-/* ── Payment Card ────────────────────────────────── */
+/* -- Payment Card ------------------------------------------------------ */
 .payment-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-light);
@@ -442,7 +510,7 @@ const pay = async () => {
 }
 .retry-btn:active { transform: scale(0.97); }
 
-/* ── Trust Row ───────────────────────────────────── */
+/* -- Trust Row --------------------------------------------------------- */
 .trust-row {
   display: flex; align-items: center; justify-content: center;
   gap: 6px;
@@ -452,7 +520,7 @@ const pay = async () => {
   text-align: center;
 }
 
-/* ── CTA Footer ──────────────────────────────────── */
+/* -- CTA Footer -------------------------------------------------------- */
 .checkout-footer {
   margin-top: auto;
   padding-top: 8px;
@@ -488,7 +556,7 @@ const pay = async () => {
 .cta-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .cta-price { opacity: 0.85; font-weight: 500; margin-left: 2px; }
 
-/* ── Processing State ────────────────────────────── */
+/* -- Processing State -------------------------------------------------- */
 .processing-state {
   align-items: center; justify-content: center; text-align: center;
   padding-top: 20vh;
@@ -497,7 +565,7 @@ const pay = async () => {
 .processing-state h2 { font-size: 1.25rem; margin-bottom: 8px; }
 .processing-state p { color: var(--text-muted); font-size: 0.9rem; }
 
-/* ── Success State ───────────────────────────────── */
+/* -- Success State ----------------------------------------------------- */
 .success-state {
   align-items: center; text-align: center;
   padding-top: 10vh;

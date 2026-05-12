@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -142,6 +143,62 @@ public class PaymentController {
     public ResponseEntity<?> listarBilhetes(@PathVariable String clienteId) {
         List<Bilhete> bilhetes = repositorioBilhetes.listarPorCliente(clienteId);
         return ResponseEntity.ok(Map.of("status", "sucesso", "bilhetes", bilhetes));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // 4. Verificar estado de um PaymentIntent (anti-duplo-pagamento)
+    //    Usado pelo frontend ao carregar a página para detetar pagamentos
+    //    já concluídos — mesmo que o utilizador navegue para trás.
+    // ─────────────────────────────────────────────────────────────────────
+
+    @GetMapping("/check-intent/{paymentIntentId}")
+    public ResponseEntity<?> checkPaymentIntent(@PathVariable String paymentIntentId) {
+        // 1. Verificar primeiro na BD local (mais rápido, sem chamar Stripe)
+        Optional<Bilhete> bilheteExistente = repositorioBilhetes.procurarPorPaymentIntent(paymentIntentId);
+        if (bilheteExistente.isPresent()) {
+            Bilhete b = bilheteExistente.get();
+            return ResponseEntity.ok(Map.of(
+                "status", "sucesso",
+                "pago", true,
+                "estado", b.getEstado(),
+                "nomeTipo", b.getNomeTipo(),
+                "preco", b.getPreco(),
+                "dataCompra", b.getDataCompra().toString()
+            ));
+        }
+
+        // 2. Consultar Stripe diretamente (fonte de verdade)
+        try {
+            PaymentIntent intent = PaymentIntent.retrieve(paymentIntentId);
+            boolean succeeded = "succeeded".equals(intent.getStatus());
+
+            if (succeeded) {
+                // Emitir bilhete caso o webhook não o tenha feito ainda (resiliência)
+                emitirBilhete(intent);
+                Map<String, String> meta = intent.getMetadata();
+                String nomeTipo = meta.getOrDefault("nome_tipo", "Bilhete");
+                BigDecimal preco = new BigDecimal(intent.getAmount()).divide(new BigDecimal("100"));
+                return ResponseEntity.ok(Map.of(
+                    "status", "sucesso",
+                    "pago", true,
+                    "estado", "Ativo",
+                    "nomeTipo", nomeTipo,
+                    "preco", preco
+                ));
+            }
+
+            return ResponseEntity.ok(Map.of(
+                "status", "sucesso",
+                "pago", false,
+                "stripeStatus", intent.getStatus()
+            ));
+        } catch (StripeException e) {
+            System.err.println("[Stripe] Erro ao verificar PaymentIntent " + paymentIntentId + ": " + e.getMessage());
+            return ResponseEntity.status(503).body(Map.of(
+                "status", "erro",
+                "mensagem", "Nao foi possivel verificar o estado do pagamento."
+            ));
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────
