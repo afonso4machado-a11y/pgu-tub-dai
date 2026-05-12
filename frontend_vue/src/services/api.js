@@ -52,22 +52,28 @@ const DEMO_CORRELACAO = {
     { linhaId: 'L40', tipoDia: 'UTIL', viagensProgramadas: 30 },
   ],
   procuraPorHora: [
-    { hora: 6, entradas: 45, saidas: 10 },
-    { hora: 7, entradas: 280, saidas: 60 },
-    { hora: 8, entradas: 520, saidas: 120 },
-    { hora: 9, entradas: 390, saidas: 180 },
-    { hora: 10, entradas: 210, saidas: 200 },
-    { hora: 11, entradas: 180, saidas: 170 },
+    // Manha: muitas entradas, poucas saidas (passageiros a entrar na cidade)
+    { hora: 6,  entradas:  45, saidas:  10 },
+    { hora: 7,  entradas: 280, saidas:  55 },
+    { hora: 8,  entradas: 520, saidas: 110 },
+    { hora: 9,  entradas: 390, saidas: 175 },
+    { hora: 10, entradas: 210, saidas: 195 },
+    { hora: 11, entradas: 180, saidas: 165 },
+    // Hora de almoco: equilibrio
     { hora: 12, entradas: 320, saidas: 280 },
-    { hora: 13, entradas: 290, saidas: 310 },
-    { hora: 14, entradas: 200, saidas: 220 },
-    { hora: 15, entradas: 180, saidas: 190 },
-    { hora: 16, entradas: 250, saidas: 240 },
-    { hora: 17, entradas: 480, saidas: 350 },
-    { hora: 18, entradas: 420, saidas: 450 },
-    { hora: 19, entradas: 210, saidas: 300 },
-    { hora: 20, entradas: 90, saidas: 180 },
-    { hora: 21, entradas: 40, saidas: 100 },
+    { hora: 13, entradas: 285, saidas: 270 },
+    // Tarde: mais saidas (acumulacao da manha a dissipar-se)
+    // O total acumulado de entradas ate aqui e ~2230, saidas ~1260,
+    // ha ~970 passageiros "no sistema" que agora comecam a sair.
+    { hora: 14, entradas: 180, saidas: 230 },
+    { hora: 15, entradas: 170, saidas: 195 },
+    { hora: 16, entradas: 245, saidas: 240 },
+    { hora: 17, entradas: 480, saidas: 340 },
+    // Fim do dia: mais saidas que entradas (pessoas a ir para casa)
+    { hora: 18, entradas: 390, saidas: 450 },
+    { hora: 19, entradas: 190, saidas: 295 },
+    { hora: 20, entradas:  75, saidas: 160 },
+    { hora: 21, entradas:  35, saidas:  85 },
   ],
   bilheticaSimulada: {
     'Estudante': 1712,
@@ -86,10 +92,12 @@ const DEMO_HISTORICO = (() => {
     const key = dt.toISOString().split('T')[0]
     h[key] = {}
     DEMO_AUTOCARROS.forEach(a => {
-      h[key][a.id] = {
-        entradas: Math.floor(Math.random() * 200) + 50,
-        saidas: Math.floor(Math.random() * 180) + 40,
-      }
+      // Gerar entradas primeiro; saidas e sempre <= entradas
+      // (num dia completo, um autocarro que comeca vazio nao pode
+      // ter mais saidas do que entradas — conservacao de passageiros)
+      const entradas = Math.floor(Math.random() * 200) + 50
+      const saidas   = Math.floor(Math.random() * (entradas - 10)) + 10
+      h[key][a.id] = { entradas, saidas }
     })
   }
   return h
