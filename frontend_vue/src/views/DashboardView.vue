@@ -1,18 +1,21 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { RefreshCw, Users, Bus, Percent, AlertTriangle, Info, Bell, Activity } from 'lucide-vue-next'
-import { apiFetch } from '../services/api.js'
+import { apiFetch, demoModeRef } from '../services/api.js'
 import { authService } from '../services/auth'
 
 const dashboardStats = ref(null)
 const loading = ref(true)
 const err = ref('')
 const adminUser = ref(null)
+const isDemo = ref(false)
 
 onMounted(() => {
   adminUser.value = authService.getAdminUser()
   carregarDashboard()
 })
+
+watch(demoModeRef, () => carregarDashboard())
 
 async function carregarDashboard() {
   loading.value = true

@@ -1,8 +1,8 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { GitCompare, TrendingUp, Calendar, BarChart3, Users, Bus, AlertTriangle, Download } from 'lucide-vue-next'
 
-import { apiFetch } from '../services/api.js'
+import { apiFetch, demoModeRef } from '../services/api.js'
 const loading = ref(false)
 const err = ref('')
 const correlacao = ref(null)
@@ -19,6 +19,8 @@ onMounted(() => {
   dataInicio.value = inicio.toISOString().split('T')[0]
   carregarCorrelacao()
 })
+
+watch(demoModeRef, () => carregarCorrelacao())
 
 async function carregarCorrelacao() {
   loading.value = true

@@ -1,11 +1,11 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import {
   Bell, AlertTriangle, AlertOctagon, CheckCircle, Clock,
   Filter, Download, Bus, RefreshCw, ShieldAlert, Activity
 } from 'lucide-vue-next'
 
-import { apiFetch } from '../services/api.js'
+import { apiFetch, demoModeRef } from '../services/api.js'
 const alerts = ref([])
 const loading = ref(true)
 const filterType = ref('')
@@ -116,6 +116,8 @@ onMounted(() => {
   timer = setInterval(fetchAlerts, 8000)
 })
 onUnmounted(() => { if (timer) clearInterval(timer) })
+
+watch(demoModeRef, () => fetchAlerts())
 </script>
 
 <template>

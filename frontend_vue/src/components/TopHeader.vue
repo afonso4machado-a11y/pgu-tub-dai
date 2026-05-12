@@ -1,23 +1,23 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { Bell, ShieldCheck, LogOut, Sun, Moon, Monitor } from 'lucide-vue-next'
+import { Bell, ShieldCheck, LogOut, Sun, Moon, Monitor, ToggleLeft, ToggleRight } from 'lucide-vue-next'
 import { useTheme } from '../composables/useTheme'
 import { authService } from '../services/auth'
-import { isDemoMode } from '../services/api'
+import { demoModeRef, toggleDemoMode } from '../services/api'
 
 const adminUser = ref(null)
-const isDemo = ref(false)
 const { currentTheme, setTheme } = useTheme()
-let demoChecker = null
+
+// Usa diretamente o ref reativo — sem interval, sem polling
+const isDemo = demoModeRef
 
 onMounted(() => {
   adminUser.value = authService.getAdminUser()
-  demoChecker = setInterval(() => { isDemo.value = isDemoMode() }, 2000)
 })
 
-onUnmounted(() => {
-  if (demoChecker) clearInterval(demoChecker)
-})
+function handleToggleDemo() {
+  toggleDemoMode()
+}
 
 function handleLogout() {
   authService.logoutAdmin()
@@ -31,6 +31,12 @@ function handleLogout() {
     </div>
     
     <div class="header-actions">
+
+      <!-- Mode Toggle -->
+      <button class="mode-toggle" :class="isDemo ? 'mode-demo' : 'mode-live'" @click="handleToggleDemo" :title="isDemo ? 'Mudar para Dados Reais' : 'Mudar para Simulação'">
+        <component :is="isDemo ? ToggleRight : ToggleLeft" :size="20" />
+        <span class="mode-label fira-code">{{ isDemo ? 'SIMULAÇÃO' : 'DADOS REAIS' }}</span>
+      </button>
 
       <!-- Theme Switcher -->
       <div class="theme-switcher">
@@ -110,6 +116,41 @@ function handleLogout() {
   display: flex;
   align-items: center;
   gap: 1.5rem;
+}
+
+/* Mode Toggle Button */
+.mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1rem;
+  border-radius: 2rem;
+  border: 1px solid var(--border-light);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.mode-live {
+  background: rgba(16, 185, 129, 0.08);
+  color: var(--success);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+.mode-live:hover {
+  background: rgba(16, 185, 129, 0.15);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+}
+
+.mode-demo {
+  background: rgba(245, 158, 11, 0.08);
+  color: var(--warning);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+.mode-demo:hover {
+  background: rgba(245, 158, 11, 0.15);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.15);
 }
 
 .status-badge {

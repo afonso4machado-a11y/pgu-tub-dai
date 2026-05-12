@@ -1,8 +1,8 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { Activity, Radio, AlertOctagon, Calendar, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
-import { apiFetch } from '../services/api.js'
+import { apiFetch, demoModeRef } from '../services/api.js'
 const telemetries = ref([])
 const criticalBus = ref(null)
 let timer = null
@@ -105,6 +105,11 @@ onMounted(() => {
   timer = setInterval(fetchData, 5000)
 })
 onUnmounted(() => { if (timer) clearInterval(timer) })
+
+watch(demoModeRef, () => {
+  fetchData()
+  fetchHistorico()
+})
 </script>
 
 <template>

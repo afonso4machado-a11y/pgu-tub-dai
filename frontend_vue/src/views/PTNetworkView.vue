@@ -4,7 +4,7 @@ import { MapPin, Route, Settings2, Bus, Users, AlertTriangle, Radio, Locate, Lay
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-import { apiFetch } from '../services/api.js'
+import { apiFetch, demoModeRef } from '../services/api.js'
 const apiUrl = '/api'
 let map = null
 let markersLayer = null
@@ -307,6 +307,12 @@ onUnmounted(() => {
   markersCache.clear()
   positionsCache.clear()
   if (map) { map.remove(); map = null }
+})
+
+watch(demoModeRef, () => {
+  // Limpar fingerprint para forçar re-render com novos dados
+  lastDataFingerprint = ''
+  fetchFleet()
 })
 </script>
 

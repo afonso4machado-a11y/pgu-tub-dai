@@ -1,12 +1,12 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { Bar, Doughnut } from 'vue-chartjs'
 import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement } from 'chart.js'
 import { Ticket, CreditCard, AlertTriangle, TrendingUp, Download, RefreshCw } from 'lucide-vue-next'
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement)
 
-import { apiFetch } from '../services/api.js'
+import { apiFetch, demoModeRef } from '../services/api.js'
 const loading = ref(true)
 const bilhetica = ref(null)
 const metricas = ref(null)
@@ -27,6 +27,7 @@ async function fetchBilhetica() {
 }
 
 onMounted(() => fetchBilhetica())
+watch(demoModeRef, () => fetchBilhetica())
 
 // Total de validações
 const totalValidacoes = computed(() => {

@@ -3,6 +3,7 @@
  * Tenta ligar ao backend Java. Se falhar, retorna dados de demonstração
  * realistas para permitir demonstrações completas de todas as funcionalidades.
  */
+import { ref } from 'vue'
 
 // ────────────────────── DADOS DE DEMONSTRAÇÃO ──────────────────────
 
@@ -102,17 +103,35 @@ const DEMO_PARAGENS = [
   "Bom Jesus", "Nogueiró", "Gualtar", "Braga Parque", "Estádio Municipal",
 ]
 
-// ────────────────────── ESTADO GLOBAL ──────────────────────
+// ────────────────────── ESTADO GLOBAL (REATIVO) ──────────────────────
 
-/** Flag reativa: true quando a app está a usar dados de demonstração */
-let _isDemo = false
+/** Ref reativo — permite que as views façam watch() e recarreguem dados */
+export const demoModeRef = ref(localStorage.getItem('pgu-demo-mode') === '1')
 
 /**
- * Verifica se a app está a funcionar em modo de demonstração.
+ * Verifica se a app está em modo de demonstração.
  * @returns {boolean}
  */
 export function isDemoMode() {
-  return _isDemo
+  return demoModeRef.value
+}
+
+/**
+ * Define o modo de demonstração manualmente.
+ * @param {boolean} val
+ */
+export function setDemoMode(val) {
+  demoModeRef.value = !!val
+  localStorage.setItem('pgu-demo-mode', val ? '1' : '0')
+}
+
+/**
+ * Alterna entre modo de demonstração e dados reais.
+ * @returns {boolean} novo estado
+ */
+export function toggleDemoMode() {
+  setDemoMode(!demoModeRef.value)
+  return demoModeRef.value
 }
 
 // ────────────────────── FETCH PRINCIPAL ──────────────────────
@@ -128,16 +147,19 @@ export function isDemoMode() {
 export async function apiFetch(endpoint, options = {}) {
   const baseUrl = '/api'
 
+  // Se o modo demo está forçado pelo utilizador, nem tenta a API
+  if (demoModeRef.value) {
+    return { live: false, data: getDemoData(endpoint) }
+  }
+
   try {
     const res = await fetch(`${baseUrl}${endpoint}`, { ...options, signal: AbortSignal.timeout(4000) })
     const data = await res.json()
     if (data.status === 'sucesso') {
-      _isDemo = false
       return { live: true, data }
     }
     throw new Error('API error')
   } catch (e) {
-    _isDemo = true
     return { live: false, data: getDemoData(endpoint) }
   }
 }
