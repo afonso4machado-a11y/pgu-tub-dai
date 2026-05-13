@@ -8,7 +8,14 @@ import Sidebar from './components/Sidebar.vue'
 import TopHeader from './components/TopHeader.vue'
 
 const route = useRoute()
-const isPassengerApp = computed(() => route.path.startsWith('/app'))
+const isAuthPage = computed(() => ['admin-login', 'pax-login'].includes(route.name))
+const isPassengerApp = computed(() => route.path.startsWith('/app') && !isAuthPage.value)
+
+import { authService } from './services/auth'
+const showAdminLayout = computed(() => {
+  // Re-evaluates when route changes
+  return !isAuthPage.value && !isPassengerApp.value && authService.isAdminLoggedIn()
+})
 
 const { initTheme: initAdminTheme } = useTheme()
 const { initTheme: initPassengerTheme } = usePassengerTheme()
@@ -31,13 +38,18 @@ watch(isPassengerApp, (newVal) => {
 </script>
 
 <template>
-  <!-- Passenger App: full-screen, no sidebar -->
-  <div v-if="isPassengerApp" class="pwa-wrapper">
+  <!-- Auth pages: full-screen, sem sidebar nem header -->
+  <div v-if="isAuthPage" class="auth-wrapper">
     <router-view />
   </div>
 
-  <!-- Backoffice Dashboard: sidebar + header -->
-  <div v-else class="app-layout">
+  <!-- Passenger App: full-screen, no sidebar -->
+  <div v-else-if="isPassengerApp" class="pwa-wrapper">
+    <router-view />
+  </div>
+
+  <!-- Backoffice Dashboard: sidebar + header (só visível se logado) -->
+  <div v-else-if="showAdminLayout" class="app-layout">
     <Sidebar />
     <main class="main-content">
       <TopHeader />
@@ -49,6 +61,11 @@ watch(isPassengerApp, (newVal) => {
         </router-view>
       </div>
     </main>
+  </div>
+
+  <!-- Fallback (ex: 404 sem estar logado) -->
+  <div v-else class="auth-wrapper">
+    <router-view />
   </div>
 </template>
 
