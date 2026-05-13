@@ -64,31 +64,72 @@ function formatDate(ds) {
     <!-- Quick stats -->
     <div v-if="dashboardStats" class="quick-stats">
       <div class="stat-card glass-panel">
-        <div class="stat-icon"><Percent /></div>
-        <div class="stat-info">
-          <span class="stat-value">{{ Number(dashboardStats.taxaOcupacaoMedia || 0).toFixed(1) }}%</span>
-          <span class="stat-label">Taxa Ocupação Média</span>
+        <div class="stat-content">
+          <div class="stat-icon"><Percent /></div>
+          <div class="stat-info">
+            <span class="stat-value">{{ Number(dashboardStats.taxaOcupacaoMedia || 0).toFixed(1) }}%</span>
+            <span class="stat-label">Taxa Ocupação Média</span>
+          </div>
+        </div>
+        <div class="stat-chart">
+          <svg viewBox="0 0 80 30" preserveAspectRatio="none" class="sparkline">
+            <path d="M0,25 C15,20 25,28 40,15 C55,2 65,12 80,5" fill="none" stroke="var(--accent-blue)" stroke-width="2" stroke-linecap="round"/>
+            <path d="M0,25 C15,20 25,28 40,15 C55,2 65,12 80,5 L80,30 L0,30 Z" fill="url(#grad1)"/>
+            <defs>
+              <linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--accent-blue)" stop-opacity="0.3" />
+                <stop offset="100%" stop-color="var(--accent-blue)" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+          </svg>
         </div>
       </div>
+
       <div class="stat-card glass-panel">
-        <div class="stat-icon"><Users /></div>
-        <div class="stat-info">
-          <span class="stat-value">{{ dashboardStats.volumeTotalPassageiros }}</span>
-          <span class="stat-label">Volume Passageiros</span>
+        <div class="stat-content">
+          <div class="stat-icon"><Users /></div>
+          <div class="stat-info">
+            <span class="stat-value">{{ dashboardStats.volumeTotalPassageiros }}</span>
+            <span class="stat-label">Volume Passageiros</span>
+          </div>
+        </div>
+        <div class="stat-chart bars">
+          <div class="bar" style="height: 40%"></div>
+          <div class="bar" style="height: 60%"></div>
+          <div class="bar" style="height: 45%"></div>
+          <div class="bar" style="height: 80%"></div>
+          <div class="bar" style="height: 55%"></div>
+          <div class="bar" style="height: 90%"></div>
         </div>
       </div>
+
       <div class="stat-card glass-panel">
-        <div class="stat-icon"><Bus /></div>
-        <div class="stat-info">
-          <span class="stat-value">{{ dashboardStats.totalAutocarros }}</span>
-          <span class="stat-label">Autocarros Ativos</span>
+        <div class="stat-content">
+          <div class="stat-icon"><Bus /></div>
+          <div class="stat-info">
+            <span class="stat-value">{{ dashboardStats.totalAutocarros }}</span>
+            <span class="stat-label">Autocarros Ativos</span>
+          </div>
+        </div>
+        <div class="stat-chart">
+          <svg viewBox="0 0 80 30" preserveAspectRatio="none" class="sparkline">
+            <path d="M0,15 L15,15 L30,15 L45,15 L60,15 L80,15" fill="none" stroke="var(--accent-blue)" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 4"/>
+          </svg>
         </div>
       </div>
+
       <div class="stat-card glass-panel">
-        <div class="stat-icon"><Activity /></div>
-        <div class="stat-info">
-          <span class="stat-value">OK</span>
-          <span class="stat-label">Estado PGU</span>
+        <div class="stat-content">
+          <div class="stat-icon icon-success"><Activity /></div>
+          <div class="stat-info">
+            <span class="stat-value text-success">OK</span>
+            <span class="stat-label">Estado PGU</span>
+          </div>
+        </div>
+        <div class="stat-chart">
+          <svg viewBox="0 0 80 30" preserveAspectRatio="none" class="sparkline">
+            <path d="M0,15 L20,15 L25,5 L35,25 L40,15 L80,15" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </div>
       </div>
     </div>
@@ -179,12 +220,50 @@ function formatDate(ds) {
 }
 .stat-card {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
   padding: 1.5rem;
   background: var(--bg-surface);
   border: 1px solid var(--border-light);
   border-radius: 1rem;
+  overflow: hidden;
+  position: relative;
+}
+.stat-content {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  z-index: 2;
+}
+.stat-chart {
+  width: 70px;
+  height: 35px;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  z-index: 1;
+}
+.sparkline {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.stat-chart.bars {
+  justify-content: space-between;
+}
+.stat-chart .bar {
+  flex: 1;
+  background: var(--accent-blue);
+  border-radius: 2px 2px 0 0;
+  opacity: 0.5;
+}
+.icon-success {
+  background: rgba(16, 185, 129, 0.1) !important;
+  color: #10b981 !important;
+}
+.text-success {
+  color: #10b981 !important;
 }
 .stat-icon {
   background: rgba(6, 182, 212, 0.1);
