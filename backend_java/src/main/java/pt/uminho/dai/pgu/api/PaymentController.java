@@ -78,9 +78,8 @@ public class PaymentController {
                 .putMetadata("tipo_id",    req.tipoId())
                 .putMetadata("nome_tipo",  config.nomeTipo())
                 .putMetadata("cliente_id", req.clienteId())
-                .setAutomaticPaymentMethods(
-                    PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
-                        .setEnabled(true).build())
+                .addPaymentMethodType("card")
+                .addPaymentMethodType("mbway")
                 .build();
 
             PaymentIntent intent = PaymentIntent.create(params);

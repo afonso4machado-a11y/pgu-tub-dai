@@ -71,6 +71,7 @@ const validadeFormatted = computed(() => {
 })
 
 const diasRestantes = computed(() => {
+  if (activeTicket.value.validade === '-') return '-'
   const diff = new Date(activeTicket.value.validade) - new Date()
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
 })
@@ -118,7 +119,10 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
         </div>
         <div class="tc-detail">
           <span class="tc-label">Restam</span>
-          <span class="tc-value tc-days">{{ diasRestantes }} dias</span>
+          <span class="tc-value tc-days">
+            <template v-if="diasRestantes !== '-'">{{ diasRestantes }} dias</template>
+            <template v-else>-</template>
+          </span>
         </div>
       </div>
 

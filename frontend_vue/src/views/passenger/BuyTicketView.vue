@@ -11,7 +11,6 @@ const user = authService.getUser()
 // Flow: 'select' -> 'checkout' -> 'processing' -> 'success'
 const step = ref('select')
 const selectedId = ref('simples')
-const paymentMethod = ref('card')
 const isProcessing = ref(false)
 const errorMessage = ref('')
 
@@ -29,8 +28,6 @@ const formattedPrice = computed(() => selected.value?.price.toFixed(2).replace('
 const ctaLabel = computed(() => {
   if (isProcessing.value) return ''
   const price = selected.value?.price.toFixed(2).replace('.', ',')
-  if (paymentMethod.value === 'mbway') return `Pagar ${price} EUR com MB WAY`
-  if (paymentMethod.value === 'apple') return `Pagar com Apple Pay`
   return `Pagar ${price} EUR`
 })
 
@@ -109,6 +106,7 @@ const mountStripeElements = async () => {
 
     elements = stripe.elements({
       clientSecret,
+      locale: 'pt-PT',
       appearance: {
         theme: isDark ? 'night' : 'flat',
         variables: {
