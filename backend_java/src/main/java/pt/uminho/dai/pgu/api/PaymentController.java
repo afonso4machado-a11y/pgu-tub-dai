@@ -78,33 +78,14 @@ public class PaymentController {
                 .putMetadata("tipo_id",    req.tipoId())
                 .putMetadata("nome_tipo",  config.nomeTipo())
                 .putMetadata("cliente_id", req.clienteId())
-                .addPaymentMethodType("card")
-                .addPaymentMethodType("link")
-                .addPaymentMethodType("bancontact")
-                .addPaymentMethodType("mbway")
-                .addPaymentMethodType("revolut_pay")
+                .setAutomaticPaymentMethods(
+                    PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
+                        .setEnabled(true)
+                        .build()
+                )
                 .build();
 
-            PaymentIntent intent;
-            try {
-                intent = PaymentIntent.create(params);
-            } catch (StripeException e) {
-                String errMsg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
-                if (errMsg.contains("mbway") || errMsg.contains("bancontact") || errMsg.contains("revolut_pay") || errMsg.contains("link")) {
-                    System.err.println("[Stripe] Metodo(s) de pagamento extra nao ativos na dashboard. A efetuar fallback seguro apenas para cartao...");
-                    PaymentIntentCreateParams fallbackParams = PaymentIntentCreateParams.builder()
-                        .setAmount(config.preco().multiply(new BigDecimal("100")).longValue())
-                        .setCurrency("eur")
-                        .putMetadata("tipo_id",    req.tipoId())
-                        .putMetadata("nome_tipo",  config.nomeTipo())
-                        .putMetadata("cliente_id", req.clienteId())
-                        .addPaymentMethodType("card")
-                        .build();
-                    intent = PaymentIntent.create(fallbackParams);
-                } else {
-                    throw e;
-                }
-            }
+            PaymentIntent intent = PaymentIntent.create(params);
 
             return ResponseEntity.ok(Map.of(
                 "clientSecret", intent.getClientSecret(),

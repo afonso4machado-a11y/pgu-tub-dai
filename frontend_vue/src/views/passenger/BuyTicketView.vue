@@ -412,10 +412,6 @@ const pay = async () => {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border-radius: 6px;
-  background: var(--bg-hover-strong);
-  color: var(--text-muted);
-}
-.tc-badge.popular {
   background: var(--accent-blue);
   color: #fff;
 }
