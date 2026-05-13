@@ -82,7 +82,25 @@ public class PaymentController {
                 .addPaymentMethodType("mbway")
                 .build();
 
-            PaymentIntent intent = PaymentIntent.create(params);
+            PaymentIntent intent;
+            try {
+                intent = PaymentIntent.create(params);
+            } catch (StripeException e) {
+                if (e.getMessage() != null && e.getMessage().toLowerCase().contains("mbway")) {
+                    System.err.println("[Stripe] MB Way nao ativo na dashboard Stripe. A efetuar fallback apenas para cartao...");
+                    PaymentIntentCreateParams fallbackParams = PaymentIntentCreateParams.builder()
+                        .setAmount(config.preco().multiply(new BigDecimal("100")).longValue())
+                        .setCurrency("eur")
+                        .putMetadata("tipo_id",    req.tipoId())
+                        .putMetadata("nome_tipo",  config.nomeTipo())
+                        .putMetadata("cliente_id", req.clienteId())
+                        .addPaymentMethodType("card")
+                        .build();
+                    intent = PaymentIntent.create(fallbackParams);
+                } else {
+                    throw e;
+                }
+            }
 
             return ResponseEntity.ok(Map.of(
                 "clientSecret", intent.getClientSecret(),
@@ -92,8 +110,17 @@ public class PaymentController {
             ));
         } catch (StripeException e) {
             System.err.println("[Stripe] Erro ao criar PaymentIntent: " + e.getMessage());
+            String msg = "Erro ao inicializar pagamento. Tente novamente.";
+            if (e.getMessage() != null) {
+                if (e.getMessage().contains("Invalid API Key")) {
+                    msg = "Erro: A Chave Secreta do Stripe nao e valida.";
+                } else {
+                    // Retorna a mensagem original para facilitar debug
+                    msg = "Erro Stripe: " + e.getMessage().split(";")[0]; 
+                }
+            }
             return ResponseEntity.internalServerError()
-                .body(Map.of("status", "erro", "mensagem", "Erro ao inicializar pagamento. Tente novamente."));
+                .body(Map.of("status", "erro", "mensagem", msg));
         }
     }
 
