@@ -79,6 +79,7 @@ public class PaymentController {
                 .putMetadata("nome_tipo",  config.nomeTipo())
                 .putMetadata("cliente_id", req.clienteId())
                 .addPaymentMethodType("card")
+                .addPaymentMethodType("bancontact")
                 .addPaymentMethodType("mbway")
                 .build();
 
@@ -86,8 +87,8 @@ public class PaymentController {
             try {
                 intent = PaymentIntent.create(params);
             } catch (StripeException e) {
-                if (e.getMessage() != null && e.getMessage().toLowerCase().contains("mbway")) {
-                    System.err.println("[Stripe] MB Way nao ativo na dashboard Stripe. A efetuar fallback apenas para cartao...");
+                if (e.getMessage() != null && (e.getMessage().toLowerCase().contains("mbway") || e.getMessage().toLowerCase().contains("bancontact"))) {
+                    System.err.println("[Stripe] Metodo(s) (MB Way / Bancontact) nao ativo(s) na dashboard. A efetuar fallback apenas para cartao...");
                     PaymentIntentCreateParams fallbackParams = PaymentIntentCreateParams.builder()
                         .setAmount(config.preco().multiply(new BigDecimal("100")).longValue())
                         .setCurrency("eur")
