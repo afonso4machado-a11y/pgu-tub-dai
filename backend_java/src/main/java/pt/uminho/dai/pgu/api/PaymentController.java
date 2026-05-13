@@ -79,16 +79,19 @@ public class PaymentController {
                 .putMetadata("nome_tipo",  config.nomeTipo())
                 .putMetadata("cliente_id", req.clienteId())
                 .addPaymentMethodType("card")
+                .addPaymentMethodType("link")
                 .addPaymentMethodType("bancontact")
                 .addPaymentMethodType("mbway")
+                .addPaymentMethodType("revolut_pay")
                 .build();
 
             PaymentIntent intent;
             try {
                 intent = PaymentIntent.create(params);
             } catch (StripeException e) {
-                if (e.getMessage() != null && (e.getMessage().toLowerCase().contains("mbway") || e.getMessage().toLowerCase().contains("bancontact"))) {
-                    System.err.println("[Stripe] Metodo(s) (MB Way / Bancontact) nao ativo(s) na dashboard. A efetuar fallback apenas para cartao...");
+                String errMsg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+                if (errMsg.contains("mbway") || errMsg.contains("bancontact") || errMsg.contains("revolut_pay") || errMsg.contains("link")) {
+                    System.err.println("[Stripe] Metodo(s) de pagamento extra nao ativos na dashboard. A efetuar fallback seguro apenas para cartao...");
                     PaymentIntentCreateParams fallbackParams = PaymentIntentCreateParams.builder()
                         .setAmount(config.preco().multiply(new BigDecimal("100")).longValue())
                         .setCurrency("eur")
