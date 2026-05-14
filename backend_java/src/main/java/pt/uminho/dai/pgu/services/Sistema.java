@@ -65,8 +65,26 @@ public class Sistema {
         repositorioAutocarros.guardar(new Autocarro(id, capacidadeMaxima, matricula, marca, modelo));
     }
 
+    private String hashPassword(String password) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(password.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder(2 * hash.length);
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new RuntimeException("Erro ao gerar hash de password", e);
+        }
+    }
+
     public void registarCliente(String id, String nome, String email, String password) {
-        repositorioClientes.guardar(new Cliente(id, nome, email, password));
+        repositorioClientes.guardar(new Cliente(id, nome, email, hashPassword(password)));
     }
 
     public void registarLinha(String id, String nome) {
@@ -75,7 +93,19 @@ public class Sistema {
 
     public Optional<Cliente> loginCliente(String email, String password) {
         return repositorioClientes.procurarPorEmail(email)
-                .filter(c -> password.equals(c.getPassword()));
+                .filter(c -> {
+                    String hashedInput = hashPassword(password);
+                    if (hashedInput.equals(c.getPassword())) {
+                        return true;
+                    }
+                    // Retrocompatibilidade para passwords antigas em plaintext
+                    if (password.equals(c.getPassword())) {
+                        c.setPassword(hashedInput); // atualizar para hash (necessita adicionar setter no Cliente)
+                        atualizarCliente(c);
+                        return true;
+                    }
+                    return false;
+                });
     }
 
     public Optional<Cliente> procurarClientePorEmail(String email) {
