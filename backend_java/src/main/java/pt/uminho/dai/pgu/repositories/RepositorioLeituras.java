@@ -63,7 +63,7 @@ public class RepositorioLeituras {
     public List<Map<String, Object>> obterVolumePorHoraHoje() {
         List<Map<String, Object>> resultado = new ArrayList<>();
         String sql = "SELECT HOUR(timestamp) as hora, SUM(entradas) as passageiros " +
-                     "FROM leituras WHERE DATE(timestamp) = CURDATE() " +
+                     "FROM leituras WHERE timestamp >= CURDATE() AND timestamp < CURDATE() + INTERVAL 1 DAY " +
                      "GROUP BY HOUR(timestamp) ORDER BY hora ASC";
         try (Connection conn = DatabaseConnection.obterConexao();
              PreparedStatement ps = conn.prepareStatement(sql);
