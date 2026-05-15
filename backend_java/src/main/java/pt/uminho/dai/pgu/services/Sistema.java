@@ -358,4 +358,12 @@ public class Sistema {
     public void atualizarCliente(Cliente cliente) {
         repositorioClientes.guardar(cliente);
     }
+
+    /**
+     * Retorna o volume de passageiros (entradas) agrupado por hora para o dia atual.
+     * Delega ao RepositorioLeituras que faz GROUP BY HOUR() na BD.
+     */
+    public List<Map<String, Object>> obterVolumePorHoraHoje() {
+        return repositorioLeituras.obterVolumePorHoraHoje();
+    }
 }

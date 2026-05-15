@@ -1,14 +1,29 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import { RefreshCw, Users, Bus, Percent, AlertTriangle, Info, Bell, Activity } from 'lucide-vue-next'
+import { ref, onMounted, watch, computed } from 'vue'
+import { RefreshCw, Users, Bus, Percent, AlertTriangle, Info, Bell, Activity, TrendingUp } from 'lucide-vue-next'
 import { apiFetch, demoModeRef } from '../services/api.js'
 import { authService } from '../services/auth'
+
+// vue-chartjs + chart.js
+import { Line } from 'vue-chartjs'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+} from 'chart.js'
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
 
 const dashboardStats = ref(null)
 const loading = ref(true)
 const err = ref('')
 const adminUser = ref(null)
-const isDemo = ref(false)
 
 onMounted(() => {
   adminUser.value = authService.getAdminUser()
@@ -27,8 +42,8 @@ async function carregarDashboard() {
     } else {
       err.value = data.mensagem || 'Erro desconhecido ao obter dados.'
     }
-  } catch(e) { 
-    err.value = "Falha Crítica na ligação ao servidor principal."
+  } catch(e) {
+    err.value = 'Falha Crítica na ligação ao servidor principal.'
   } finally {
     setTimeout(() => { loading.value = false }, 300)
   }
@@ -38,6 +53,70 @@ function formatDate(ds) {
   if (!ds) return ''
   const d = new Date(ds)
   return d.toLocaleString('pt-PT')
+}
+
+// ── Chart.js: dados e opções ──────────────────────────────────────────
+
+const chartData = computed(() => {
+  const raw = dashboardStats.value?.volumePorHora ?? []
+  const labels = raw.map(r => `${String(r.hora).padStart(2, '0')}h`)
+  const values = raw.map(r => r.passageiros)
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'Passageiros / hora',
+        data: values,
+        fill: true,
+        tension: 0.45,
+        borderColor: '#06b6d4',
+        borderWidth: 2.5,
+        pointBackgroundColor: '#06b6d4',
+        pointBorderColor: '#0e1117',
+        pointRadius: 4,
+        pointHoverRadius: 7,
+        backgroundColor: (ctx) => {
+          const canvas = ctx.chart.canvas
+          const gradient = canvas.getContext('2d').createLinearGradient(0, 0, 0, canvas.height)
+          gradient.addColorStop(0, 'rgba(6,182,212,0.35)')
+          gradient.addColorStop(1, 'rgba(6,182,212,0.00)')
+          return gradient
+        },
+      },
+    ],
+  }
+})
+
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  interaction: { mode: 'index', intersect: false },
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: 'rgba(14,17,23,0.92)',
+      borderColor: 'rgba(6,182,212,0.4)',
+      borderWidth: 1,
+      titleColor: '#e2e8f0',
+      bodyColor: '#94a3b8',
+      padding: 12,
+      callbacks: {
+        label: ctx => ` ${ctx.parsed.y} passageiros`,
+      },
+    },
+  },
+  scales: {
+    x: {
+      grid: { color: 'rgba(255,255,255,0.04)' },
+      ticks: { color: '#64748b', font: { size: 11 } },
+    },
+    y: {
+      grid: { color: 'rgba(255,255,255,0.04)' },
+      ticks: { color: '#64748b', font: { size: 11 } },
+      beginAtZero: true,
+    },
+  },
 }
 </script>
 
@@ -134,6 +213,37 @@ function formatDate(ds) {
       </div>
     </div>
 
+    <!-- ── Gráfico de Evolução Temporal ─────────────────────────────── -->
+    <div v-if="dashboardStats" class="chart-section glass-panel">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <TrendingUp class="chart-icon" :size="20" />
+          <div>
+            <h4 class="chart-title">Evolução de Passageiros — Hoje</h4>
+            <p class="chart-subtitle">Volume de entradas por hora do dia atual</p>
+          </div>
+        </div>
+        <span class="chart-badge">
+          {{ demoModeRef ? 'Simulação' : 'Dados Reais' }}
+        </span>
+      </div>
+
+      <div class="chart-canvas-wrapper">
+        <div v-if="(dashboardStats.volumePorHora ?? []).length === 0" class="chart-empty">
+          <TrendingUp :size="40" class="text-muted" />
+          <p>Sem leituras registadas hoje.</p>
+          <span>Assim que chegarem dados do sensor, o gráfico será preenchido automaticamente.</span>
+        </div>
+        <Line
+          v-else
+          :data="chartData"
+          :options="chartOptions"
+          style="width:100%; height:100%;"
+        />
+      </div>
+    </div>
+
+    <!-- ── Painéis Inferiores ───────────────────────────────────────── -->
     <div v-if="dashboardStats" class="dashboard-content">
       <div class="content-section autocarros-criticos">
         <h4><AlertTriangle class="text-warning"/> Veículos em Lotação Crítica</h4>
@@ -212,6 +322,7 @@ function formatDate(ds) {
   margin-bottom: 1.5rem;
 }
 
+/* ── Quick Stats ── */
 .quick-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -249,9 +360,7 @@ function formatDate(ds) {
   height: 100%;
   overflow: visible;
 }
-.stat-chart.bars {
-  justify-content: space-between;
-}
+.stat-chart.bars { justify-content: space-between; }
 .stat-chart .bar {
   flex: 1;
   background: var(--accent-blue);
@@ -262,9 +371,7 @@ function formatDate(ds) {
   background: rgba(16, 185, 129, 0.1) !important;
   color: #10b981 !important;
 }
-.text-success {
-  color: #10b981 !important;
-}
+.text-success { color: #10b981 !important; }
 .stat-icon {
   background: rgba(6, 182, 212, 0.1);
   color: var(--accent-blue);
@@ -274,8 +381,98 @@ function formatDate(ds) {
 }
 .stat-info { display: flex; flex-direction: column; }
 .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
-.stat-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
 
+/* ── Chart Section ── */
+.chart-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: 1rem;
+  padding: 1.75rem;
+  margin-bottom: 2rem;
+}
+
+.chart-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.chart-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.chart-icon {
+  color: var(--accent-blue);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.chart-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.chart-subtitle {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.chart-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(6, 182, 212, 0.12);
+  color: var(--accent-blue);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  white-space: nowrap;
+}
+
+.chart-canvas-wrapper {
+  position: relative;
+  height: 260px;
+}
+
+.chart-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+.chart-empty p {
+  margin: 0;
+  font-weight: 500;
+  font-size: 1rem;
+}
+.chart-empty span {
+  font-size: 0.82rem;
+  opacity: 0.7;
+  max-width: 28rem;
+}
+
+/* ── Bottom Grid ── */
 .dashboard-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -283,9 +480,7 @@ function formatDate(ds) {
 }
 
 @media (max-width: 768px) {
-  .dashboard-content {
-    grid-template-columns: 1fr;
-  }
+  .dashboard-content { grid-template-columns: 1fr; }
 }
 
 .content-section h4 {
@@ -298,8 +493,9 @@ function formatDate(ds) {
 }
 
 .text-warning { color: var(--warning); }
-.text-danger { color: var(--danger); }
-.text-accent { color: var(--accent-blue); }
+.text-danger  { color: var(--danger); }
+.text-accent  { color: var(--accent-blue); }
+.text-muted   { color: var(--text-muted); }
 
 .list-container {
   display: flex;
@@ -328,11 +524,9 @@ function formatDate(ds) {
   padding: 0.75rem 0;
   border-bottom: 1px solid var(--border-light);
 }
-.list-item:last-child {
-  border-bottom: none;
-}
+.list-item:last-child { border-bottom: none; }
 
-.item-id { font-weight: bold; color: var(--text-main); }
+.item-id    { font-weight: bold; color: var(--text-main); }
 .item-value { font-weight: 500; }
 
 .aviso-item {
@@ -346,10 +540,7 @@ function formatDate(ds) {
   border-radius: 50%;
   display: flex;
 }
-.aviso-detalhes {
-  display: flex;
-  flex-direction: column;
-}
-.aviso-msg { font-weight: 500; color: var(--text-main); }
+.aviso-detalhes { display: flex; flex-direction: column; }
+.aviso-msg  { font-weight: 500; color: var(--text-main); }
 .aviso-meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem; }
 </style>
