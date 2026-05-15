@@ -2,6 +2,7 @@ package pt.uminho.dai.pgu.core;
 
 import java.sql.*;
 import java.util.List;
+import pt.uminho.dai.pgu.repositories.DatabaseConnection;
 
 public class RepositorioClientesAlertas {
 
