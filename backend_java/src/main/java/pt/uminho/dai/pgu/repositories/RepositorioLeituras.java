@@ -55,4 +55,28 @@ public class RepositorioLeituras {
         }
         return resultado;
     }
+
+    /**
+     * Retorna o total de entradas por hora do dia atual.
+     * Estrutura: [ { "hora": 8, "passageiros": 320 }, ... ]
+     */
+    public List<Map<String, Object>> obterVolumePorHoraHoje() {
+        List<Map<String, Object>> resultado = new ArrayList<>();
+        String sql = "SELECT HOUR(timestamp) as hora, SUM(entradas) as passageiros " +
+                     "FROM leituras WHERE DATE(timestamp) = CURDATE() " +
+                     "GROUP BY HOUR(timestamp) ORDER BY hora ASC";
+        try (Connection conn = DatabaseConnection.obterConexao();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> row = new LinkedHashMap<>();
+                row.put("hora", rs.getInt("hora"));
+                row.put("passageiros", rs.getInt("passageiros"));
+                resultado.add(row);
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao obter volume por hora: " + e.getMessage());
+        }
+        return resultado;
+    }
 }

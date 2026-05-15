@@ -29,6 +29,24 @@ const DEMO_DASHBOARD = {
   totalAutocarros: DEMO_AUTOCARROS.length,
   autocarrosCriticos: DEMO_AUTOCARROS.filter(a => a.ocupacao > 80).map(a => ({ id: a.id, taxaOcupacao: a.ocupacao })),
   avisosRecentes: DEMO_ALERTAS,
+  volumePorHora: [
+    { hora: 6,  passageiros:  45 },
+    { hora: 7,  passageiros: 280 },
+    { hora: 8,  passageiros: 520 },
+    { hora: 9,  passageiros: 390 },
+    { hora: 10, passageiros: 210 },
+    { hora: 11, passageiros: 180 },
+    { hora: 12, passageiros: 320 },
+    { hora: 13, passageiros: 285 },
+    { hora: 14, passageiros: 180 },
+    { hora: 15, passageiros: 170 },
+    { hora: 16, passageiros: 245 },
+    { hora: 17, passageiros: 480 },
+    { hora: 18, passageiros: 390 },
+    { hora: 19, passageiros: 190 },
+    { hora: 20, passageiros:  75 },
+    { hora: 21, passageiros:  35 },
+  ],
 }
 
 const DEMO_CORRELACAO = {

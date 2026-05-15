@@ -58,7 +58,34 @@ public class SistemaService {
     }
 
     public Map<String, Object> obterDadosDashboard() throws Exception {
-        return sistema.obterDadosDashboard();
+        Map<String, Object> dashboard = new java.util.LinkedHashMap<>(sistema.obterDadosDashboard());
+
+        // ── Simulação vs Real: volumePorHora ──
+        boolean demoMode = "1".equals(System.getenv("PGU_DEMO_MODE"))
+                        || "true".equalsIgnoreCase(System.getenv("PGU_DEMO_MODE"));
+
+        List<Map<String, Object>> volumePorHora;
+        if (demoMode) {
+            // Dados fictícios com picos realistas (manhã + fim de tarde)
+            int[][] picos = {
+                {6, 45}, {7, 280}, {8, 520}, {9, 390}, {10, 210}, {11, 180},
+                {12, 320}, {13, 285}, {14, 180}, {15, 170}, {16, 245},
+                {17, 480}, {18, 390}, {19, 190}, {20, 75}, {21, 35}
+            };
+            volumePorHora = new java.util.ArrayList<>();
+            for (int[] p : picos) {
+                Map<String, Object> row = new java.util.LinkedHashMap<>();
+                row.put("hora", p[0]);
+                row.put("passageiros", p[1]);
+                volumePorHora.add(row);
+            }
+        } else {
+            // Dados reais: GROUP BY HOUR() na BD para o dia atual
+            volumePorHora = sistema.obterVolumePorHoraHoje();
+        }
+
+        dashboard.put("volumePorHora", volumePorHora);
+        return dashboard;
     }
 
     public java.util.Map<String, java.util.Map<String, java.util.Map<String, Integer>>> obterHistoricoPorDia() throws Exception {
