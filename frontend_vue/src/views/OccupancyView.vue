@@ -162,9 +162,9 @@ watch(demoModeRef, () => {
       <div class="cal-header">
         <h4 class="cal-title"><Calendar class="icon-inline" /> Histórico de Ocupação por Dia</h4>
         <div class="cal-nav">
-          <button class="nav-btn" @click="prevMonth"><ChevronLeft :size="18"/></button>
+          <button class="nav-btn" @click="prevMonth" aria-label="Mês anterior"><ChevronLeft :size="18"/></button>
           <span class="cal-month">{{ calendarTitle }}</span>
-          <button class="nav-btn" @click="nextMonth"><ChevronRight :size="18"/></button>
+          <button class="nav-btn" @click="nextMonth" aria-label="Mês seguinte"><ChevronRight :size="18"/></button>
         </div>
         <select v-model="selectedBus" class="bus-select">
           <option :value="null">Todos os Autocarros</option>
