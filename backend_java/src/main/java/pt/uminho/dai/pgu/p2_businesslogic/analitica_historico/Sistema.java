@@ -93,11 +93,11 @@ public class Sistema {
  }
 
  public boolean loginAdmin(String email, String password) {
- // Sentinel: Falha segura se a variável de ambiente não existir
- String adminPassword = System.getenv("PGU_ADMIN_PASSWORD");
- if (adminPassword == null || adminPassword.isBlank()) {
- return false; // Fail-safe: Bloqueia login se a variável não estiver segura no ambiente
- }
+  // Sentinel: Falha segura se a variável de ambiente não existir
+  String adminPassword = pt.uminho.dai.pgu.p7_data.DatabaseConnection.getEnv("PGU_ADMIN_PASSWORD", "");
+  if (adminPassword == null || adminPassword.isBlank()) {
+  return false; // Fail-safe: Bloqueia login se a variável não estiver segura no ambiente
+  }
 
  if (email == null || password == null) {
  return false;
@@ -138,9 +138,11 @@ public class Sistema {
  repositorioLeituras.guardar(autocarroId, leitura);
  List<Long> alertaIds = repositorioAlertas.guardarTodos(alertas);
 
+ List<String> clienteIds = new ArrayList<>();
  for (Cliente cliente : repositorioClientes.listarTodos()) {
- repositorioClientesAlertas.guardar(cliente.getId(), alertaIds);
+     clienteIds.add(cliente.getId());
  }
+ repositorioClientesAlertas.guardarEmLote(clienteIds, alertaIds);
 
  repositorioAutocarros.atualizarEstado(autocarro);
  notificarClientes(alertas);

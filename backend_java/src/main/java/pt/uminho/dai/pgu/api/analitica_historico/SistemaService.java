@@ -182,15 +182,15 @@ public class SistemaService {
  }).toList();
  }
 
- public Map<String, Object> atualizarPerfilCliente(String id, Map<String, Object> dados) throws Exception {
+ public Map<String, Object> atualizarPerfilCliente(String id, AtualizarPerfilDTO dto) throws Exception {
  var cliente = sistema.procurarClientePorId(id)
  .orElseThrow(() -> new Exception("Cliente não encontrado"));
  
- if (dados.containsKey("nif")) {
- cliente.setNif((String) dados.get("nif"));
+ if (dto.getNif() != null) {
+ cliente.setNif(dto.getNif());
  }
- if (dados.containsKey("passeMensal")) {
- cliente.setPasseMensal((Boolean) dados.get("passeMensal"));
+ if (dto.getPasseMensal() != null) {
+ cliente.setPasseMensal(dto.getPasseMensal());
  }
  // Persistir alterações
  sistema.atualizarCliente(cliente);

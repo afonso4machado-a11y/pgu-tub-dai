@@ -39,7 +39,7 @@ public class DatabaseConnection {
 
  private DatabaseConnection() {}
 
- private static synchronized String getEnv(String key, String def) {
+ public static synchronized String getEnv(String key, String def) {
  if (!envLoaded) {
  envLoaded = true;
  try {
@@ -87,6 +87,7 @@ public class DatabaseConnection {
  url.append("jdbc:mysql://").append(host).append(":3306/").append(dbName);
  url.append("?serverTimezone=UTC");
  url.append("&allowPublicKeyRetrieval=true");
+ url.append("&useUnicode=true&characterEncoding=UTF-8");
  url.append("&useSSL=").append(host.equals("localhost") || host.equals("127.0.0.1") ? "false" : "true");
  url.append("&requireSSL=").append(host.equals("localhost") || host.equals("127.0.0.1") ? "false" : "true");
 

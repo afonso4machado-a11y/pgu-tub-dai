@@ -180,42 +180,42 @@ public class ApiController {
  }
  }
 
- @PostMapping("/auth/signup")
- public ResponseEntity<Map<String, Object>> signup(@RequestBody Map<String, String> payload) {
- try {
- Map<String, Object> user = sistemaService.signupCliente(
- payload.get("nome"), 
- payload.get("email"), 
- payload.get("password")
- );
- return ResponseEntity.ok(Map.of("status", "sucesso", "user", user));
- } catch (Exception e) {
- return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", e.getMessage()));
- }
- }
+  @PostMapping("/auth/signup")
+  public ResponseEntity<Map<String, Object>> signup(@Valid @RequestBody SignupPassengerDTO dto) {
+  try {
+  Map<String, Object> user = sistemaService.signupCliente(
+  dto.getNome(), 
+  dto.getEmail(), 
+  dto.getPassword()
+  );
+  return ResponseEntity.ok(Map.of("status", "sucesso", "user", user));
+  } catch (Exception e) {
+  return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", e.getMessage()));
+  }
+  }
 
- @GetMapping("/auth/profile/{id}")
- public ResponseEntity<Map<String, Object>> getProfile(@PathVariable String id) {
- try {
- Map<String, Object> user = sistemaService.obterPerfilCliente(id);
- return ResponseEntity.ok(Map.of("status", "sucesso", "user", user));
- } catch (Exception e) {
- return ResponseEntity.status(404).body(Map.of("status", "erro", "mensagem", e.getMessage()));
- }
- }
+  @GetMapping("/auth/profile/{id}")
+  public ResponseEntity<Map<String, Object>> getProfile(@PathVariable String id) {
+  try {
+  Map<String, Object> user = sistemaService.obterPerfilCliente(id);
+  return ResponseEntity.ok(Map.of("status", "sucesso", "user", user));
+  } catch (Exception e) {
+  return ResponseEntity.status(404).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+  }
+  }
 
- @PostMapping("/auth/login")
- public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> payload) {
- try {
- Map<String, Object> user = sistemaService.loginCliente(
- payload.get("email"), 
- payload.get("password")
- );
- return ResponseEntity.ok(Map.of("status", "sucesso", "user", user));
- } catch (Exception e) {
- return ResponseEntity.status(401).body(Map.of("status", "erro", "mensagem", e.getMessage()));
- }
- }
+  @PostMapping("/auth/login")
+  public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody LoginPassengerDTO dto) {
+  try {
+  Map<String, Object> user = sistemaService.loginCliente(
+  dto.getEmail(), 
+  dto.getPassword()
+  );
+  return ResponseEntity.ok(Map.of("status", "sucesso", "user", user));
+  } catch (Exception e) {
+  return ResponseEntity.status(401).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+  }
+  }
 
  @PostMapping("/auth/admin/login")
  public ResponseEntity<Map<String, Object>> adminLogin(@Valid @RequestBody AdminLoginDTO payload) {
@@ -264,16 +264,16 @@ public class ApiController {
 
  // PROFILE UPDATE 
 
- @PutMapping("/auth/profile/{id}")
- public ResponseEntity<Map<String, Object>> updateProfile(@PathVariable String id,
- @RequestBody Map<String, Object> payload) {
- try {
- Map<String, Object> user = sistemaService.atualizarPerfilCliente(id, payload);
- return ResponseEntity.ok(Map.of("status", "sucesso", "user", user));
- } catch (Exception e) {
- return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", e.getMessage()));
- }
- }
+  @PutMapping("/auth/profile/{id}")
+  public ResponseEntity<Map<String, Object>> updateProfile(@PathVariable String id,
+  @Valid @RequestBody AtualizarPerfilDTO dto) {
+  try {
+  Map<String, Object> user = sistemaService.atualizarPerfilCliente(id, dto);
+  return ResponseEntity.ok(Map.of("status", "sucesso", "user", user));
+  } catch (Exception e) {
+  return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", e.getMessage()));
+  }
+  }
 
  // HEALTH CHECK (Monitorização) 
 

@@ -37,8 +37,19 @@ const SESSION_KEY = `pgu_payment_done_${user?.id || 'anon'}`
 const PENDING_KEY = `pgu_pending_intent_${user?.id || 'anon'}`
 
 onMounted(async () => {
- const key = import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_51TV9cB2Zu827UzcHZ0e3PHKZLWVChT3Vag39Mkv4bsXj6B4C4g6POPhGSps7AovYNYpHZg39uoendvmZBYZKeJCa0079Gpuisx'
- stripe = await loadStripe(key)
+  const key = import.meta.env.VITE_STRIPE_PUBLIC_KEY
+  if (!key) {
+    stripe = null
+    errorMessage.value = 'O servico de pagamentos esta indisponivel de momento (chave publica nao configurada).'
+  } else {
+    try {
+      stripe = await loadStripe(key)
+    } catch (e) {
+      console.error('Erro ao carregar Stripe: ' + e.message)
+      stripe = null
+      errorMessage.value = 'Erro ao inicializar o processador de pagamentos.'
+    }
+  }
 
  // Proteccao anti-"Voltar" no browser:
  // Se existe registo de pagamento concluido nesta sessao, verificar no servidor.
