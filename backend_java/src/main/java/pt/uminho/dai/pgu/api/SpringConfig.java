@@ -1,6 +1,16 @@
 package pt.uminho.dai.pgu.api;
 
-import pt.uminho.dai.pgu.services.Sistema;
+import pt.uminho.dai.pgu.p2_businesslogic.acessos_configuracao.*;
+import pt.uminho.dai.pgu.p2_businesslogic.operacao_tempo_real.*;
+import pt.uminho.dai.pgu.p2_businesslogic.analitica_historico.*;
+import pt.uminho.dai.pgu.p7_data.*;
+import pt.uminho.dai.pgu.p7_data.acessos_configuracao.*;
+import pt.uminho.dai.pgu.p7_data.operacao_tempo_real.*;
+import pt.uminho.dai.pgu.p7_data.analitica_historico.*;
+import pt.uminho.dai.pgu.api.acessos_configuracao.*;
+import pt.uminho.dai.pgu.api.operacao_tempo_real.*;
+import pt.uminho.dai.pgu.api.analitica_historico.*;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -22,7 +32,7 @@ public class SpringConfig implements WebMvcConfigurer {
     public Sistema sistema() {
         Sistema sistema = new Sistema();
 
-        // ── Frota Realista TUB ──
+        //  Frota Realista TUB 
         sistema.registarAutocarro("TUB-101", 80, "23-AB-45", "Mercedes", "Citaro");
         sistema.registarAutocarro("TUB-102", 60, "67-CD-89", "Volvo", "7900");
         sistema.registarAutocarro("TUB-103", 80, "10-EF-23", "Mercedes", "eCitaro");
@@ -30,12 +40,12 @@ public class SpringConfig implements WebMvcConfigurer {
         sistema.registarAutocarro("TUB-105", 70, "89-IJ-01", "Volvo", "7900E");
         sistema.registarAutocarro("TUB-106", 80, "34-KL-56", "Mercedes", "Citaro G");
 
-        // ── Linhas TUB ──
+        //  Linhas TUB 
         sistema.registarLinha("L7", "Celeirós — S. Vítor");
         sistema.registarLinha("L40", "Gualtar — Real");
         sistema.registarLinha("L43", "Estação — Universidade");
 
-        // ── Associar autocarros às linhas ──
+        //  Associar autocarros às linhas 
         sistema.associarAutocarroALinha("TUB-101", "L7");
         sistema.associarAutocarroALinha("TUB-102", "L43");
         sistema.associarAutocarroALinha("TUB-103", "L7");
