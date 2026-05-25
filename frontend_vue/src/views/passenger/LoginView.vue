@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { authService } from '../../services/auth'
 import { User, Mail, Lock, ArrowRight, Bus, Clock } from 'lucide-vue-next'
@@ -14,31 +14,83 @@ const error = ref('')
 const loading = ref(false)
 const sessionExpired = ref(false)
 
+const lockoutRemaining = ref(0)
+const lockoutInterval = ref(null)
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60)
+  const s = sec % 60
+  return `${m}:${s < 10 ? '0' : ''}${s}`
+}
+
+function checkLockout() {
+  const lockoutUntil = localStorage.getItem('pgu_login_lockout_until')
+  if (lockoutUntil) {
+    const remaining = Math.ceil((parseInt(lockoutUntil) - Date.now()) / 1000)
+    if (remaining > 0) {
+      lockoutRemaining.value = remaining
+      error.value = 'Demasiadas tentativas de acesso. Espere um pouco para tentar novamente.'
+      
+      if (!lockoutInterval.value) {
+        lockoutInterval.value = setInterval(() => {
+          const rem = Math.ceil((parseInt(lockoutUntil) - Date.now()) / 1000)
+          if (rem <= 0) {
+            lockoutRemaining.value = 0
+            error.value = ''
+            clearInterval(lockoutInterval.value)
+            lockoutInterval.value = null
+          } else {
+            lockoutRemaining.value = rem
+          }
+        }, 1000)
+      }
+      return true
+    }
+  }
+  lockoutRemaining.value = 0
+  return false
+}
+
 onMounted(() => {
- if (route.query.reason === 'expired') {
- sessionExpired.value = true
- isSignup.value = false // Mostrar login em vez de signup
- localStorage.removeItem('pgu_user_login_at')
- }
+  if (route.query.reason === 'expired') {
+    sessionExpired.value = true
+    isSignup.value = false // Mostrar login em vez de signup
+    localStorage.removeItem('pgu_user_login_at')
+  }
+  checkLockout()
+})
+
+onUnmounted(() => {
+  if (lockoutInterval.value) {
+    clearInterval(lockoutInterval.value)
+  }
 })
 
 async function handleSubmit() {
- error.value = ''
- sessionExpired.value = false
- loading.value = true
- 
- try {
- if (isSignup.value) {
- await authService.signupPassenger(nome.value, email.value, password.value)
- } else {
- await authService.loginPassenger(email.value, password.value)
- }
- router.push('/app')
- } catch (e) {
- error.value = 'Falha na autenticação. Tente novamente.'
- } finally {
- loading.value = false
- }
+  if (checkLockout()) {
+    return
+  }
+
+  error.value = ''
+  sessionExpired.value = false
+  loading.value = true
+  
+  try {
+    if (isSignup.value) {
+      await authService.signupPassenger(nome.value, email.value, password.value)
+    } else {
+      await authService.loginPassenger(email.value, password.value)
+    }
+    router.push('/app')
+  } catch (e) {
+    error.value = e.message || 'Falha na autenticação. Tente novamente.'
+    if (e.message && (e.message.includes('Demasiadas') || e.message.includes('Múltiplas') || e.message.includes('Zero-Trust'))) {
+      localStorage.setItem('pgu_login_lockout_until', (Date.now() + 5 * 60 * 1000).toString())
+      checkLockout()
+    }
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -83,8 +135,8 @@ async function handleSubmit() {
 
  <div v-if="error" class="error-msg">{{ error }}</div>
 
- <button type="submit" class="submit-btn" :disabled="loading">
- {{ loading ? 'A processar...' : (isSignup ? 'Criar Perfil' : 'Entrar') }}
+ <button type="submit" class="submit-btn" :disabled="loading || lockoutRemaining > 0">
+ {{ lockoutRemaining > 0 ? `Bloqueado (${formatTime(lockoutRemaining)})` : (loading ? 'A processar...' : (isSignup ? 'Criar Perfil' : 'Entrar')) }}
  <ArrowRight :size="20" />
  </button>
 

@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { authService } from '../../services/auth'
 import { ShieldCheck, Lock, Mail, ArrowRight } from 'lucide-vue-next'
@@ -10,29 +10,84 @@ const password = ref('')
 const error = ref('')
 const loading = ref(false)
 
+const lockoutRemaining = ref(0)
+const lockoutInterval = ref(null)
+
 const isValidEmail = (e) => {
  if (!e) return false
  const normalized = e.trim().toLowerCase()
  return normalized.endsWith('@uminho.pt') || normalized.endsWith('@um')
 }
 
+function formatTime(sec) {
+  const m = Math.floor(sec / 60)
+  const s = sec % 60
+  return `${m}:${s < 10 ? '0' : ''}${s}`
+}
+
+function checkLockout() {
+  const lockoutUntil = localStorage.getItem('pgu_login_lockout_until')
+  if (lockoutUntil) {
+    const remaining = Math.ceil((parseInt(lockoutUntil) - Date.now()) / 1000)
+    if (remaining > 0) {
+      lockoutRemaining.value = remaining
+      error.value = 'Demasiadas tentativas de acesso. Espere um pouco para tentar novamente.'
+      
+      if (!lockoutInterval.value) {
+        lockoutInterval.value = setInterval(() => {
+          const rem = Math.ceil((parseInt(lockoutUntil) - Date.now()) / 1000)
+          if (rem <= 0) {
+            lockoutRemaining.value = 0
+            error.value = ''
+            clearInterval(lockoutInterval.value)
+            lockoutInterval.value = null
+          } else {
+            lockoutRemaining.value = rem
+          }
+        }, 1000)
+      }
+      return true
+    }
+  }
+  lockoutRemaining.value = 0
+  return false
+}
+
+onMounted(() => {
+  checkLockout()
+})
+
+onUnmounted(() => {
+  if (lockoutInterval.value) {
+    clearInterval(lockoutInterval.value)
+  }
+})
+
 async function handleLogin() {
- if (!isValidEmail(email.value)) {
- error.value = 'Por favor, use um email institucional (@uminho.pt ou @um).'
- return
- }
- 
- error.value = ''
- loading.value = true
- 
- try {
- await authService.loginAdmin(email.value, password.value)
- router.push('/')
- } catch (e) {
- error.value = e.message
- } finally {
- loading.value = false
- }
+  if (checkLockout()) {
+    return
+  }
+
+  if (!isValidEmail(email.value)) {
+    error.value = 'Por favor, use um email institucional (@uminho.pt ou @um).'
+    return
+  }
+  
+  error.value = ''
+  loading.value = true
+  
+  try {
+    await authService.loginAdmin(email.value, password.value)
+    router.push('/')
+  } catch (e) {
+    error.value = e.message || 'Falha na autenticação. Tente novamente.'
+    if (e.message && (e.message.includes('Demasiadas') || e.message.includes('Múltiplas') || e.message.includes('Zero-Trust'))) {
+      localStorage.setItem('pgu_login_lockout_until', (Date.now() + 5 * 60 * 1000).toString())
+      checkLockout()
+    }
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -76,10 +131,10 @@ async function handleLogin() {
  {{ error }}
  </div>
 
- <button type="submit" class="btn-login" :disabled="loading">
- <span>{{ loading ? 'A verificar...' : 'Entrar no Sistema' }}</span>
- <ArrowRight v-if="!loading" :size="18" />
- </button>
+ <button type="submit" class="btn-login" :disabled="loading || lockoutRemaining > 0">
+    <span>{{ lockoutRemaining > 0 ? `Bloqueado (${formatTime(lockoutRemaining)})` : (loading ? 'A verificar...' : 'Entrar no Sistema') }}</span>
+    <ArrowRight v-if="!loading && lockoutRemaining === 0" :size="18" />
+  </button>
  </form>
 
  <div class="login-footer">

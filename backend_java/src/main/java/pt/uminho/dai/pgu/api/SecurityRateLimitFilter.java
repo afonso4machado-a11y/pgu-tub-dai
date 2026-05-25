@@ -48,10 +48,10 @@ public class SecurityRateLimitFilter implements Filter {
  // 1. Prevenção de Brute Force nos endpoints de Login
  if (path.contains("/auth/login") || path.contains("/auth/admin/login")) {
  TokenBucket loginBucket = loginAttempts.computeIfAbsent(ip, k -> new TokenBucket(System.currentTimeMillis()));
- if (!loginBucket.tryConsume(MAX_LOGIN_ATTEMPTS, 15 * 60 * 1000)) { // 15 minutos de lockout
- httpResponse.setStatus(429);
- httpResponse.setContentType("application/json;charset=UTF-8");
- httpResponse.getWriter().write("{\"status\":\"erro\",\"mensagem\":\"Múltiplas tentativas falhadas. Conta bloqueada temporariamente. Política de Zero-Trust aplicada.\"}");
+    if (!loginBucket.tryConsume(MAX_LOGIN_ATTEMPTS, 5 * 60 * 1000)) { // 5 minutos de lockout
+      httpResponse.setStatus(429);
+      httpResponse.setContentType("application/json;charset=UTF-8");
+      httpResponse.getWriter().write("{\"status\":\"erro\",\"mensagem\":\"Demasiadas tentativas de acesso. Espere um pouco para tentar novamente.\"}");
  return;
  }
  }

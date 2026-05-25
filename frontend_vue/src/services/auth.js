@@ -99,57 +99,63 @@ export const authService = {
  return JSON.parse(user)
  },
 
- async signupPassenger(nome, email, password) {
- try {
- const res = await fetch(`${API_BASE}/auth/signup`, {
- method: 'POST',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify({ nome, email, password })
- })
- const data = await res.json()
- if (data.status === 'sucesso') {
- const user = {
- ...data.user,
- nif: data.user.nif || '--- --- ---',
- passeMensal: data.user.passeMensal || false
- }
- this._setPassengerSession(user)
- return user
- }
- throw new Error(data.mensagem)
- } catch (e) {
- // Fallback para demo
- const demoUser = { id: 'demo-' + Date.now(), nome, email, nif: '--- --- ---', passeMensal: false }
- this._setPassengerSession(demoUser)
- return demoUser
- }
- },
+  async signupPassenger(nome, email, password) {
+    let res, data
+    try {
+      res = await fetch(`${API_BASE}/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, email, password })
+      })
+      data = await res.json()
+    } catch (e) {
+      // Fallback para demo apenas em falha física de rede (ex. servidor offline)
+      console.warn('Backend offline, falling back to demo signup:', e)
+      const demoUser = { id: 'demo-' + Date.now(), nome, email, nif: '--- --- ---', passeMensal: false }
+      this._setPassengerSession(demoUser)
+      return demoUser
+    }
 
- async loginPassenger(email, password) {
- try {
- const res = await fetch(`${API_BASE}/auth/login`, {
- method: 'POST',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify({ email, password })
- })
- const data = await res.json()
- if (data.status === 'sucesso') {
- const user = {
- ...data.user,
- nif: data.user.nif || '--- --- ---',
- passeMensal: data.user.passeMensal || false
- }
- this._setPassengerSession(user)
- return user
- }
- throw new Error(data.mensagem)
- } catch (e) {
- // Fallback para demo
- const demoUser = { id: 'demo-login', nome: email.split('@')[0], email, nif: '123 456 789', passeMensal: true }
- this._setPassengerSession(demoUser)
- return demoUser
- }
- },
+    if (data.status === 'sucesso') {
+      const user = {
+        ...data.user,
+        nif: data.user.nif || '--- --- ---',
+        passeMensal: data.user.passeMensal || false
+      }
+      this._setPassengerSession(user)
+      return user
+    }
+    throw new Error(data.mensagem || 'Falha ao criar conta. Tente novamente.')
+  },
+
+  async loginPassenger(email, password) {
+    let res, data
+    try {
+      res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      })
+      data = await res.json()
+    } catch (e) {
+      // Fallback para demo apenas em falha física de rede (ex. servidor offline)
+      console.warn('Backend offline, falling back to demo login:', e)
+      const demoUser = { id: 'demo-login', nome: email.split('@')[0], email, nif: '123 456 789', passeMensal: true }
+      this._setPassengerSession(demoUser)
+      return demoUser
+    }
+
+    if (data.status === 'sucesso') {
+      const user = {
+        ...data.user,
+        nif: data.user.nif || '--- --- ---',
+        passeMensal: data.user.passeMensal || false
+      }
+      this._setPassengerSession(user)
+      return user
+    }
+    throw new Error(data.mensagem || 'Falha na autenticação. Tente novamente.')
+  },
 
  _setPassengerSession(user) {
  localStorage.setItem('pgu_user', JSON.stringify(user))
