@@ -9,9 +9,9 @@ import pt.uminho.dai.pgu.p7_data.analitica_historico.*;
 import pt.uminho.dai.pgu.p2_businesslogic.analitica_historico.*;
 
 public enum TipoAlerta {
-    OCUPACAO_ACIMA_DO_LIMIAR,
-    LEITURA_ANOMALA_ENTRADA,
-    LEITURA_ANOMALA_SAIDA,
-    LEITURA_INCONSISTENTE,
-    AUSENCIA_DE_LEITURAS
+ OCUPACAO_ACIMA_DO_LIMIAR,
+ LEITURA_ANOMALA_ENTRADA,
+ LEITURA_ANOMALA_SAIDA,
+ LEITURA_INCONSISTENTE,
+ AUSENCIA_DE_LEITURAS
 }

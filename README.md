@@ -17,21 +17,21 @@ O sistema segue uma arquitetura em camadas (N-Tier) rigorosamente mapeada de aco
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│  P5 UI (Frontend Vue.js SPA/PWA)                       │
-│  ├── Backoffice (Gestor Operacional de Frota)          │
-│  └── App Passageiro (Interface Mobile-First)           │
+│ P5 UI (Frontend Vue.js SPA/PWA) │
+│ ├── Backoffice (Gestor Operacional de Frota) │
+│ └── App Passageiro (Interface Mobile-First) │
 ├────────────────────────────────────────────────────────┤
-│  REST API (Spring Boot HTTP Entrypoint)                │
-│  └── ApiController / PaymentController                 │
+│ REST API (Spring Boot HTTP Entrypoint) │
+│ └── ApiController / PaymentController │
 ├────────────────────────────────────────────────────────┤
-│  P2 Business Logic (Camada de Domínio / Regras)        │
-│  └── pt.uminho.dai.pgu.p2_businesslogic                │
+│ P2 Business Logic (Camada de Domínio / Regras) │
+│ └── pt.uminho.dai.pgu.p2_businesslogic │
 ├────────────────────────────────────────────────────────┤
-│  P7 Data Layer (Persistência / Conexão JDBC)           │
-│  └── pt.uminho.dai.pgu.p7_data                         │
+│ P7 Data Layer (Persistência / Conexão JDBC) │
+│ └── pt.uminho.dai.pgu.p7_data │
 ├────────────────────────────────────────────────────────┤
-│  MySQL Database (Azure Poland Central)                 │
-│  └── 10 tabelas relacionais com índices B-Tree         │
+│ MySQL Database (Azure Poland Central) │
+│ └── 10 tabelas relacionais com índices B-Tree │
 └────────────────────────────────────────────────────────┘
 ```
 
@@ -60,7 +60,7 @@ Configure as credenciais e inicie a API:
 
 ```bash
 cd backend_java
-cp .env.example .env  # Edite o ficheiro com as credenciais reais do seu ambiente
+cp .env.example .env # Edite o ficheiro com as credenciais reais do seu ambiente
 mvn clean install
 mvn spring-boot:run
 # O servidor iniciará em: http://localhost:8080
@@ -92,31 +92,31 @@ O repositório encontra-se organizado de forma modular, permitindo a perfeita co
 
 ```
 pgu-tub-dai/
-├── backend_java/                       # API REST e Lógica Servidor (Spring Boot)
-│   ├── src/main/java/pt/uminho/dai/pgu/
-│   │   ├── api/                        # REST API Layer (Controllers, DTOs e Configurações)
-│   │   │   ├── acessos_configuracao/   # Endpoints de login e pagamentos via Stripe
-│   │   │   ├── operacao_tempo_real/    # Endpoints de telemetria e leituras IoT
-│   │   │   └── analitica_historico/    # Endpoints de dashboards e correlacionador
-│   │   ├── p2_businesslogic/           # Business Logic Layer (Regras de Domínio - Pilar P2)
-│   │   │   ├── acessos_configuracao/   # Entidades Cliente e Bilhete
-│   │   │   ├── operacao_tempo_real/    # Entidades Autocarro, Leitura, Alerta, Paragem e Linha
-│   │   │   └── analitica_historico/    # Motor central de processamento (Sistema.java)
-│   │   └── p7_data/                    # Data Persistence Layer (Repositórios JDBC - Pilar P7)
-│   │       ├── acessos_configuracao/   # Repositórios de Clientes e Bilhetes
-│   │       ├── operacao_tempo_real/    # Repositórios de Leituras, Veículos e Alertas
-│   │       └── analitica_historico/    # Repositório de Correlação de dados GTFS
-│   └── src/test/java/                  # Testes Unitários e de Integração (JUnit)
-├── frontend_vue/                       # Frontend SPA/PWA (Vue.js 3 + Vite)
-│   ├── src/views/                      # Ecrãs do utilizador (Backoffice e Mobile)
-│   ├── src/components/                 # Componentes reutilizáveis
-│   └── src/services/                   # Serviços de comunicação HTTP com a API
-├── Wiki/                               # Documentação técnica completa da plataforma
-├── historico/                          # Ficheiros de suporte académico e dados reais
-├── tools/                              # Simulador de sensores IoT e ferramentas de testes
-├── docker-compose.yml                  # Configuração de orquestração local
-├── init.sql                            # Ficheiro de criação de base de dados e índices
-└── pom.xml                             # Configuração Maven Multi-Module
+├── backend_java/ # API REST e Lógica Servidor (Spring Boot)
+│ ├── src/main/java/pt/uminho/dai/pgu/
+│ │ ├── api/ # REST API Layer (Controllers, DTOs e Configurações)
+│ │ │ ├── acessos_configuracao/ # Endpoints de login e pagamentos via Stripe
+│ │ │ ├── operacao_tempo_real/ # Endpoints de telemetria e leituras IoT
+│ │ │ └── analitica_historico/ # Endpoints de dashboards e correlacionador
+│ │ ├── p2_businesslogic/ # Business Logic Layer (Regras de Domínio - Pilar P2)
+│ │ │ ├── acessos_configuracao/ # Entidades Cliente e Bilhete
+│ │ │ ├── operacao_tempo_real/ # Entidades Autocarro, Leitura, Alerta, Paragem e Linha
+│ │ │ └── analitica_historico/ # Motor central de processamento (Sistema.java)
+│ │ └── p7_data/ # Data Persistence Layer (Repositórios JDBC - Pilar P7)
+│ │ ├── acessos_configuracao/ # Repositórios de Clientes e Bilhetes
+│ │ ├── operacao_tempo_real/ # Repositórios de Leituras, Veículos e Alertas
+│ │ └── analitica_historico/ # Repositório de Correlação de dados GTFS
+│ └── src/test/java/ # Testes Unitários e de Integração (JUnit)
+├── frontend_vue/ # Frontend SPA/PWA (Vue.js 3 + Vite)
+│ ├── src/views/ # Ecrãs do utilizador (Backoffice e Mobile)
+│ ├── src/components/ # Componentes reutilizáveis
+│ └── src/services/ # Serviços de comunicação HTTP com a API
+├── Wiki/ # Documentação técnica completa da plataforma
+├── historico/ # Ficheiros de suporte académico e dados reais
+├── tools/ # Simulador de sensores IoT e ferramentas de testes
+├── docker-compose.yml # Configuração de orquestração local
+├── init.sql # Ficheiro de criação de base de dados e índices
+└── pom.xml # Configuração Maven Multi-Module
 ```
 
 ---

@@ -4,36 +4,36 @@ const currentPassengerTheme = ref(localStorage.getItem('pgu_passenger_theme') ||
 const hasPassengerPermission = ref(localStorage.getItem('pgu_passenger_theme_permission') === 'true')
 
 export function usePassengerTheme() {
-  const applyTheme = (theme) => {
-    let effectiveTheme = theme;
+ const applyTheme = (theme) => {
+ let effectiveTheme = theme;
 
-    if (theme === 'auto') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      effectiveTheme = prefersDark ? 'dark' : 'light'
-    }
+ if (theme === 'auto') {
+ const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+ effectiveTheme = prefersDark ? 'dark' : 'light'
+ }
 
-    document.documentElement.setAttribute('data-theme', effectiveTheme)
-  }
+ document.documentElement.setAttribute('data-theme', effectiveTheme)
+ }
 
-  const setTheme = (theme) => {
-    currentPassengerTheme.value = theme
-    localStorage.setItem('pgu_passenger_theme', theme)
-    applyTheme(theme)
-  }
+ const setTheme = (theme) => {
+ currentPassengerTheme.value = theme
+ localStorage.setItem('pgu_passenger_theme', theme)
+ applyTheme(theme)
+ }
 
-  const initTheme = () => {
-    applyTheme(currentPassengerTheme.value)
+ const initTheme = () => {
+ applyTheme(currentPassengerTheme.value)
 
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-      if (currentPassengerTheme.value === 'auto') {
-        applyTheme('auto')
-      }
-    })
-  }
+ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+ if (currentPassengerTheme.value === 'auto') {
+ applyTheme('auto')
+ }
+ })
+ }
 
-  return {
-    currentPassengerTheme,
-    setTheme,
-    initTheme
-  }
+ return {
+ currentPassengerTheme,
+ setTheme,
+ initTheme
+ }
 }

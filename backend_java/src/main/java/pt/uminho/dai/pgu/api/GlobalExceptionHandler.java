@@ -33,20 +33,20 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationErrors(MethodArgumentNotValidException ex) {
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("status", "erro");
-        response.put("mensagem", "Dados de entrada inválidos. Verifique os campos assinalados.");
+ @ExceptionHandler(MethodArgumentNotValidException.class)
+ public ResponseEntity<Map<String, Object>> handleValidationErrors(MethodArgumentNotValidException ex) {
+ Map<String, Object> response = new LinkedHashMap<>();
+ response.put("status", "erro");
+ response.put("mensagem", "Dados de entrada inválidos. Verifique os campos assinalados.");
 
-        Map<String, String> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
-            .collect(Collectors.toMap(
-                FieldError::getField,
-                FieldError::getDefaultMessage,
-                (existing, replacement) -> existing // manter o primeiro erro por campo
-            ));
+ Map<String, String> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
+ .collect(Collectors.toMap(
+ FieldError::getField,
+ FieldError::getDefaultMessage,
+ (existing, replacement) -> existing // manter o primeiro erro por campo
+ ));
 
-        response.put("erros", fieldErrors);
-        return ResponseEntity.badRequest().body(response);
-    }
+ response.put("erros", fieldErrors);
+ return ResponseEntity.badRequest().body(response);
+ }
 }

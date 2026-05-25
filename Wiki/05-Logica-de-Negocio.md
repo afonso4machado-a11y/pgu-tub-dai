@@ -13,21 +13,21 @@ O diagrama seguinte liga requisitos de negócio de alto nível a componentes esp
 **Mapeamento da Lógica de Negócio**
 ```mermaid
 graph TD
-    subgraph "Natural Language Space"
-        A["Process Sensor Data"]
-        B["Generate Alerts"]
-        C["Manage Fleet"]
-        D["Authenticate Users"]
-    end
+ subgraph "Natural Language Space"
+ A["Process Sensor Data"]
+ B["Generate Alerts"]
+ C["Manage Fleet"]
+ D["Authenticate Users"]
+ end
 
-    subgraph "Code Entity Space"
-        A --> |"receberLeitura()"| E["Sistema.java"]
-        B --> |"processarLeitura()"| F["Autocarro.java"]
-        C --> |"registarAutocarro()"| G["SistemaService.java"]
-        D --> |"loginCliente() / loginAdmin()"| G
-        E --> |"guardar()"| H["RepositorioLeituras.java"]
-        F --> |"thresholdsAlerta"| I["ThresholdsAlerta.java"]
-    end
+ subgraph "Code Entity Space"
+ A --> |"receberLeitura()"| E["Sistema.java"]
+ B --> |"processarLeitura()"| F["Autocarro.java"]
+ C --> |"registarAutocarro()"| G["SistemaService.java"]
+ D --> |"loginCliente() / loginAdmin()"| G
+ E --> |"guardar()"| H["RepositorioLeituras.java"]
+ F --> |"thresholdsAlerta"| I["ThresholdsAlerta.java"]
+ end
 ```
 Fontes: [backend_java/src/main/java/pt/uminho/dai/pgu/services/Sistema.java:9-18](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/services/SistemaService.java:14-22]()
 
@@ -40,15 +40,15 @@ A classe `Sistema` é o orquestrador central da camada de domínio. Gere o ciclo
 ### Processamento de Lotação e Geração de Alertas
 A lógica mais crítica reside na ingestão de dados de sensores via `receberLeitura`.
 
-1.  **Ingestão de Dados**: Recebe `entradas` (boardings) e `saidas` (alightings) para um determinado `autocarroId` [backend_java/src/main/java/pt/uminho/dai/pgu/services/Sistema.java:108-112]().
-2.  **Atualização de Estado**: O modelo `Autocarro` processa o `LeituraContagem` para atualizar a contagem atual de passageiros e a taxa de lotação [backend_java/src/main/java/pt/uminho/dai/pgu/services/Sistema.java:116-117]().
-3.  **Avaliação de Limiar**: Usando `ThresholdsAlerta`, o sistema verifica se a nova lotação ultrapassa os limites definidos (por exemplo, 80% para `LOTACAO_CRITICA`) [backend_java/src/main/java/pt/uminho/dai/pgu/services/Sistema.java:33]().
-4.  **Persistência e Notificação**: A leitura é guardada em `RepositorioLeituras`, eventuais alertas gerados são guardados em `RepositorioAlertas` e os clientes relevantes são notificados [backend_java/src/main/java/pt/uminho/dai/pgu/services/Sistema.java:119-128]().
+1. **Ingestão de Dados**: Recebe `entradas` (boardings) e `saidas` (alightings) para um determinado `autocarroId` [backend_java/src/main/java/pt/uminho/dai/pgu/services/Sistema.java:108-112]().
+2. **Atualização de Estado**: O modelo `Autocarro` processa o `LeituraContagem` para atualizar a contagem atual de passageiros e a taxa de lotação [backend_java/src/main/java/pt/uminho/dai/pgu/services/Sistema.java:116-117]().
+3. **Avaliação de Limiar**: Usando `ThresholdsAlerta`, o sistema verifica se a nova lotação ultrapassa os limites definidos (por exemplo, 80% para `LOTACAO_CRITICA`) [backend_java/src/main/java/pt/uminho/dai/pgu/services/Sistema.java:33]().
+4. **Persistência e Notificação**: A leitura é guardada em `RepositorioLeituras`, eventuais alertas gerados são guardados em `RepositorioAlertas` e os clientes relevantes são notificados [backend_java/src/main/java/pt/uminho/dai/pgu/services/Sistema.java:119-128]().
 
 ### Autenticação de Administrador
 O login de administrador é tratado diretamente em `Sistema` usando uma regra específica do domínio:
-*   O email deve terminar em `@uminho.pt` ou `@um` [backend_java/src/main/java/pt/uminho/dai/pgu/services/Sistema.java:87]().
-*   A palavra-passe é comparada com a variável de ambiente `PGU_ADMIN_PASSWORD` ou com um valor de fallback [backend_java/src/main/java/pt/uminho/dai/pgu/services/Sistema.java:82-84]().
+* O email deve terminar em `@uminho.pt` ou `@um` [backend_java/src/main/java/pt/uminho/dai/pgu/services/Sistema.java:87]().
+* A palavra-passe é comparada com a variável de ambiente `PGU_ADMIN_PASSWORD` ou com um valor de fallback [backend_java/src/main/java/pt/uminho/dai/pgu/services/Sistema.java:82-84]().
 
 Fontes: [backend_java/src/main/java/pt/uminho/dai/pgu/services/Sistema.java:80-92](), [backend_java/src/main/java/pt/uminho/dai/pgu/services/Sistema.java:108-129]()
 
@@ -64,17 +64,17 @@ O diagrama abaixo ilustra como os dados fluem do conceito físico (Leitura) até
 **Fluxo de Transformação de Dados**
 ```mermaid
 sequenceDiagram
-    participant API as "ApiController"
-    participant SS as "SistemaService"
-    participant S as "Sistema"
-    participant R as "Repositories"
+ participant API as "ApiController"
+ participant SS as "SistemaService"
+ participant S as "Sistema"
+ participant R as "Repositories"
 
-    API->>SS: registarLeituras(id, in, out)
-    SS->>S: receberLeitura(id, in, out)
-    S->>R: guardar(leitura)
-    S->>S: processarAlertas()
-    S-->>SS: List<Alerta>
-    SS-->>API: List<Alerta> (JSON)
+ API->>SS: registarLeituras(id, in, out)
+ SS->>S: receberLeitura(id, in, out)
+ S->>R: guardar(leitura)
+ S->>S: processarAlertas()
+ S-->>SS: List<Alerta>
+ SS-->>API: List<Alerta> (JSON)
 ```
 Fontes: [backend_java/src/main/java/pt/uminho/dai/pgu/api/services/SistemaService.java:28-30](), [backend_java/src/main/java/pt/uminho/dai/pgu/services/Sistema.java:112-129]()
 
@@ -89,7 +89,7 @@ Fontes: [backend_java/src/main/java/pt/uminho/dai/pgu/api/services/SistemaServic
 
 ### Correlação e Histórico
 O `SistemaService` também disponibiliza dados analíticos de alto nível:
-*   **Correlação**: Agrega dados de procura vs. oferta para intervalos de datas específicos [backend_java/src/main/java/pt/uminho/dai/pgu/api/services/SistemaService.java:83-90]().
-*   **Histórico Diário**: Devolve uma estrutura aninhada de Map representando contagens de passageiros categorizadas por dia e hora [backend_java/src/main/java/pt/uminho/dai/pgu/api/services/SistemaService.java:67-69]().
+* **Correlação**: Agrega dados de procura vs. oferta para intervalos de datas específicos [backend_java/src/main/java/pt/uminho/dai/pgu/api/services/SistemaService.java:83-90]().
+* **Histórico Diário**: Devolve uma estrutura aninhada de Map representando contagens de passageiros categorizadas por dia e hora [backend_java/src/main/java/pt/uminho/dai/pgu/api/services/SistemaService.java:67-69]().
 
 Fontes: [backend_java/src/main/java/pt/uminho/dai/pgu/api/services/SistemaService.java:32-61](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/services/SistemaService.java:83-109]()

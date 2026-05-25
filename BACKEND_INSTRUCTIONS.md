@@ -7,9 +7,9 @@ Adicionar a dependência oficial da Stripe para processamento de pagamentos:
 
 ```xml
 <dependency>
-    <groupId>com.stripe</groupId>
-    <artifactId>stripe-java</artifactId>
-    <version>24.22.0</version> <!-- Usar a versão mais recente -->
+ <groupId>com.stripe</groupId>
+ <artifactId>stripe-java</artifactId>
+ <version>24.22.0</version> <!-- Usar a versão mais recente -->
 </dependency>
 ```
 
@@ -19,15 +19,15 @@ Adicionar a dependência oficial da Stripe para processamento de pagamentos:
 **Sugestão de SQL para a tabela de Bilhetes:**
 ```sql
 CREATE TABLE IF NOT EXISTS bilhetes (
-    id VARCHAR(50) PRIMARY KEY,
-    cliente_id VARCHAR(50) NOT NULL,
-    tipo VARCHAR(50) NOT NULL, -- Ex: 'Bilhete Simples', 'Passe Mensal'
-    data_compra DATETIME NOT NULL,
-    data_validade DATETIME NOT NULL,
-    estado VARCHAR(20) NOT NULL DEFAULT 'Ativo', -- 'Ativo', 'Utilizado', 'Expirado'
-    preco DECIMAL(10, 2) NOT NULL,
-    payment_intent_id VARCHAR(100) NULL, -- ID do Stripe
-    FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+ id VARCHAR(50) PRIMARY KEY,
+ cliente_id VARCHAR(50) NOT NULL,
+ tipo VARCHAR(50) NOT NULL, -- Ex: 'Bilhete Simples', 'Passe Mensal'
+ data_compra DATETIME NOT NULL,
+ data_validade DATETIME NOT NULL,
+ estado VARCHAR(20) NOT NULL DEFAULT 'Ativo', -- 'Ativo', 'Utilizado', 'Expirado'
+ preco DECIMAL(10, 2) NOT NULL,
+ payment_intent_id VARCHAR(100) NULL, -- ID do Stripe
+ FOREIGN KEY (cliente_id) REFERENCES clientes(id)
 );
 ```
 

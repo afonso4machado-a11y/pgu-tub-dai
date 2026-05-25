@@ -13,32 +13,32 @@ Este diagrama mostra como a aplicação Vue se liga ao backend e trata os dois p
 
 ```mermaid
 graph TD
-    subgraph "Frontend (Vue.js SPA)"
-        Router["vue-router"]
-        Auth["authService.js"]
-        Shared["TopHeader.vue"]
-        
-        subgraph "Backoffice Interface"
-            B_Views["Dashboard, Fleet, Network, etc."]
-        end
-        
-        subgraph "Passenger Interface"
-            P_Views["PaxHome, PaxMap, PaxTicket, etc."]
-        end
-    end
+ subgraph "Frontend (Vue.js SPA)"
+ Router["vue-router"]
+ Auth["authService.js"]
+ Shared["TopHeader.vue"]
+ 
+ subgraph "Backoffice Interface"
+ B_Views["Dashboard, Fleet, Network, etc."]
+ end
+ 
+ subgraph "Passenger Interface"
+ P_Views["PaxHome, PaxMap, PaxTicket, etc."]
+ end
+ end
 
-    subgraph "Backend"
-        API["Spring Boot REST API (/api)"]
-    end
+ subgraph "Backend"
+ API["Spring Boot REST API (/api)"]
+ end
 
-    User_Admin["Fleet Operator"] -->|"/login"| B_Views
-    User_Pax["Passenger"] -->|"/app/login"| P_Views
-    
-    B_Views --> Router
-    P_Views --> Router
-    Router --> Auth
-    B_Views --> API
-    P_Views --> API
+ User_Admin["Fleet Operator"] -->|"/login"| B_Views
+ User_Pax["Passenger"] -->|"/app/login"| P_Views
+ 
+ B_Views --> Router
+ P_Views --> Router
+ Router --> Auth
+ B_Views --> API
+ P_Views --> API
 ```
 **Fontes:** [frontend_vue/src/router/index.js:25-105](), [frontend_vue/server.js:14-18](), [frontend_vue/src/components/TopHeader.vue:4-4]()
 
@@ -46,35 +46,35 @@ graph TD
 
 A aplicação assenta em vários sistemas partilhados para manter o estado e a segurança em ambas as interfaces.
 
-*   **Routing e Guards:** Geridos pelo `vue-router`, definindo caminhos para tarefas administrativas (por exemplo, `/fleet`, `/occupancy`) e para tarefas dos passageiros (sob o prefixo `/app`) [frontend_vue/src/router/index.js:40-96](). Os guards de navegação impõem o controlo de acesso baseado em perfil [frontend_vue/src/router/index.js:107-124]().
-*   **Serviço de Autenticação:** Um `authService` centralizado gere a persistência de sessão. Usa `sessionStorage` para administradores (apagado ao fechar o separador) e `localStorage` com TTL de 7 dias para passageiros [frontend_vue/src/router/index.js:108-121]().
-*   **Modo Demo:** Um toggle global de simulação, gerido em `TopHeader.vue`, permite que a interface alterne entre dados reais em produção e dados mock locais para testes e demonstrações [frontend_vue/src/components/TopHeader.vue:14-18]().
+* **Routing e Guards:** Geridos pelo `vue-router`, definindo caminhos para tarefas administrativas (por exemplo, `/fleet`, `/occupancy`) e para tarefas dos passageiros (sob o prefixo `/app`) [frontend_vue/src/router/index.js:40-96](). Os guards de navegação impõem o controlo de acesso baseado em perfil [frontend_vue/src/router/index.js:107-124]().
+* **Serviço de Autenticação:** Um `authService` centralizado gere a persistência de sessão. Usa `sessionStorage` para administradores (apagado ao fechar o separador) e `localStorage` com TTL de 7 dias para passageiros [frontend_vue/src/router/index.js:108-121]().
+* **Modo Demo:** Um toggle global de simulação, gerido em `TopHeader.vue`, permite que a interface alterne entre dados reais em produção e dados mock locais para testes e demonstrações [frontend_vue/src/components/TopHeader.vue:14-18]().
 
 #### Mapa de Navegação e Routing
 Este diagrama mapeia a estrutura de URLs da aplicação aos componentes Vue correspondentes e aos requisitos de segurança.
 
 ```mermaid
 graph LR
-    subgraph "Public"
-        L1["/login (AdminLogin)"]
-        L2["/app/login (PaxLogin)"]
-    end
+ subgraph "Public"
+ L1["/login (AdminLogin)"]
+ L2["/app/login (PaxLogin)"]
+ end
 
-    subgraph "Admin Domain (requiresAdmin)"
-        R1["/ (DashboardView)"]
-        R2["/fleet (FleetView)"]
-        R3["/network (PTNetworkView)"]
-        R4["/alerts (AlertsCenterView)"]
-    end
+ subgraph "Admin Domain (requiresAdmin)"
+ R1["/ (DashboardView)"]
+ R2["/fleet (FleetView)"]
+ R3["/network (PTNetworkView)"]
+ R4["/alerts (AlertsCenterView)"]
+ end
 
-    subgraph "Passenger Domain (requiresUser)"
-        P1["/app (PassengerApp Layout)"]
-        P1 --> P2["/app/map (PaxMap)"]
-        P1 --> P3["/app/ticket (PaxTicket)"]
-    end
+ subgraph "Passenger Domain (requiresUser)"
+ P1["/app (PassengerApp Layout)"]
+ P1 --> P2["/app/map (PaxMap)"]
+ P1 --> P3["/app/ticket (PaxTicket)"]
+ end
 
-    style R1 stroke-dasharray: 5 5
-    style P1 stroke-dasharray: 5 5
+ style R1 stroke-dasharray: 5 5
+ style P1 stroke-dasharray: 5 5
 ```
 **Fontes:** [frontend_vue/src/router/index.js:27-104]()
 
@@ -95,15 +95,15 @@ Para documentação técnica detalhada sobre partes específicas do frontend, co
 
 #### [3.1 Routing, Serviço de Autenticação e Componentes Partilhados](10-Routing-Auth-Componentes.md)
 Análise detalhada da lógica do `authService.js`, da utilidade `apiFetch` com fallbacks de modo demo e da configuração dos guards globais de navegação.
-*   *Ficheiros principais:* `src/router/index.js`, `src/services/auth.js`, `src/components/TopHeader.vue`.
+* *Ficheiros principais:* `src/router/index.js`, `src/services/auth.js`, `src/components/TopHeader.vue`.
 
 #### [3.2 Backoffice — Painel do Operador](11-Backoffice-Dashboard.md)
 Visão geral técnica das vistas para operadores, incluindo o mapa em tempo real da rede PT, as tabelas de gestão de frota e os gráficos de correlação ocupação/procura.
-*   *Ficheiros principais:* `src/views/DashboardView.vue`, `src/views/PTNetworkView.vue`, `src/views/FleetView.vue`.
+* *Ficheiros principais:* `src/views/DashboardView.vue`, `src/views/PTNetworkView.vue`, `src/views/FleetView.vue`.
 
 #### [3.3 PWA do Passageiro — Interface Móvel](12-PWA-Passageiro.md)
 Documentação sobre a aplicação mobile-first do passageiro, focada no planeador de viagens, no acompanhamento em tempo real dos autocarros e no sistema de bilhética virtual.
-*   *Ficheiros principais:* `src/layouts/PassengerApp.vue`, `src/views/passenger/LiveMapView.vue`, `src/views/passenger/HomeView.vue`.
+* *Ficheiros principais:* `src/layouts/PassengerApp.vue`, `src/views/passenger/LiveMapView.vue`, `src/views/passenger/HomeView.vue`.
 
 **Fontes:**
 - [frontend_vue/package.json:1-27]()

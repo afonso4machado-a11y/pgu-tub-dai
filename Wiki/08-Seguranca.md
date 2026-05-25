@@ -24,21 +24,21 @@ O diagrama seguinte ilustra como o `SecurityRateLimitFilter` processa um `HttpSe
 Title: SecurityRateLimitFilter Processing Flow
 ```mermaid
 graph TD
-    subgraph "Filter Pipeline"
-    A["HttpServletRequest"] --> B["SecurityRateLimitFilter::doFilterInternal"]
-    B --> C{"Is /api/ path?"}
-    C -- "No" --> D["filterChain.doFilter()"]
-    C -- "Yes" --> E["Identify clientIp & Category"]
-    E --> F["Check counters Map"]
-    F --> G{"Limit Exceeded?"}
-    G -- "Yes" --> H["HTTP 423 Too Many Requests"]
-    G -- "No" --> I["Increment AtomicInteger"]
-    I --> D
-    end
+ subgraph "Filter Pipeline"
+ A["HttpServletRequest"] --> B["SecurityRateLimitFilter::doFilterInternal"]
+ B --> C{"Is /api/ path?"}
+ C -- "No" --> D["filterChain.doFilter()"]
+ C -- "Yes" --> E["Identify clientIp & Category"]
+ E --> F["Check counters Map"]
+ F --> G{"Limit Exceeded?"}
+ G -- "Yes" --> H["HTTP 423 Too Many Requests"]
+ G -- "No" --> I["Increment AtomicInteger"]
+ I --> D
+ end
 
-    subgraph "Memory Management"
-    J["CLEANUP_INTERVAL_MS"] --> K["Remove expired RateWindow entries"]
-    end
+ subgraph "Memory Management"
+ J["CLEANUP_INTERVAL_MS"] --> K["Remove expired RateWindow entries"]
+ end
 ```
 Fontes: [backend_java/src/main/java/pt/uminho/dai/pgu/api/SecurityRateLimitFilter.java:56-128]()
 
@@ -53,14 +53,14 @@ O acesso administrativo é estritamente restrito por domínio de email. Apenas u
 Title: Authentication Component Interaction
 ```mermaid
 graph LR
-    subgraph "Security Config Space"
-    SC["SpringConfig.java"] -- "provides" --> PE["BCryptPasswordEncoder"]
-    end
+ subgraph "Security Config Space"
+ SC["SpringConfig.java"] -- "provides" --> PE["BCryptPasswordEncoder"]
+ end
 
-    subgraph "Auth Logic Space"
-    DTO["AdminLoginDTO"] -- "validates" --> EMAIL["@uminho.pt domain"]
-    PE -- "matches" --> PASS["Hashed Password"]
-    end
+ subgraph "Auth Logic Space"
+ DTO["AdminLoginDTO"] -- "validates" --> EMAIL["@uminho.pt domain"]
+ PE -- "matches" --> PASS["Hashed Password"]
+ end
 ```
 Fontes: [backend_java/src/main/java/pt/uminho/dai/pgu/api/SpringConfig.java:49-51](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/AdminLoginDTO.java:7-20]()
 
@@ -71,8 +71,8 @@ O backend utiliza **Jakarta Bean Validation** (anteriormente JSR 303/380) para i
 ### Data Transfer Objects (DTOs)
 As restrições de validação são aplicadas diretamente nos campos dos DTOs através de anotações.
 
-*   **Validação de Email**: Usa `@Email` para garantir o formato RFC adequado e `@NotBlank` para impedir submissões vazias [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/AdminLoginDTO.java:8-10]().
-*   **Complexidade da Palavra-passe**: Usa `@Size(min = 4, max = 128)` para impor requisitos de comprimento [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/ClienteLoginDTO.java:13-13]().
+* **Validação de Email**: Usa `@Email` para garantir o formato RFC adequado e `@NotBlank` para impedir submissões vazias [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/AdminLoginDTO.java:8-10]().
+* **Complexidade da Palavra-passe**: Usa `@Size(min = 4, max = 128)` para impor requisitos de comprimento [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/ClienteLoginDTO.java:13-13]().
 
 ### Resumo das Regras de Validação
 | Classe DTO | Campo | Restrições |

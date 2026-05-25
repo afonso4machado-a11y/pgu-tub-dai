@@ -29,65 +29,65 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Component
 public class SecurityRateLimitFilter implements Filter {
 
-    private static final int MAX_REQUESTS_PER_MINUTE = 60; // Rate Limit Geral
-    private static final int MAX_LOGIN_ATTEMPTS = 5;       // Anti-Brute Force
+ private static final int MAX_REQUESTS_PER_MINUTE = 60; // Rate Limit Geral
+ private static final int MAX_LOGIN_ATTEMPTS = 5; // Anti-Brute Force
 
-    private final Map<String, TokenBucket> requestCounts = new ConcurrentHashMap<>();
-    private final Map<String, TokenBucket> loginAttempts = new ConcurrentHashMap<>();
+ private final Map<String, TokenBucket> requestCounts = new ConcurrentHashMap<>();
+ private final Map<String, TokenBucket> loginAttempts = new ConcurrentHashMap<>();
 
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
-        
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
+ @Override
+ public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+ throws IOException, ServletException {
+ 
+ HttpServletRequest httpRequest = (HttpServletRequest) request;
+ HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        String ip = request.getRemoteAddr();
-        String path = httpRequest.getRequestURI();
+ String ip = request.getRemoteAddr();
+ String path = httpRequest.getRequestURI();
 
-        // 1. Prevenção de Brute Force nos endpoints de Login
-        if (path.contains("/auth/login") || path.contains("/auth/admin/login")) {
-            TokenBucket loginBucket = loginAttempts.computeIfAbsent(ip, k -> new TokenBucket(System.currentTimeMillis()));
-            if (!loginBucket.tryConsume(MAX_LOGIN_ATTEMPTS, 15 * 60 * 1000)) { // 15 minutos de lockout
-                httpResponse.setStatus(429);
-                httpResponse.setContentType("application/json;charset=UTF-8");
-                httpResponse.getWriter().write("{\"status\":\"erro\",\"mensagem\":\"Múltiplas tentativas falhadas. Conta bloqueada temporariamente. Política de Zero-Trust aplicada.\"}");
-                return;
-            }
-        }
+ // 1. Prevenção de Brute Force nos endpoints de Login
+ if (path.contains("/auth/login") || path.contains("/auth/admin/login")) {
+ TokenBucket loginBucket = loginAttempts.computeIfAbsent(ip, k -> new TokenBucket(System.currentTimeMillis()));
+ if (!loginBucket.tryConsume(MAX_LOGIN_ATTEMPTS, 15 * 60 * 1000)) { // 15 minutos de lockout
+ httpResponse.setStatus(429);
+ httpResponse.setContentType("application/json;charset=UTF-8");
+ httpResponse.getWriter().write("{\"status\":\"erro\",\"mensagem\":\"Múltiplas tentativas falhadas. Conta bloqueada temporariamente. Política de Zero-Trust aplicada.\"}");
+ return;
+ }
+ }
 
-        // 2. Rate Limiting Geral para Prevenção de DoS
-        TokenBucket generalBucket = requestCounts.computeIfAbsent(ip, k -> new TokenBucket(System.currentTimeMillis()));
-        if (!generalBucket.tryConsume(MAX_REQUESTS_PER_MINUTE, 60 * 1000)) { // 1 minuto de janela
-            httpResponse.setStatus(429);
-            httpResponse.setContentType("application/json;charset=UTF-8");
-            httpResponse.getWriter().write("{\"status\":\"erro\",\"mensagem\":\"Muitos pedidos simultâneos (Rate Limit Exceeded). Tente mais tarde.\"}");
-            return;
-        }
+ // 2. Rate Limiting Geral para Prevenção de DoS
+ TokenBucket generalBucket = requestCounts.computeIfAbsent(ip, k -> new TokenBucket(System.currentTimeMillis()));
+ if (!generalBucket.tryConsume(MAX_REQUESTS_PER_MINUTE, 60 * 1000)) { // 1 minuto de janela
+ httpResponse.setStatus(429);
+ httpResponse.setContentType("application/json;charset=UTF-8");
+ httpResponse.getWriter().write("{\"status\":\"erro\",\"mensagem\":\"Muitos pedidos simultâneos (Rate Limit Exceeded). Tente mais tarde.\"}");
+ return;
+ }
 
-        chain.doFilter(request, response);
-    }
+ chain.doFilter(request, response);
+ }
 
-    private static class TokenBucket {
-        private final AtomicInteger tokens = new AtomicInteger(0);
-        private long windowStart;
+ private static class TokenBucket {
+ private final AtomicInteger tokens = new AtomicInteger(0);
+ private long windowStart;
 
-        public TokenBucket(long windowStart) {
-            this.windowStart = windowStart;
-        }
+ public TokenBucket(long windowStart) {
+ this.windowStart = windowStart;
+ }
 
-        public synchronized boolean tryConsume(int limit, long windowSizeMillis) {
-            long now = System.currentTimeMillis();
-            if (now - windowStart > windowSizeMillis) {
-                // Reset da janela de tempo
-                tokens.set(0);
-                windowStart = now;
-            }
+ public synchronized boolean tryConsume(int limit, long windowSizeMillis) {
+ long now = System.currentTimeMillis();
+ if (now - windowStart > windowSizeMillis) {
+ // Reset da janela de tempo
+ tokens.set(0);
+ windowStart = now;
+ }
 
-            if (tokens.incrementAndGet() > limit) {
-                return false;
-            }
-            return true;
-        }
-    }
+ if (tokens.incrementAndGet() > limit) {
+ return false;
+ }
+ return true;
+ }
+ }
 }

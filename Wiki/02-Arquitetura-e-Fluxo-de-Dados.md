@@ -8,14 +8,14 @@ O sistema segue uma arquitetura em camadas mapeada pelo **método 4SRS**, garant
 
 ### 1. Camada de Apresentação (P5 — UI)
 Uma Single Page Application (SPA) em Vue.js 3 que funciona como Progressive Web App (PWA). Disponibiliza duas interfaces principais:
-*   **Backoffice:** Painel para operadores de frota monitorizarem KPIs, localizações dos autocarros em tempo real e correlações de lotação [README.md:20-20]().
-*   **Aplicação do Passageiro:** Interface mobile-first para planeamento de viagens, mapas em tempo real e bilhética [README.md:21-21]().
+* **Backoffice:** Painel para operadores de frota monitorizarem KPIs, localizações dos autocarros em tempo real e correlações de lotação [README.md:20-20]().
+* **Aplicação do Passageiro:** Interface mobile-first para planeamento de viagens, mapas em tempo real e bilhética [README.md:21-21]().
 
 ### 2. Camada de Lógica de Negócio (P2 — Logic)
 Uma aplicação Spring Boot que atua como motor central. Trata de:
-*   **Ingestão IoT:** Processamento das leituras de sensores recebidas dos veículos [README.md:99-99]().
-*   **Motor de Domínio:** A classe `Sistema` funciona como fachada principal, gerindo o estado dos autocarros (`Autocarro`), das linhas (`Linha`) e dos alertas (`Alerta`) [backend_java/src/main/java/pt/uminho/dai/pgu/api/SpringConfig.java:20-46]().
-*   **Segurança:** Autenticação para administradores (restrita a domínios `@uminho.pt`) e para passageiros [README.md:111-115]().
+* **Ingestão IoT:** Processamento das leituras de sensores recebidas dos veículos [README.md:99-99]().
+* **Motor de Domínio:** A classe `Sistema` funciona como fachada principal, gerindo o estado dos autocarros (`Autocarro`), das linhas (`Linha`) e dos alertas (`Alerta`) [backend_java/src/main/java/pt/uminho/dai/pgu/api/SpringConfig.java:20-46]().
+* **Segurança:** Autenticação para administradores (restrita a domínios `@uminho.pt`) e para passageiros [README.md:111-115]().
 
 ### 3. Camada de Dados (P7 — Data)
 Uma base de dados MySQL (implantada via Azure Flexible Server) que persiste o estado do sistema usando o padrão Repository sobre JDBC [README.md:15-15]().
@@ -26,30 +26,30 @@ O diagrama seguinte liga a arquitetura de alto nível às entidades de código e
 **Mapeamento Arquitetura para Código**
 ```mermaid
 graph TD
-    subgraph "Presentation (Vue.js)"
-        UI["App.vue"]
-        BO["Backoffice Views"]
-        PA["Passenger Views"]
-    end
+ subgraph "Presentation (Vue.js)"
+ UI["App.vue"]
+ BO["Backoffice Views"]
+ PA["Passenger Views"]
+ end
 
-    subgraph "Logic (Spring Boot)"
-        API["ApiController.java"]
-        SVC["SistemaService.java"]
-        CORE["Sistema.java (Facade)"]
-        AUTH["SecurityRateLimitFilter.java"]
-    end
+ subgraph "Logic (Spring Boot)"
+ API["ApiController.java"]
+ SVC["SistemaService.java"]
+ CORE["Sistema.java (Facade)"]
+ AUTH["SecurityRateLimitFilter.java"]
+ end
 
-    subgraph "Data (MySQL)"
-        DB[("init.sql Schema")]
-        REPO["RepositorioAutocarros.java"]
-    end
+ subgraph "Data (MySQL)"
+ DB[("init.sql Schema")]
+ REPO["RepositorioAutocarros.java"]
+ end
 
-    UI --> API
-    API --> SVC
-    SVC --> CORE
-    CORE --> REPO
-    REPO --> DB
-    API -.-> AUTH
+ UI --> API
+ API --> SVC
+ SVC --> CORE
+ CORE --> REPO
+ REPO --> DB
+ API -.-> AUTH
 ```
 Fontes: [README.md:17-31](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/SpringConfig.java:16-17]()
 
@@ -58,30 +58,30 @@ Fontes: [README.md:17-31](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/S
 O sistema processa dados em tempo real provenientes dos sensores dos autocarros (simulados ou reais) para fornecer atualizações de lotação e alertas em direto. Este fluxo segue uma pipeline de Arquitetura Orientada a Eventos (EDA) com 4 etapas [tools/simulador_sensores.html:6-7]().
 
 ### Sequência de Ingestão
-1.  **Leitura do Sensor:** O sensor gera um payload JSON contendo o ID do veículo e a contagem de passageiros.
-2.  **Entrada na API:** O `ApiController` recebe um pedido `POST` em `/api/leituras` [README.md:99-99]().
-3.  **Processamento:** A classe `Sistema` processa a leitura através de `processarLeitura()`, atualizando a instância específica de `Autocarro` [README.md:77-79]().
-4.  **Avaliação de Limiares:** O sistema verifica se a nova lotação ultrapassa os `ThresholdsAlerta` definidos.
-5.  **Persistência e Notificação:** Os dados são guardados na tabela `LeituraContagem` e, em caso de violação de limiar, é gerado um novo `Alerta` [README.md:101-101]().
+1. **Leitura do Sensor:** O sensor gera um payload JSON contendo o ID do veículo e a contagem de passageiros.
+2. **Entrada na API:** O `ApiController` recebe um pedido `POST` em `/api/leituras` [README.md:99-99]().
+3. **Processamento:** A classe `Sistema` processa a leitura através de `processarLeitura()`, atualizando a instância específica de `Autocarro` [README.md:77-79]().
+4. **Avaliação de Limiares:** O sistema verifica se a nova lotação ultrapassa os `ThresholdsAlerta` definidos.
+5. **Persistência e Notificação:** Os dados são guardados na tabela `LeituraContagem` e, em caso de violação de limiar, é gerado um novo `Alerta` [README.md:101-101]().
 
 **Pipeline de Ingestão de Dados**
 ```mermaid
 sequenceDiagram
-    participant S as "IoT Sensor / Simulator"
-    participant A as "ApiController.java"
-    participant SS as "SistemaService.java"
-    participant C as "Sistema.java"
-    participant R as "RepositorioLeituras.java"
-    participant DB as "MySQL (init.sql)"
+ participant S as "IoT Sensor / Simulator"
+ participant A as "ApiController.java"
+ participant SS as "SistemaService.java"
+ participant C as "Sistema.java"
+ participant R as "RepositorioLeituras.java"
+ participant DB as "MySQL (init.sql)"
 
-    S->>A: POST /api/leituras (JSON)
-    A->>SS: processarLeitura(dto)
-    SS->>C: processarLeitura(id, count)
-    C->>C: evaluateThresholds()
-    C->>R: salvarLeitura(leitura)
-    R->>DB: INSERT INTO leituras_contagem
-    C-->>A: Return Updated State
-    A-->>S: 201 Created
+ S->>A: POST /api/leituras (JSON)
+ A->>SS: processarLeitura(dto)
+ SS->>C: processarLeitura(id, count)
+ C->>C: evaluateThresholds()
+ C->>R: salvarLeitura(leitura)
+ R->>DB: INSERT INTO leituras_contagem
+ C-->>A: Return Updated State
+ A-->>S: 201 Created
 ```
 ## Processo de Pagamento Integrado (Stripe)
 
@@ -96,46 +96,46 @@ Para garantir a máxima fiabilidade, evitar duplos pagamentos e suportar situaç
 **Diagrama de Sequência do Processo de Pagamento Stripe**
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor P as Passageiro (PWA)
-    participant V as BuyTicketView.vue
-    participant C as PaymentController.java
-    participant S as Stripe API
-    participant W as Stripe Webhook (/webhook)
-    participant DB as MySQL (Tabela bilhetes)
+ autonumber
+ actor P as Passageiro (PWA)
+ participant V as BuyTicketView.vue
+ participant C as PaymentController.java
+ participant S as Stripe API
+ participant W as Stripe Webhook (/webhook)
+ participant DB as MySQL (Tabela bilhetes)
 
-    P->>V: Seleciona bilhete e clica em Pagar
-    V->>C: POST /api/payments/create-intent {tipoId, clienteId}
-    Note over C: Valida tipoId nos preços canónicos do catálogo
-    C->>S: Criar PaymentIntent (amount, currency, metadata, AutomaticPaymentMethods)
-    S-->>C: Retorna clientSecret & paymentIntentId
-    C-->>V: Retorna clientSecret & paymentIntentId
-    V->>V: Inicializa Stripe Elements (pt-PT, flat/night theme)
-    V->>P: Mostra formulário de pagamento unificado (Stripe Element)
-    P->>V: Insere dados e confirma pagamento
-    V->>S: stripe.confirmPayment() (direto para o Stripe)
-    alt Pagamento Sucedido
-        S-->>V: Redireciona / Confirma sucesso no browser
-        S->>W: POST Evento payment_intent.succeeded (Webhook)
-        Note over W: Valida assinatura usando STRIPE_WEBHOOK_SECRET
-        W->>W: emitirBilhete() com garantia de idempotência
-        W->>DB: INSERT INTO bilhetes (id, cliente_id, estado='Ativo', ...)
-        W-->>S: 200 OK
-    end
-    Note over V: Resiliência / Prevenção de duplos pagamentos
-    V->>C: GET /api/payments/check-intent/{paymentIntentId}
-    C->>DB: Verifica na BD local se o bilhete já existe
-    alt Bilhete Já Emitido
-        DB-->>C: Bilhete encontrado
-        C-->>V: Retorna pago=true (Sucesso Imediato)
-    else Não Emitido Ainda (Webhook atrasado ou falhou)
-        C->>S: Consultar estado do PaymentIntent no Stripe
-        S-->>C: Estado = succeeded
-        C->>C: emitirBilhete() (fallback automático de emissão)
-        C->>DB: INSERT INTO bilhetes (...)
-        C-->>V: Retorna pago=true
-    end
-    V->>P: Apresenta ecrã de Sucesso e disponibiliza Bilhete Digital
+ P->>V: Seleciona bilhete e clica em Pagar
+ V->>C: POST /api/payments/create-intent {tipoId, clienteId}
+ Note over C: Valida tipoId nos preços canónicos do catálogo
+ C->>S: Criar PaymentIntent (amount, currency, metadata, AutomaticPaymentMethods)
+ S-->>C: Retorna clientSecret & paymentIntentId
+ C-->>V: Retorna clientSecret & paymentIntentId
+ V->>V: Inicializa Stripe Elements (pt-PT, flat/night theme)
+ V->>P: Mostra formulário de pagamento unificado (Stripe Element)
+ P->>V: Insere dados e confirma pagamento
+ V->>S: stripe.confirmPayment() (direto para o Stripe)
+ alt Pagamento Sucedido
+ S-->>V: Redireciona / Confirma sucesso no browser
+ S->>W: POST Evento payment_intent.succeeded (Webhook)
+ Note over W: Valida assinatura usando STRIPE_WEBHOOK_SECRET
+ W->>W: emitirBilhete() com garantia de idempotência
+ W->>DB: INSERT INTO bilhetes (id, cliente_id, estado='Ativo', ...)
+ W-->>S: 200 OK
+ end
+ Note over V: Resiliência / Prevenção de duplos pagamentos
+ V->>C: GET /api/payments/check-intent/{paymentIntentId}
+ C->>DB: Verifica na BD local se o bilhete já existe
+ alt Bilhete Já Emitido
+ DB-->>C: Bilhete encontrado
+ C-->>V: Retorna pago=true (Sucesso Imediato)
+ else Não Emitido Ainda (Webhook atrasado ou falhou)
+ C->>S: Consultar estado do PaymentIntent no Stripe
+ S-->>C: Estado = succeeded
+ C->>C: emitirBilhete() (fallback automático de emissão)
+ C->>DB: INSERT INTO bilhetes (...)
+ C-->>V: Retorna pago=true
+ end
+ V->>P: Apresenta ecrã de Sucesso e disponibiliza Bilhete Digital
 ```
 Fontes: [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:28-60](), [frontend_vue/src/views/passenger/BuyTicketView.vue:4-41]()
 
@@ -154,8 +154,8 @@ O estado do sistema é inicializado durante o arranque do Spring Boot, no fichei
 
 O método 4SRS (System Requirements Specification Strategy) é usado para mapear requisitos funcionais em componentes arquiteturais [README.md:9-10]().
 
-*   **P2 (Lógica de Negócio):** Representada pelo pacote `pt.uminho.dai.pgu.services`. Encapsula o "Motor de Ingestão" e o "Motor de Correlação" centrais [README.md:77-77]().
-*   **P5 (Interface de Utilizador):** Representada pela diretoria `frontend_vue/src/views`, separando vistas de operador e de passageiro [README.md:80-81]().
-*   **P7 (Persistência de Dados):** Representada pelo pacote `pt.uminho.dai.pgu.repositories` e pelo esquema `init.sql` [README.md:78-78](), [README.md:87-87]().
+* **P2 (Lógica de Negócio):** Representada pelo pacote `pt.uminho.dai.pgu.services`. Encapsula o "Motor de Ingestão" e o "Motor de Correlação" centrais [README.md:77-77]().
+* **P5 (Interface de Utilizador):** Representada pela diretoria `frontend_vue/src/views`, separando vistas de operador e de passageiro [README.md:80-81]().
+* **P7 (Persistência de Dados):** Representada pelo pacote `pt.uminho.dai.pgu.repositories` e pelo esquema `init.sql` [README.md:78-78](), [README.md:87-87]().
 
 Fontes: [README.md:9-16](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/SpringConfig.java:1-17]()

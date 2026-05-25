@@ -17,17 +17,17 @@ A lógica de routing é governada por um guard global de navegação `router.bef
 Title: Navigation Guard Logic Flow
 ```mermaid
 graph TD
-    A["router.beforeEach(to)"] --> B{"meta.requiresAdmin?"}
-    B -- "Yes" --> C{"authService.isAdminLoggedIn()"}
-    C -- "False" --> D["Redirect to /login"]
-    C -- "True" --> E["next()"]
-    
-    B -- "No" --> F{"meta.requiresUser?"}
-    F -- "Yes" --> G{"authService.getUser()"}
-    G -- "null (Expired/Missing)" --> H["Redirect to /app/login"]
-    G -- "Valid User" --> E
-    
-    F -- "No" --> E
+ A["router.beforeEach(to)"] --> B{"meta.requiresAdmin?"}
+ B -- "Yes" --> C{"authService.isAdminLoggedIn()"}
+ C -- "False" --> D["Redirect to /login"]
+ C -- "True" --> E["next()"]
+ 
+ B -- "No" --> F{"meta.requiresUser?"}
+ F -- "Yes" --> G{"authService.getUser()"}
+ G -- "null (Expired/Missing)" --> H["Redirect to /app/login"]
+ G -- "Valid User" --> E
+ 
+ F -- "No" --> E
 ```
 Fontes: [frontend_vue/src/router/index.js:107-124]()
 
@@ -81,27 +81,27 @@ O componente `TopHeader.vue` fornece uma barra de navegação e estado consisten
 Title: TopHeader Integration with Services
 ```mermaid
 graph LR
-    subgraph "Vue Component: TopHeader.vue"
-        TH["TopHeader Template"]
-        TD["toggleDemo()"]
-        HL["handleLogout()"]
-    end
+ subgraph "Vue Component: TopHeader.vue"
+ TH["TopHeader Template"]
+ TD["toggleDemo()"]
+ HL["handleLogout()"]
+ end
 
-    subgraph "Auth Service"
-        AS["authService.getAdminUser()"]
-        LO["authService.logoutAdmin()"]
-    end
+ subgraph "Auth Service"
+ AS["authService.getAdminUser()"]
+ LO["authService.logoutAdmin()"]
+ end
 
-    subgraph "Storage"
-        LS[("localStorage: pgu_demo_mode")]
-        SS[("sessionStorage: pgu_admin_user")]
-    end
+ subgraph "Storage"
+ LS[("localStorage: pgu_demo_mode")]
+ SS[("sessionStorage: pgu_admin_user")]
+ end
 
-    TH -- "calls" --> TD
-    TH -- "calls" --> HL
-    TD -- "updates" --> LS
-    HL -- "calls" --> LO
-    LO -- "clears" --> SS
-    AS -- "reads" --> SS
+ TH -- "calls" --> TD
+ TH -- "calls" --> HL
+ TD -- "updates" --> LS
+ HL -- "calls" --> LO
+ LO -- "clears" --> SS
+ AS -- "reads" --> SS
 ```
 Fontes: [frontend_vue/src/components/TopHeader.vue:1-60](), [frontend_vue/src/services/auth.js:45-61]()

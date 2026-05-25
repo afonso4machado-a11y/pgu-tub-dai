@@ -16,8 +16,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication(scanBasePackages = "pt.uminho.dai.pgu")
 public class Programa {
-    public static void main(String[] args) {
-        SpringApplication.run(Programa.class, args);
-        System.out.println("====== SERVIDOR SPRING BOOT TUB INICIADO NA PORTA 8080 ======");
-    }
+ public static void main(String[] args) {
+ SpringApplication.run(Programa.class, args);
+ System.out.println("====== SERVIDOR SPRING BOOT TUB INICIADO NA PORTA 8080 ======");
+ }
 }

@@ -11,35 +11,35 @@ import pt.uminho.dai.pgu.p2_businesslogic.analitica_historico.*;
 import java.time.Duration;
 
 public class ThresholdsAlerta {
-    private final double limiteOcupacao;
-    private final int leiturasAnomalasSimultaneas;
-    private final Duration limiteSemLeituras;
+ private final double limiteOcupacao;
+ private final int leiturasAnomalasSimultaneas;
+ private final Duration limiteSemLeituras;
 
-    public ThresholdsAlerta() {
-        this(0.90, 7, Duration.ofMinutes(15));
-    }
+ public ThresholdsAlerta() {
+ this(0.90, 7, Duration.ofMinutes(15));
+ }
 
-    public ThresholdsAlerta(double limiteOcupacao, int leiturasAnomalasSimultaneas, Duration limiteSemLeituras) {
-        if (limiteOcupacao <= 0 || limiteOcupacao > 1) {
-            throw new IllegalArgumentException("O limite de ocupacao deve estar entre 0 e 1.");
-        }
-        if (leiturasAnomalasSimultaneas <= 0) {
-            throw new IllegalArgumentException("O limite de leituras anomalas deve ser superior a zero.");
-        }
-        this.limiteOcupacao = limiteOcupacao;
-        this.leiturasAnomalasSimultaneas = leiturasAnomalasSimultaneas;
-        this.limiteSemLeituras = limiteSemLeituras;
-    }
+ public ThresholdsAlerta(double limiteOcupacao, int leiturasAnomalasSimultaneas, Duration limiteSemLeituras) {
+ if (limiteOcupacao <= 0 || limiteOcupacao > 1) {
+ throw new IllegalArgumentException("O limite de ocupacao deve estar entre 0 e 1.");
+ }
+ if (leiturasAnomalasSimultaneas <= 0) {
+ throw new IllegalArgumentException("O limite de leituras anomalas deve ser superior a zero.");
+ }
+ this.limiteOcupacao = limiteOcupacao;
+ this.leiturasAnomalasSimultaneas = leiturasAnomalasSimultaneas;
+ this.limiteSemLeituras = limiteSemLeituras;
+ }
 
-    public double getLimiteOcupacao() {
-        return limiteOcupacao;
-    }
+ public double getLimiteOcupacao() {
+ return limiteOcupacao;
+ }
 
-    public int getLeiturasAnomalasSimultaneas() {
-        return leiturasAnomalasSimultaneas;
-    }
+ public int getLeiturasAnomalasSimultaneas() {
+ return leiturasAnomalasSimultaneas;
+ }
 
-    public Duration getLimiteSemLeituras() {
-        return limiteSemLeituras;
-    }
+ public Duration getLimiteSemLeituras() {
+ return limiteSemLeituras;
+ }
 }

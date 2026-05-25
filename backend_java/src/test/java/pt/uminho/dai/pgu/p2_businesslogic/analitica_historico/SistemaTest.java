@@ -17,56 +17,56 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SistemaTest {
 
-    private static Sistema criarSistemaEmMemoria(ThresholdsAlerta thresholds) {
-        return new Sistema(
-                new RepositorioAutocarros(true),
-                new RepositorioClientes(true),
-                new RepositorioLeituras(true),
-                new RepositorioAlertas(true),
-                new RepositorioClientesAlertas(true),
-                thresholds);
-    }
+ private static Sistema criarSistemaEmMemoria(ThresholdsAlerta thresholds) {
+ return new Sistema(
+ new RepositorioAutocarros(true),
+ new RepositorioClientes(true),
+ new RepositorioLeituras(true),
+ new RepositorioAlertas(true),
+ new RepositorioClientesAlertas(true),
+ thresholds);
+ }
 
-    @Test
-    void deveGerarAlertaQuandoOcupacaoUltrapassaNoventaPorCento() {
-        Sistema sistema = criarSistemaEmMemoria(new ThresholdsAlerta(0.90, 7, Duration.ofMinutes(15)));
-        sistema.registarAutocarro("BUS-1", 10);
+ @Test
+ void deveGerarAlertaQuandoOcupacaoUltrapassaNoventaPorCento() {
+ Sistema sistema = criarSistemaEmMemoria(new ThresholdsAlerta(0.90, 7, Duration.ofMinutes(15)));
+ sistema.registarAutocarro("BUS-1", 10);
 
-        List<Alerta> alertas = sistema.receberLeitura("BUS-1", 9, 0, LocalDateTime.now());
+ List<Alerta> alertas = sistema.receberLeitura("BUS-1", 9, 0, LocalDateTime.now());
 
-        assertTrue(alertas.stream().anyMatch(alerta -> alerta.getTipo() == TipoAlerta.OCUPACAO_ACIMA_DO_LIMIAR));
-    }
+ assertTrue(alertas.stream().anyMatch(alerta -> alerta.getTipo() == TipoAlerta.OCUPACAO_ACIMA_DO_LIMIAR));
+ }
 
-    @Test
-    void deveGerarAlertaQuandoEntramSeteOuMaisPassageirosEmSimultaneo() {
-        Sistema sistema = criarSistemaEmMemoria(new ThresholdsAlerta());
-        sistema.registarAutocarro("BUS-2", 50);
+ @Test
+ void deveGerarAlertaQuandoEntramSeteOuMaisPassageirosEmSimultaneo() {
+ Sistema sistema = criarSistemaEmMemoria(new ThresholdsAlerta());
+ sistema.registarAutocarro("BUS-2", 50);
 
-        List<Alerta> alertas = sistema.receberLeitura("BUS-2", 7, 0, LocalDateTime.now());
+ List<Alerta> alertas = sistema.receberLeitura("BUS-2", 7, 0, LocalDateTime.now());
 
-        assertTrue(alertas.stream().anyMatch(alerta -> alerta.getTipo() == TipoAlerta.LEITURA_ANOMALA_ENTRADA));
-    }
+ assertTrue(alertas.stream().anyMatch(alerta -> alerta.getTipo() == TipoAlerta.LEITURA_ANOMALA_ENTRADA));
+ }
 
-    @Test
-    void deveGerarAlertaQuandoSaemSeteOuMaisPassageirosEmSimultaneo() {
-        Sistema sistema = criarSistemaEmMemoria(new ThresholdsAlerta());
-        sistema.registarAutocarro("BUS-3", 50);
-        sistema.receberLeitura("BUS-3", 10, 0, LocalDateTime.now());
+ @Test
+ void deveGerarAlertaQuandoSaemSeteOuMaisPassageirosEmSimultaneo() {
+ Sistema sistema = criarSistemaEmMemoria(new ThresholdsAlerta());
+ sistema.registarAutocarro("BUS-3", 50);
+ sistema.receberLeitura("BUS-3", 10, 0, LocalDateTime.now());
 
-        List<Alerta> alertas = sistema.receberLeitura("BUS-3", 0, 7, LocalDateTime.now().plusMinutes(1));
+ List<Alerta> alertas = sistema.receberLeitura("BUS-3", 0, 7, LocalDateTime.now().plusMinutes(1));
 
-        assertTrue(alertas.stream().anyMatch(alerta -> alerta.getTipo() == TipoAlerta.LEITURA_ANOMALA_SAIDA));
-    }
+ assertTrue(alertas.stream().anyMatch(alerta -> alerta.getTipo() == TipoAlerta.LEITURA_ANOMALA_SAIDA));
+ }
 
-    @Test
-    void deveGerarAlertaQuandoExisteAusenciaDeLeiturasPorPeriodoProlongado() {
-        Sistema sistema = criarSistemaEmMemoria(new ThresholdsAlerta(0.90, 7, Duration.ofMinutes(15)));
-        sistema.registarAutocarro("BUS-4", 50);
-        LocalDateTime instanteInicial = LocalDateTime.now();
-        sistema.receberLeitura("BUS-4", 1, 0, instanteInicial);
+ @Test
+ void deveGerarAlertaQuandoExisteAusenciaDeLeiturasPorPeriodoProlongado() {
+ Sistema sistema = criarSistemaEmMemoria(new ThresholdsAlerta(0.90, 7, Duration.ofMinutes(15)));
+ sistema.registarAutocarro("BUS-4", 50);
+ LocalDateTime instanteInicial = LocalDateTime.now();
+ sistema.receberLeitura("BUS-4", 1, 0, instanteInicial);
 
-        List<Alerta> alertas = sistema.receberLeitura("BUS-4", 1, 0, instanteInicial.plusMinutes(20));
+ List<Alerta> alertas = sistema.receberLeitura("BUS-4", 1, 0, instanteInicial.plusMinutes(20));
 
-        assertTrue(alertas.stream().anyMatch(alerta -> alerta.getTipo() == TipoAlerta.AUSENCIA_DE_LEITURAS));
-    }
+ assertTrue(alertas.stream().anyMatch(alerta -> alerta.getTipo() == TipoAlerta.AUSENCIA_DE_LEITURAS));
+ }
 }

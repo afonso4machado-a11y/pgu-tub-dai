@@ -12,221 +12,221 @@ const dataFim = ref('')
 
 // Inicializar com últimos 30 dias
 onMounted(() => {
-  const hoje = new Date()
-  const inicio = new Date(hoje)
-  inicio.setDate(inicio.getDate() - 30)
-  dataFim.value = hoje.toISOString().split('T')[0]
-  dataInicio.value = inicio.toISOString().split('T')[0]
-  carregarCorrelacao()
+ const hoje = new Date()
+ const inicio = new Date(hoje)
+ inicio.setDate(inicio.getDate() - 30)
+ dataFim.value = hoje.toISOString().split('T')[0]
+ dataInicio.value = inicio.toISOString().split('T')[0]
+ carregarCorrelacao()
 })
 
 watch(demoModeRef, () => carregarCorrelacao())
 
 async function carregarCorrelacao() {
-  loading.value = true
-  err.value = ''
-  try {
-    const { data } = await apiFetch(`/correlacao?dataInicio=${dataInicio.value}&dataFim=${dataFim.value}`)
-    if (data.status === 'sucesso') {
-      correlacao.value = data.correlacao
-    } else {
-      err.value = data.mensagem || 'Erro desconhecido.'
-    }
-  } catch (e) {
-    err.value = 'Falha na ligação ao servidor. Verifique que o backend está ativo.'
-  } finally {
-    loading.value = false
-  }
+ loading.value = true
+ err.value = ''
+ try {
+ const { data } = await apiFetch(`/correlacao?dataInicio=${dataInicio.value}&dataFim=${dataFim.value}`)
+ if (data.status === 'sucesso') {
+ correlacao.value = data.correlacao
+ } else {
+ err.value = data.mensagem || 'Erro desconhecido.'
+ }
+ } catch (e) {
+ err.value = 'Falha na ligação ao servidor. Verifique que o backend está ativo.'
+ } finally {
+ loading.value = false
+ }
 }
 
 // Computed para o gráfico horizontal de barras (CSS puro)
 const maxEntradas = computed(() => {
-  if (!correlacao.value?.procuraPorLinha?.length) return 1
-  return Math.max(...correlacao.value.procuraPorLinha.map(l => l.totalEntradas), 1)
+ if (!correlacao.value?.procuraPorLinha?.length) return 1
+ return Math.max(...correlacao.value.procuraPorLinha.map(l => l.totalEntradas), 1)
 })
 
 // Cor do ratio
 function ratioColor(ratio) {
-  if (ratio < 5) return 'var(--text-muted)'
-  if (ratio < 15) return 'var(--accent-teal)'
-  if (ratio < 30) return 'var(--warning)'
-  return 'var(--danger)'
+ if (ratio < 5) return 'var(--text-muted)'
+ if (ratio < 15) return 'var(--accent-teal)'
+ if (ratio < 30) return 'var(--warning)'
+ return 'var(--danger)'
 }
 
 // Formato hora
 function fmtHora(h) {
-  return `${String(h).padStart(2, '0')}:00`
+ return `${String(h).padStart(2, '0')}:00`
 }
 
 // Max hora para barra
 const maxHoraEntradas = computed(() => {
-  if (!correlacao.value?.procuraPorHora?.length) return 1
-  return Math.max(...correlacao.value.procuraPorHora.map(h => h.entradas), 1)
+ if (!correlacao.value?.procuraPorHora?.length) return 1
+ return Math.max(...correlacao.value.procuraPorHora.map(h => h.entradas), 1)
 })
 
 function exportCSV() {
-  if (!correlacao.value) return
-  const lines = ['Linha;Entradas;Saídas;Dias com Dados;Total Leituras']
-  correlacao.value.procuraPorLinha.forEach(l => {
-    lines.push(`${l.linhaId};${l.totalEntradas};${l.totalSaidas};${l.diasComDados};${l.totalLeituras}`)
-  })
-  lines.push('')
-  lines.push('Hora;Entradas;Saídas')
-  correlacao.value.procuraPorHora.forEach(h => {
-    lines.push(`${h.hora}:00;${h.entradas};${h.saidas}`)
-  })
-  lines.push('')
-  lines.push('Perfil Bilhética;Validações')
-  Object.entries(correlacao.value.bilheticaSimulada).forEach(([k, v]) => {
-    lines.push(`${k};${v}`)
-  })
-  const csv = lines.join('\n')
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `correlacao_pgu_${dataInicio.value}_${dataFim.value}.csv`
-  a.click()
-  URL.revokeObjectURL(url)
+ if (!correlacao.value) return
+ const lines = ['Linha;Entradas;Saídas;Dias com Dados;Total Leituras']
+ correlacao.value.procuraPorLinha.forEach(l => {
+ lines.push(`${l.linhaId};${l.totalEntradas};${l.totalSaidas};${l.diasComDados};${l.totalLeituras}`)
+ })
+ lines.push('')
+ lines.push('Hora;Entradas;Saídas')
+ correlacao.value.procuraPorHora.forEach(h => {
+ lines.push(`${h.hora}:00;${h.entradas};${h.saidas}`)
+ })
+ lines.push('')
+ lines.push('Perfil Bilhética;Validações')
+ Object.entries(correlacao.value.bilheticaSimulada).forEach(([k, v]) => {
+ lines.push(`${k};${v}`)
+ })
+ const csv = lines.join('\n')
+ const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+ const url = URL.createObjectURL(blob)
+ const a = document.createElement('a')
+ a.href = url
+ a.download = `correlacao_pgu_${dataInicio.value}_${dataFim.value}.csv`
+ a.click()
+ URL.revokeObjectURL(url)
 }
 </script>
 
 <template>
-  <div class="correlation-view fade-in">
-    <!-- Header -->
-    <div class="glass-panel main-header">
-      <div class="head-left">
-        <h3 class="panel-title"><GitCompare class="icon-inline"/> Motor de Correlação — Procura vs Oferta</h3>
-        <p class="panel-desc">UC 4.3: Cruzamento de dados de contagem com GTFS e bilhética</p>
-      </div>
-      <div class="header-controls">
-        <div class="date-picker">
-          <label>De</label>
-          <input type="date" v-model="dataInicio" class="date-input fira-code" />
-        </div>
-        <div class="date-picker">
-          <label>Até</label>
-          <input type="date" v-model="dataFim" class="date-input fira-code" />
-        </div>
-        <button class="btn btn-primary" @click="carregarCorrelacao" :disabled="loading">
-          <TrendingUp :size="16" :class="{'spin': loading}" /> Correlacionar
-        </button>
-        <button v-if="correlacao" class="btn btn-secondary" @click="exportCSV">
-          <Download :size="16" /> CSV
-        </button>
-      </div>
-    </div>
+ <div class="correlation-view fade-in">
+ <!-- Header -->
+ <div class="glass-panel main-header">
+ <div class="head-left">
+ <h3 class="panel-title"><GitCompare class="icon-inline"/> Motor de Correlação — Procura vs Oferta</h3>
+ <p class="panel-desc">UC 4.3: Cruzamento de dados de contagem com GTFS e bilhética</p>
+ </div>
+ <div class="header-controls">
+ <div class="date-picker">
+ <label>De</label>
+ <input type="date" v-model="dataInicio" class="date-input fira-code" />
+ </div>
+ <div class="date-picker">
+ <label>Até</label>
+ <input type="date" v-model="dataFim" class="date-input fira-code" />
+ </div>
+ <button class="btn btn-primary" @click="carregarCorrelacao" :disabled="loading">
+ <TrendingUp :size="16" :class="{'spin': loading}" /> Correlacionar
+ </button>
+ <button v-if="correlacao" class="btn btn-secondary" @click="exportCSV">
+ <Download :size="16" /> CSV
+ </button>
+ </div>
+ </div>
 
-    <!-- Error -->
-    <div v-if="err" class="error-banner fade-in">
-      <AlertTriangle /> {{ err }}
-    </div>
+ <!-- Error -->
+ <div v-if="err" class="error-banner fade-in">
+ <AlertTriangle /> {{ err }}
+ </div>
 
-    <!-- Métricas KPI -->
-    <div v-if="correlacao" class="kpi-grid mt-4">
-      <div class="glass-panel kpi-card">
-        <div class="kpi-icon"><Users /></div>
-        <div class="kpi-info">
-          <span class="kpi-value fira-code">{{ correlacao.metricas.totalPassageirosContados }}</span>
-          <span class="kpi-label">Passageiros Contados</span>
-        </div>
-      </div>
-      <div class="glass-panel kpi-card">
-        <div class="kpi-icon"><Bus /></div>
-        <div class="kpi-info">
-          <span class="kpi-value fira-code">{{ correlacao.metricas.totalViagensProgramadas }}</span>
-          <span class="kpi-label">Viagens Programadas (GTFS)</span>
-        </div>
-      </div>
-      <div class="glass-panel kpi-card highlight">
-        <div class="kpi-icon"><TrendingUp /></div>
-        <div class="kpi-info">
-          <span class="kpi-value fira-code" :style="{color: ratioColor(correlacao.metricas.ratioProcuraOferta)}">
-            {{ correlacao.metricas.ratioProcuraOferta }}
-          </span>
-          <span class="kpi-label">Ratio Passageiros/Viagem</span>
-        </div>
-      </div>
-      <div class="glass-panel kpi-card">
-        <div class="kpi-icon"><Calendar /></div>
-        <div class="kpi-info">
-          <span class="kpi-value fira-code text-cyan">{{ correlacao.metricas.periodoInicio }}</span>
-          <span class="kpi-label">→ {{ correlacao.metricas.periodoFim }}</span>
-        </div>
-      </div>
-    </div>
+ <!-- Métricas KPI -->
+ <div v-if="correlacao" class="kpi-grid mt-4">
+ <div class="glass-panel kpi-card">
+ <div class="kpi-icon"><Users /></div>
+ <div class="kpi-info">
+ <span class="kpi-value fira-code">{{ correlacao.metricas.totalPassageirosContados }}</span>
+ <span class="kpi-label">Passageiros Contados</span>
+ </div>
+ </div>
+ <div class="glass-panel kpi-card">
+ <div class="kpi-icon"><Bus /></div>
+ <div class="kpi-info">
+ <span class="kpi-value fira-code">{{ correlacao.metricas.totalViagensProgramadas }}</span>
+ <span class="kpi-label">Viagens Programadas (GTFS)</span>
+ </div>
+ </div>
+ <div class="glass-panel kpi-card highlight">
+ <div class="kpi-icon"><TrendingUp /></div>
+ <div class="kpi-info">
+ <span class="kpi-value fira-code" :style="{color: ratioColor(correlacao.metricas.ratioProcuraOferta)}">
+ {{ correlacao.metricas.ratioProcuraOferta }}
+ </span>
+ <span class="kpi-label">Ratio Passageiros/Viagem</span>
+ </div>
+ </div>
+ <div class="glass-panel kpi-card">
+ <div class="kpi-icon"><Calendar /></div>
+ <div class="kpi-info">
+ <span class="kpi-value fira-code text-cyan">{{ correlacao.metricas.periodoInicio }}</span>
+ <span class="kpi-label">→ {{ correlacao.metricas.periodoFim }}</span>
+ </div>
+ </div>
+ </div>
 
-    <!-- Content Grid -->
-    <div v-if="correlacao" class="content-grid mt-4">
+ <!-- Content Grid -->
+ <div v-if="correlacao" class="content-grid mt-4">
 
-      <!-- Procura por Linha -->
-      <div class="glass-panel section">
-        <h4><BarChart3 class="icon-inline" /> Procura Real por Linha</h4>
-        <p class="section-desc">Volume de passageiros contados por sensores/QR em cada linha</p>
-        <div v-if="correlacao.procuraPorLinha.length === 0" class="empty-state">
-          Sem dados de contagem no período seleccionado.
-        </div>
-        <div class="bar-list">
-          <div v-for="l in correlacao.procuraPorLinha" :key="l.linhaId" class="bar-row">
-            <span class="bar-label fira-code">{{ l.linhaId }}</span>
-            <div class="bar-track">
-              <div class="bar-fill" :style="{width: (l.totalEntradas / maxEntradas * 100) + '%'}"></div>
-            </div>
-            <span class="bar-value fira-code">{{ l.totalEntradas }}</span>
-            <span class="bar-detail dim">{{ l.diasComDados }}d · {{ l.totalLeituras }} leit.</span>
-          </div>
-        </div>
-      </div>
+ <!-- Procura por Linha -->
+ <div class="glass-panel section">
+ <h4><BarChart3 class="icon-inline" /> Procura Real por Linha</h4>
+ <p class="section-desc">Volume de passageiros contados por sensores/QR em cada linha</p>
+ <div v-if="correlacao.procuraPorLinha.length === 0" class="empty-state">
+ Sem dados de contagem no período seleccionado.
+ </div>
+ <div class="bar-list">
+ <div v-for="l in correlacao.procuraPorLinha" :key="l.linhaId" class="bar-row">
+ <span class="bar-label fira-code">{{ l.linhaId }}</span>
+ <div class="bar-track">
+ <div class="bar-fill" :style="{width: (l.totalEntradas / maxEntradas * 100) + '%'}"></div>
+ </div>
+ <span class="bar-value fira-code">{{ l.totalEntradas }}</span>
+ <span class="bar-detail dim">{{ l.diasComDados }}d · {{ l.totalLeituras }} leit.</span>
+ </div>
+ </div>
+ </div>
 
-      <!-- Oferta GTFS -->
-      <div class="glass-panel section">
-        <h4><Bus class="icon-inline" /> Oferta Planeada (GTFS)</h4>
-        <p class="section-desc">Viagens programadas extraídas dos horários importados</p>
-        <div v-if="correlacao.ofertaPorLinha.length === 0" class="empty-state">
-          Sem dados GTFS. Execute <code>import_horarios.py</code> primeiro.
-        </div>
-        <div class="oferta-grid">
-          <div v-for="o in correlacao.ofertaPorLinha" :key="o.linhaId + o.tipoDia" class="oferta-card">
-            <span class="oferta-linha fira-code text-cyan">{{ o.linhaId }}</span>
-            <span class="oferta-tipo">{{ o.tipoDia === 'UTIL' ? 'Dias Úteis' : 'Fim Semana' }}</span>
-            <span class="oferta-count fira-code">{{ o.viagensProgramadas }} viagens</span>
-          </div>
-        </div>
-      </div>
+ <!-- Oferta GTFS -->
+ <div class="glass-panel section">
+ <h4><Bus class="icon-inline" /> Oferta Planeada (GTFS)</h4>
+ <p class="section-desc">Viagens programadas extraídas dos horários importados</p>
+ <div v-if="correlacao.ofertaPorLinha.length === 0" class="empty-state">
+ Sem dados GTFS. Execute <code>import_horarios.py</code> primeiro.
+ </div>
+ <div class="oferta-grid">
+ <div v-for="o in correlacao.ofertaPorLinha" :key="o.linhaId + o.tipoDia" class="oferta-card">
+ <span class="oferta-linha fira-code text-cyan">{{ o.linhaId }}</span>
+ <span class="oferta-tipo">{{ o.tipoDia === 'UTIL' ? 'Dias Úteis' : 'Fim Semana' }}</span>
+ <span class="oferta-count fira-code">{{ o.viagensProgramadas }} viagens</span>
+ </div>
+ </div>
+ </div>
 
-      <!-- Distribuição Horária -->
-      <div class="glass-panel section">
-        <h4><Calendar class="icon-inline" /> Distribuição Horária da Procura</h4>
-        <p class="section-desc">Picos de hora de ponta identificados no período</p>
-        <div v-if="correlacao.procuraPorHora.length === 0" class="empty-state">
-          Sem dados horários no período.
-        </div>
-        <div class="hora-chart">
-          <div v-for="h in correlacao.procuraPorHora" :key="h.hora" class="hora-bar-wrapper">
-            <div class="hora-bar" :style="{height: (h.entradas / maxHoraEntradas * 100) + '%'}"
-                 :class="{'hora-peak': h.entradas === maxHoraEntradas}">
-            </div>
-            <span class="hora-label fira-code">{{ fmtHora(h.hora) }}</span>
-          </div>
-        </div>
-      </div>
+ <!-- Distribuição Horária -->
+ <div class="glass-panel section">
+ <h4><Calendar class="icon-inline" /> Distribuição Horária da Procura</h4>
+ <p class="section-desc">Picos de hora de ponta identificados no período</p>
+ <div v-if="correlacao.procuraPorHora.length === 0" class="empty-state">
+ Sem dados horários no período.
+ </div>
+ <div class="hora-chart">
+ <div v-for="h in correlacao.procuraPorHora" :key="h.hora" class="hora-bar-wrapper">
+ <div class="hora-bar" :style="{height: (h.entradas / maxHoraEntradas * 100) + '%'}"
+ :class="{'hora-peak': h.entradas === maxHoraEntradas}">
+ </div>
+ <span class="hora-label fira-code">{{ fmtHora(h.hora) }}</span>
+ </div>
+ </div>
+ </div>
 
-      <!-- Bilhética Simulada -->
-      <div class="glass-panel section">
-        <h4><Users class="icon-inline" /> Bilhética Simulada (Perfis)</h4>
-        <p class="section-desc">Distribuição estimada por tipo de título de transporte</p>
-        <div class="perfil-list">
-          <div v-for="(count, perfil) in correlacao.bilheticaSimulada" :key="perfil" class="perfil-row">
-            <span class="perfil-name">{{ perfil }}</span>
-            <span class="perfil-count fira-code" :class="{'text-cyan': count > 0}">{{ count }}</span>
-          </div>
-        </div>
-        <p class="simulated-note">
-          <div class="lucide-warning-wrap"><AlertTriangle :size="16" /></div> Dados simulados proporcionalmente às entradas reais. A integração com a API de bilhética (vertical 3.3) substituirá estes valores.
-        </p>
-      </div>
-    </div>
-  </div>
+ <!-- Bilhética Simulada -->
+ <div class="glass-panel section">
+ <h4><Users class="icon-inline" /> Bilhética Simulada (Perfis)</h4>
+ <p class="section-desc">Distribuição estimada por tipo de título de transporte</p>
+ <div class="perfil-list">
+ <div v-for="(count, perfil) in correlacao.bilheticaSimulada" :key="perfil" class="perfil-row">
+ <span class="perfil-name">{{ perfil }}</span>
+ <span class="perfil-count fira-code" :class="{'text-cyan': count > 0}">{{ count }}</span>
+ </div>
+ </div>
+ <p class="simulated-note">
+ <div class="lucide-warning-wrap"><AlertTriangle :size="16" /></div> Dados simulados proporcionalmente às entradas reais. A integração com a API de bilhética (vertical 3.3) substituirá estes valores.
+ </p>
+ </div>
+ </div>
+ </div>
 </template>
 
 <style scoped>
@@ -239,12 +239,12 @@ function exportCSV() {
 .date-picker { display: flex; flex-direction: column; gap: 0.25rem; }
 .date-picker label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
 .date-input {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-light);
-  color: var(--text-main);
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.4rem;
-  font-size: 0.85rem;
+ background: var(--bg-primary);
+ border: 1px solid var(--border-light);
+ color: var(--text-main);
+ padding: 0.5rem 0.75rem;
+ border-radius: 0.4rem;
+ font-size: 0.85rem;
 }
 .date-input:focus { border-color: var(--accent-blue); outline: none; }
 
@@ -252,15 +252,15 @@ function exportCSV() {
 @keyframes spin { 100% { transform: rotate(360deg); } }
 
 .error-banner {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--danger);
-  border: 1px solid var(--danger);
-  padding: 1rem;
-  border-radius: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
+ background: rgba(239, 68, 68, 0.1);
+ color: var(--danger);
+ border: 1px solid var(--danger);
+ padding: 1rem;
+ border-radius: 0.5rem;
+ display: flex;
+ align-items: center;
+ gap: 0.75rem;
+ margin-top: 1.5rem;
 }
 
 .mt-4 { margin-top: 1.5rem; }

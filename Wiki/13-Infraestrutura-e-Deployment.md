@@ -20,30 +20,30 @@ O diagrama seguinte ilustra a relação entre os repositórios de código, o pro
 **Deployment Flow: Source to Cloud**
 ```mermaid
 graph TD
-    subgraph "Source Control (GitHub)"
-        Code["GitHub Repository"]
-        Workflow[".github/workflows/deploy_azure.yml"]
-    end
+ subgraph "Source Control (GitHub)"
+ Code["GitHub Repository"]
+ Workflow[".github/workflows/deploy_azure.yml"]
+ end
 
-    subgraph "Build & CI (GitHub Runners)"
-        JavaBuild["Maven Build (JDK 17)"]
-        NodeBuild["NPM Build (Node 20)"]
-        ArtifactJava["app.jar"]
-        ArtifactVue["deploy_bundle/"]
-    end
+ subgraph "Build & CI (GitHub Runners)"
+ JavaBuild["Maven Build (JDK 17)"]
+ NodeBuild["NPM Build (Node 20)"]
+ ArtifactJava["app.jar"]
+ ArtifactVue["deploy_bundle/"]
+ end
 
-    subgraph "Production (Azure Cloud)"
-        BackendApp["Web App: backend-pgu-tub-2026"]
-        FrontendApp["Web App: pgu-tub-frontend-2026"]
-    end
+ subgraph "Production (Azure Cloud)"
+ BackendApp["Web App: backend-pgu-tub-2026"]
+ FrontendApp["Web App: pgu-tub-frontend-2026"]
+ end
 
-    Code --> Workflow
-    Workflow --> JavaBuild
-    Workflow --> NodeBuild
-    JavaBuild --> ArtifactJava
-    NodeBuild --> ArtifactVue
-    ArtifactJava -- "azure/webapps-deploy" --> BackendApp
-    ArtifactVue -- "azure/webapps-deploy" --> FrontendApp
+ Code --> Workflow
+ Workflow --> JavaBuild
+ Workflow --> NodeBuild
+ JavaBuild --> ArtifactJava
+ NodeBuild --> ArtifactVue
+ ArtifactJava -- "azure/webapps-deploy" --> BackendApp
+ ArtifactVue -- "azure/webapps-deploy" --> FrontendApp
 ```
 **Fontes:** [.github/workflows/deploy_azure.yml:1-67](), [backend_java/pom.xml:52-63]()
 
@@ -54,8 +54,8 @@ graph TD
 O projeto implementa uma pipeline automatizada usando GitHub Actions para garantir que cada push para o branch `main` é validado e implantado.
 
 A pipeline está dividida em duas tarefas paralelas:
-1.  **`deploy-backend`**: Compila o código fonte Java usando Maven, com JDK 17, e produz um `app.jar` standalone. Este é enviado para a Azure Web App `backend-pgu-tub-2026`.
-2.  **`deploy-frontend`**: Executa `npm run build`, empacota os ficheiros estáticos resultantes com um proxy Node.js `server.js` e implanta o bundle em `pgu-tub-frontend-2026`.
+1. **`deploy-backend`**: Compila o código fonte Java usando Maven, com JDK 17, e produz um `app.jar` standalone. Este é enviado para a Azure Web App `backend-pgu-tub-2026`.
+2. **`deploy-frontend`**: Executa `npm run build`, empacota os ficheiros estáticos resultantes com um proxy Node.js `server.js` e implanta o bundle em `pgu-tub-frontend-2026`.
 
 Para detalhes sobre gestão de segredos, o proxy Node.js de produção e os triggers do workflow, consulte **[CI/CD — GitHub Actions e Deployment Azure](14-CICD-GitHub-Actions-Azure.md)**.
 
@@ -70,18 +70,18 @@ Para desenvolvimento local e paridade entre ambientes, o sistema fornece uma con
 **Container Architecture**
 ```mermaid
 graph LR
-    subgraph "Docker Host"
-        subgraph "pgu-network (Bridge)"
-            DB["tub_mysql (Port 3306)"]
-            BE["tub_backend (Port 8080)"]
-            FE["tub_frontend (Port 80)"]
-        end
-    end
+ subgraph "Docker Host"
+ subgraph "pgu-network (Bridge)"
+ DB["tub_mysql (Port 3306)"]
+ BE["tub_backend (Port 8080)"]
+ FE["tub_frontend (Port 80)"]
+ end
+ end
 
-    FE -- "Proxy Requests" --> BE
-    BE -- "JDBC Connection" --> DB
-    
-    style DB stroke-dasharray: 5 5
+ FE -- "Proxy Requests" --> BE
+ BE -- "JDBC Connection" --> DB
+ 
+ style DB stroke-dasharray: 5 5
 ```
 
 A configuração utiliza uma rede bridge privada `pgu-network` para que os serviços possam comunicar através do nome do container (por exemplo, o backend liga-se a `jdbc:mysql://mysql:3306/tub`).
@@ -96,9 +96,9 @@ Para detalhes sobre as definições dos Dockerfiles, configurações de Nginx pa
 
 Para validar a capacidade da infraestrutura de processar dados em tempo real sem necessitar de hardware físico de autocarro, está incluída uma suíte de testes especializada.
 
-*   **Simulador de Sensores**: Uma ferramenta baseada no browser (`simulador_sensores.html`) que simula a pipeline EDA de 4 etapas enviando pedidos HTTP POST para a API do backend.
-*   **Importadores de Dados**: Scripts e recursos CSV localizados em `07_Anexos_e_Historico/` usados para popular a base de dados com dados de horários TUB para as linhas 07H, 40H e 43H.
-*   **Testes Unitários**: A suíte `SistemaTest.java` garante a integridade da lógica de negócio antes do deployment.
+* **Simulador de Sensores**: Uma ferramenta baseada no browser (`simulador_sensores.html`) que simula a pipeline EDA de 4 etapas enviando pedidos HTTP POST para a API do backend.
+* **Importadores de Dados**: Scripts e recursos CSV localizados em `07_Anexos_e_Historico/` usados para popular a base de dados com dados de horários TUB para as linhas 07H, 40H e 43H.
+* **Testes Unitários**: A suíte `SistemaTest.java` garante a integridade da lógica de negócio antes do deployment.
 
 Para detalhes sobre a simulação de limiares de lotação e o processo de importação de dados de horários, consulte **[Simulador de Sensores IoT e Ferramentas de Teste](16-Simulador-IoT-e-Testes.md)**.
 

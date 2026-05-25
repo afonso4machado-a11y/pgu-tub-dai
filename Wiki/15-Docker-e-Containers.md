@@ -25,23 +25,23 @@ O diagrama seguinte ilustra a relação entre os serviços e o fluxo interno da 
 **Container Interaction and Networking**
 ```mermaid
 graph TD
-    subgraph "External Network"
-        "User Browser"
-    end
+ subgraph "External Network"
+ "User Browser"
+ end
 
-    subgraph "pgu-network (Bridge)"
-        direction TB
-        ["frontend (tub_frontend)"] -- "proxy_pass /api/" --> ["backend (tub_backend)"]
-        ["backend (tub_backend)"] -- "JDBC" --> ["mysql (tub_mysql)"]
-    end
+ subgraph "pgu-network (Bridge)"
+ direction TB
+ ["frontend (tub_frontend)"] -- "proxy_pass /api/" --> ["backend (tub_backend)"]
+ ["backend (tub_backend)"] -- "JDBC" --> ["mysql (tub_mysql)"]
+ end
 
-    "User Browser" -- "Port 80" --> ["frontend (tub_frontend)"]
-    "User Browser" -- "Port 8080 (Direct API)" --> ["backend (tub_backend)"]
-    
-    subgraph "Volumes & Init"
-        ["init.sql"] -.-> ["mysql (tub_mysql)"]
-        ["tub_data (Volume)"] <==> ["mysql (tub_mysql)"]
-    end
+ "User Browser" -- "Port 80" --> ["frontend (tub_frontend)"]
+ "User Browser" -- "Port 8080 (Direct API)" --> ["backend (tub_backend)"]
+ 
+ subgraph "Volumes & Init"
+ ["init.sql"] -.-> ["mysql (tub_mysql)"]
+ ["tub_data (Volume)"] <==> ["mysql (tub_mysql)"]
+ end
 ```
 Fontes: [docker-compose.yml:1-51]()
 
@@ -52,8 +52,8 @@ Fontes: [docker-compose.yml:1-51]()
 O container do backend é construído usando um `Dockerfile` multi-stage para minimizar o tamanho da imagem final, separando o ambiente de build do ambiente de runtime.
 
 ### Processo de Build
-1.  **Build Stage**: Usa `maven:3.9.4-eclipse-temurin-17` para compilar a aplicação [backend_java/Dockerfile:2](). Faz cache das dependências usando `mvn dependency:go-offline` antes de copiar o código fonte para otimizar o tempo de rebuild [backend_java/Dockerfile:5-6]().
-2.  **Run Stage**: Usa uma imagem leve `eclipse-temurin:17-jre-alpine` [backend_java/Dockerfile:10](). O `app.jar` compilado é copiado a partir do estágio de build [backend_java/Dockerfile:12]().
+1. **Build Stage**: Usa `maven:3.9.4-eclipse-temurin-17` para compilar a aplicação [backend_java/Dockerfile:2](). Faz cache das dependências usando `mvn dependency:go-offline` antes de copiar o código fonte para otimizar o tempo de rebuild [backend_java/Dockerfile:5-6]().
+2. **Run Stage**: Usa uma imagem leve `eclipse-temurin:17-jre-alpine` [backend_java/Dockerfile:10](). O `app.jar` compilado é copiado a partir do estágio de build [backend_java/Dockerfile:12]().
 
 ### Variáveis de Ambiente
 O serviço backend em `docker-compose.yml` injeta variáveis específicas do Spring para sobrepor as propriedades por omissão:
@@ -76,26 +76,26 @@ O ficheiro `nginx.conf` é crítico para tratar o routing das Single Page Applic
 - **Proxy de API**: Os pedidos enviados para `/api/` são reencaminhados para `http://backend:8080/api/` [frontend_vue/nginx.conf:12-13](). Isto permite que o frontend use caminhos relativos para chamadas de API.
 
 ### Dockerfile do Frontend
-1.  **Build Stage**: Usa `node:18-alpine` para executar `npm run build`, gerando a pasta `/dist` pronta para produção [frontend_vue/Dockerfile:2-7]().
-2.  **Production Stage**: Usa `nginx:alpine`. Copia os assets estáticos para `/usr/share/nginx/html` e substitui a configuração Nginx por omissão pela `nginx.conf` do projeto [frontend_vue/Dockerfile:10-12]().
+1. **Build Stage**: Usa `node:18-alpine` para executar `npm run build`, gerando a pasta `/dist` pronta para produção [frontend_vue/Dockerfile:2-7]().
+2. **Production Stage**: Usa `nginx:alpine`. Copia os assets estáticos para `/usr/share/nginx/html` e substitui a configuração Nginx por omissão pela `nginx.conf` do projeto [frontend_vue/Dockerfile:10-12]().
 
 **Frontend Build and Serve Pipeline**
 ```mermaid
 graph LR
-    subgraph "Build Stage (Node.js)"
-        "src/*" --> "npm run build"
-        "npm run build" --> "dist/"
-    end
+ subgraph "Build Stage (Node.js)"
+ "src/*" --> "npm run build"
+ "npm run build" --> "dist/"
+ end
 
-    subgraph "Production Stage (Nginx)"
-        "dist/" -- "COPY" --> "html_root [/usr/share/nginx/html]"
-        "nginx.conf" -- "COPY" --> "conf_dir [/etc/nginx/conf.d/]"
-    end
+ subgraph "Production Stage (Nginx)"
+ "dist/" -- "COPY" --> "html_root [/usr/share/nginx/html]"
+ "nginx.conf" -- "COPY" --> "conf_dir [/etc/nginx/conf.d/]"
+ end
 
-    "Client Request" -- "GET /dashboard" --> "nginx.conf"
-    "nginx.conf" -- "try_files" --> "index.html"
-    "Client Request" -- "POST /api/login" --> "nginx.conf"
-    "nginx.conf" -- "proxy_pass" --> "backend:8080"
+ "Client Request" -- "GET /dashboard" --> "nginx.conf"
+ "nginx.conf" -- "try_files" --> "index.html"
+ "Client Request" -- "POST /api/login" --> "nginx.conf"
+ "nginx.conf" -- "proxy_pass" --> "backend:8080"
 ```
 Fontes: [frontend_vue/Dockerfile:1-14](), [frontend_vue/nginx.conf:1-20]()
 
