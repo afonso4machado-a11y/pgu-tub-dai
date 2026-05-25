@@ -83,7 +83,61 @@ sequenceDiagram
     C-->>A: Return Updated State
     A-->>S: 201 Created
 ```
-Fontes: [README.md:91-109](), [tools/simulador_sensores.html:1-7](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/SpringConfig.java:20-22]()
+## Processo de Pagamento Integrado (Stripe)
+
+O sistema de bilhética digital da PGU/TUB utiliza uma integração segura com a API do **Stripe** de ponta-a-ponta, assegurando a conformidade com as diretivas PCI-DSS ao processar dados de cartões diretamente do browser através de **Stripe Payment Elements** com suporte para múltiplos meios de pagamento automáticos (incluindo Cartões, MB WAY, Revolut Pay, Link e Bancontact) [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:28-38]().
+
+### Fluxo de Pagamento e Resiliência
+Para garantir a máxima fiabilidade, evitar duplos pagamentos e suportar situações em que a ligação de rede do passageiro falha a meio da transação ou o utilizador navega para trás, o sistema implementa um fluxo em 3 etapas com verificação ativa de estado:
+1. **Intenção de Compra**: O passageiro escolhe o bilhete e o backend cria um `PaymentIntent` no Stripe com o montante fixado pelos preços canónicos (nunca confiando no preço enviado pelo frontend) [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:45-50]().
+2. **Confirmação e Webhook**: O browser envia os dados diretamente para o Stripe. Ao confirmar-se o sucesso, o Stripe notifica assincronamente o backend via **Webhook** assinado (`payment_intent.succeeded`), que de forma idêntica e segura regista o bilhete na base de dados [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:113-147]().
+3. **Resiliência Ativa (`check-intent`)**: Quando o frontend recarrega ou o utilizador é redirecionado, a app chama o endpoint `/api/payments/check-intent/{id}`. Este verifica primeiro a BD local (se o webhook já tiver persistido a compra). Se ainda não estiver registado, consulta diretamente a API do Stripe em tempo real (como fallback resiliente) para obter o estado oficial da transação e emitir o bilhete caso esta tenha sido bem sucedida [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:160-213]().
+
+**Diagrama de Sequência do Processo de Pagamento Stripe**
+```mermaid
+sequenceDiagram
+    autonumber
+    actor P as Passageiro (PWA)
+    participant V as BuyTicketView.vue
+    participant C as PaymentController.java
+    participant S as Stripe API
+    participant W as Stripe Webhook (/webhook)
+    participant DB as MySQL (Tabela bilhetes)
+
+    P->>V: Seleciona bilhete e clica em Pagar
+    V->>C: POST /api/payments/create-intent {tipoId, clienteId}
+    Note over C: Valida tipoId nos preços canónicos do catálogo
+    C->>S: Criar PaymentIntent (amount, currency, metadata, AutomaticPaymentMethods)
+    S-->>C: Retorna clientSecret & paymentIntentId
+    C-->>V: Retorna clientSecret & paymentIntentId
+    V->>V: Inicializa Stripe Elements (pt-PT, flat/night theme)
+    V->>P: Mostra formulário de pagamento unificado (Stripe Element)
+    P->>V: Insere dados e confirma pagamento
+    V->>S: stripe.confirmPayment() (direto para o Stripe)
+    alt Pagamento Sucedido
+        S-->>V: Redireciona / Confirma sucesso no browser
+        S->>W: POST Evento payment_intent.succeeded (Webhook)
+        Note over W: Valida assinatura usando STRIPE_WEBHOOK_SECRET
+        W->>W: emitirBilhete() com garantia de idempotência
+        W->>DB: INSERT INTO bilhetes (id, cliente_id, estado='Ativo', ...)
+        W-->>S: 200 OK
+    end
+    Note over V: Resiliência / Prevenção de duplos pagamentos
+    V->>C: GET /api/payments/check-intent/{paymentIntentId}
+    C->>DB: Verifica na BD local se o bilhete já existe
+    alt Bilhete Já Emitido
+        DB-->>C: Bilhete encontrado
+        C-->>V: Retorna pago=true (Sucesso Imediato)
+    else Não Emitido Ainda (Webhook atrasado ou falhou)
+        C->>S: Consultar estado do PaymentIntent no Stripe
+        S-->>C: Estado = succeeded
+        C->>C: emitirBilhete() (fallback automático de emissão)
+        C->>DB: INSERT INTO bilhetes (...)
+        C-->>V: Retorna pago=true
+    end
+    V->>P: Apresenta ecrã de Sucesso e disponibiliza Bilhete Digital
+```
+Fontes: [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:28-60](), [frontend_vue/src/views/passenger/BuyTicketView.vue:4-41]()
 
 ## Inicialização e Configuração do Sistema
 

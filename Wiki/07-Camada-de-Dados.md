@@ -70,10 +70,12 @@ graph TD
 | `RepositorioAlertas` | Armazena os alertas gerados pelo sistema. | `guardarTodos(List<Alerta>)` [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/RepositorioAlertas.java:17-39]() |
 | `RepositorioCorrelacao` | Executa JOINs pesados para a analítica do dashboard. | `obterProcuraPorLinha(start, end)` [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/RepositorioCorrelacao.java:20-54]() |
 | `RepositorioClientes` | Trata dos perfis dos passageiros e dos dados de autenticação. | `procurarPorEmail(String)` [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/RepositorioClientes.java:59-63]() |
+| `RepositorioBilhetes` | Persiste e consulta bilhetes e passes comprados via Stripe. | `procurarPorPaymentIntent(paymentIntentId)` [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/RepositorioBilhetes.java:55-66]() |
 
 **Fontes:**
 - `pt.uminho.dai.pgu.repositories.RepositorioCorrelacao` [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/RepositorioCorrelacao.java:1-110]()
 - `pt.uminho.dai.pgu.repositories.RepositorioAlertas` [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/RepositorioAlertas.java:1-61]()
+- `pt.uminho.dai.pgu.repositories.RepositorioBilhetes` [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/RepositorioBilhetes.java:1-82]()
 
 ---
 
@@ -93,6 +95,7 @@ erDiagram
     "Linha (Class)" ||--o{ "viagens (Table)" : "1:N"
     "Cliente (Class)" ||--o{ "clientes_alertas (Table)" : "M:N"
     "Alerta (Class)" ||--o{ "clientes_alertas (Table)" : "M:N"
+    "Cliente (Class)" ||--o{ "bilhetes (Table)" : "1:N"
     "viagens (Table)" ||--o{ "horarios (Table)" : "1:N"
     "paragens (Table)" ||--o{ "horarios (Table)" : "1:N"
 
@@ -109,6 +112,17 @@ erDiagram
         int saidas
         datetime timestamp
     }
+    "bilhetes (Table)" {
+        string id PK
+        string cliente_id FK
+        string tipo
+        string nome_tipo
+        datetime data_compra
+        datetime data_validade
+        string estado
+        decimal preco
+        string payment_intent_id
+    }
 ```
 **Fontes:**
 - Definições do esquema `init.sql` [init.sql:1-95]()
@@ -118,6 +132,7 @@ Para suportar o elevado volume de leituras de sensores e as queries de correlaç
 *   **Índices de Chave Estrangeira**: `idx_leituras_autocarro` e `idx_alertas_autocarro` aceleram as pesquisas para veículos específicos [init.sql:102-103]().
 *   **Índices Temporais**: `idx_leituras_timestamp` e `idx_alertas_timestamp` otimizam as vistas de dashboard que filtram por intervalos de datas [init.sql:108-109]().
 *   **Pesquisas de Horários**: `idx_horarios_viagem` e `idx_viagens_linha` garantem a obtenção rápida dos horários dos autocarros [init.sql:106-107]().
+*   **Pesquisas de Bilhetes e Transações**: `idx_bilhetes_cliente` acelera a listagem de passes por passageiro e `idx_bilhetes_payment_intent` garante velocidade extrema na validação de resiliência e prevenção de duplicações via `check-intent` [init.sql:125-126]().
 
 ### Queries Analíticas Complexas
 O `RepositorioCorrelacao` utiliza SQL avançado para agregar os dados diretamente na base de dados, reduzindo o payload enviado para o backend. Por exemplo, `obterProcuraPorLinha` faz um `JOIN` entre `leituras` e `autocarros`, agrupando por `linha_id` para calcular o total de entradas/saídas por linha [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/RepositorioCorrelacao.java:23-33]().

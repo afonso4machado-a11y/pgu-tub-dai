@@ -71,7 +71,24 @@ O QR code não é uma imagem estática, mas uma grelha gerada que roda a cada 30
 
 **Fontes:** [frontend_vue/src/views/passenger/TicketView.vue:8-32](), [frontend_vue/src/views/passenger/TicketView.vue:133-164]().
 
-## 5. Perfil e Autenticação
+## 5. BuyTicketView: Integração Stripe Payment Elements
+
+A vista `BuyTicketView` disponibiliza uma interface fluída para a aquisição de passes mensais (€30,00) e bilhetes simples (€1,55) integrando a biblioteca oficial `@stripe/stripe-js` [frontend_vue/src/views/passenger/BuyTicketView.vue:4-5]().
+
+### Configuração e Ciclo de Vida do Stripe Element
+O fluxo do componente é dinâmico e reage automaticamente às preferências e ao estado do sistema do utilizador:
+*   **Montagem do Elemento (`mountStripeElements`)**: Cria o formulário seguro do Stripe a partir do `clientSecret` obtido do backend, montando-o na referência DOM `stripeContainer` [frontend_vue/src/views/passenger/BuyTicketView.vue:80-129]().
+*   **Internacionalização Local**: Força o locale `'pt-PT'` para garantir que as descrições dos campos estejam em português de Portugal [frontend_vue/src/views/passenger/BuyTicketView.vue:109-109]().
+*   **Estilização com Dark Mode**: Deteta dinamicamente o tema ativo do browser e aplica o estilo do Stripe (`night` para modo escuro, `flat` para modo claro), garantindo uma integração estética harmoniosa [frontend_vue/src/views/passenger/BuyTicketView.vue:107-108]().
+*   **Automatic Payment Methods**: Ao ativar a propriedade `AutomaticPaymentMethods`, o Stripe apresenta dinamicamente os métodos ativos no dashboard do comerciante (ex: Cartão de Crédito/Débito, MB WAY, Revolut Pay, Link), prevenindo incompatibilidades de código [frontend_vue/src/views/passenger/BuyTicketView.vue:107-108]().
+
+### Mecanismos de Proteção e Tratamento de Erros
+*   **Segurança contra submissão múltipla**: Ao clicar em "Pagar", o estado `isProcessing` é ativado de imediato, desabilitando o botão e exibindo um spinner animado até à conclusão [frontend_vue/src/views/passenger/BuyTicketView.vue:151-155]().
+*   **Tratamento Robusto de Erros**: Erros no processamento do cartão (como fundos insuficientes ou chaves API inválidas) são detetados pelo Stripe SDK e apresentados de forma clara em português no banner `errorMessage` com opção para re-tentativa imediata [frontend_vue/src/views/passenger/BuyTicketView.vue:266-267]().
+
+**Fontes:** [frontend_vue/src/views/passenger/BuyTicketView.vue:1-490]()
+
+## 6. Perfil e Autenticação
 
 A autenticação dos passageiros é tratada via `authService`, com foco na longevidade da sessão.
 
@@ -80,7 +97,7 @@ A autenticação dos passageiros é tratada via `authService`, com foco na longe
 *   **Tratamento de Expiração:** Se uma sessão exceder os 7 dias, a `LoginView` apresenta um banner `sessionExpired` e força um novo login [frontend_vue/src/views/passenger/LoginView.vue:17-23]().
 *   **Integração de Perfil:** `ProfileView` obtém dados extendidos do utilizador (como NIF e estado do passe mensal) a partir do endpoint `/api/auth/profile/{id}` [frontend_vue/src/views/passenger/ProfileView.vue:18-32]().
 
-### Mapeamento de Entidades de Código
+## 7. Mapeamento de Entidades de Código
 
 ```mermaid
 classDiagram
@@ -104,10 +121,18 @@ classDiagram
         +generateQRPayload()
         +refreshQR()
     }
+    class BuyTicketView {
+        +stripeContainer: Ref
+        +isProcessing: Boolean
+        +errorMessage: String
+        +mountStripeElements()
+        +pay()
+    }
 
     HomeView ..> authService : uses
     LiveMapView ..> L : uses Leaflet
     TicketView ..> authService : uses
+    BuyTicketView ..> authService : uses
 ```
 
-**Fontes:** [frontend_vue/src/views/passenger/LoginView.vue:25-42](), [frontend_vue/src/views/passenger/ProfileView.vue:10-16](), [frontend_vue/src/views/passenger/HomeView.vue:4-5]().
+**Fontes:** [frontend_vue/src/views/passenger/LoginView.vue:25-42](), [frontend_vue/src/views/passenger/ProfileView.vue:10-16](), [frontend_vue/src/views/passenger/HomeView.vue:4-5](), [frontend_vue/src/views/passenger/BuyTicketView.vue:1-85]().

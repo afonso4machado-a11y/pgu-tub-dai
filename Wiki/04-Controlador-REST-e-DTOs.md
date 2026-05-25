@@ -64,6 +64,14 @@ sequenceDiagram
 | `POST` | `/signup` | `ClienteSignupDTO` | Registo de passageiro [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/ClienteSignupDTO.java:8-28](). |
 | `PUT` | `/perfil` | `AtualizarPerfilDTO` | Atualiza o NIF ou o estado do passe mensal [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/AtualizarPerfilDTO.java:10-21](). |
 
+### Processamento de Pagamentos (Stripe)
+| Method | Endpoint | DTO / Payload | Descrição |
+|:---|:---|:---|:---|
+| `POST` | `/payments/create-intent` | `CreateIntentRequest` | Cria uma intenção de pagamento (Stripe PaymentIntent) com preços canónicos e Automatic Payment Methods [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:66-110](). |
+| `POST` | `/payments/webhook` | String (Stripe Event Payload) | Recebe notificações assíncronas do Stripe (`payment_intent.succeeded`) com validação de assinatura [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:116-147](). |
+| `GET` | `/payments/check-intent/{paymentIntentId}` | N/A | Verifica resilientemente o estado de um pagamento na BD local ou na API do Stripe (mecanismo anti-duplicação) [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:165-213](). |
+| `GET` | `/payments/bilhetes/{clienteId}` | N/A | Retorna a lista de bilhetes e passes comprados pelo cliente [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:153-157](). |
+
 ---
 
 ## Data Transfer Objects (DTOs) e Regras de Validação
@@ -87,8 +95,14 @@ Usado pela pipeline IoT.
 #### AtualizarPerfilDTO
 Previne XSS armazenado restringindo o campo `nif` a caracteres numéricos e espaços [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/AtualizarPerfilDTO.java:11-13]().
 
-**Mapeamento de Entidades de Código: DTOs de Autenticação**
-Este diagrama mapeia os conceitos de "Login/Signup" em linguagem natural para classes DTO específicas e os respetivos campos de validação.
+#### CreateIntentRequest
+Usado para iniciar a intenção de pagamento no Stripe [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:260-263]().
+* **Restrições**:
+    * `tipoId`: Não pode estar em branco (`@NotBlank`). Deve mapear para os identificadores do catálogo canónico (`'simples'` ou `'passe'`).
+    * `clienteId`: ID do utilizador passageiro autenticado (`@NotBlank`).
+
+**Mapeamento de Entidades de Código: DTOs do Sistema**
+Este diagrama mapeia os conceitos de "Login/Signup", "Perfil" e "Pagamentos" para as classes DTO correspondentes.
 
 ```mermaid
 classDiagram
@@ -109,13 +123,18 @@ classDiagram
         +String nif (Regex: Numbers)
         +Boolean passeMensal
     }
+    class "CreateIntentRequest" {
+        +String tipoId (NotBlank)
+        +String clienteId (NotBlank)
+    }
     
     "AdminLoginDTO" --|> "ApiController" : POST /login/admin
     "ClienteLoginDTO" --|> "ApiController" : POST /login/cliente
     "ClienteSignupDTO" --|> "ApiController" : POST /signup
     "AtualizarPerfilDTO" --|> "ApiController" : PUT /perfil
+    "CreateIntentRequest" --|> "PaymentController" : POST /payments/create-intent
 ```
-**Fontes:** [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/AdminLoginDTO.java:7-20](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/ClienteLoginDTO.java:7-20](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/ClienteSignupDTO.java:8-28](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/AtualizarPerfilDTO.java:10-21]()
+**Fontes:** [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/AdminLoginDTO.java:7-20](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/ClienteLoginDTO.java:7-20](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/ClienteSignupDTO.java:8-28](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/AtualizarPerfilDTO.java:10-21](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:260-263]()
 
 ---
 

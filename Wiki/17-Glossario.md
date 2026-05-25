@@ -67,13 +67,17 @@ graph TD
 
 ## 3. Termos Técnicos e Abreviaturas
 
+*   **Automatic Payment Methods (Stripe):** Configuração no Stripe que ativa dinamicamente múltiplos meios de pagamento (MB WAY, Cartão, Revolut Pay, Link, Bancontact, etc.) com base nas definições da dashboard do comerciante, sem necessidade de alterar código [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:81-85]().
 *   **DTO (Data Transfer Object):** Objetos usados para encapsular dados em pedidos/respostas da API (por exemplo, `RegistarAutocarroDTO`) [backend_java/src/main/java/pt/uminho/dai/pgu/api/ApiController.java:3-11]().
 *   **EDA (Event-Driven Architecture):** Padrão usado pelo simulador IoT para enviar dados para o backend [tools/simulador_sensores.html:6-7]().
 *   **Fingerprint:** String do tipo hash gerada no frontend para detetar alterações de dados e evitar re-renders desnecessários do DOM em `LiveMapView.vue` [frontend_vue/src/views/passenger/LiveMapView.vue:198-202]().
 *   **Modo Demo:** Estado do frontend que permite à aplicação funcionar com dados mock quando o backend está inacessível [frontend_vue/src/views/passenger/HomeView.vue:108-115]().
+*   **Payment Element (Stripe):** Componente de UI dinâmico e seguro fornecido pelo Stripe que é montado diretamente na interface Vue.js para recolher dados de pagamento de forma segura e em conformidade com PCI-DSS [frontend_vue/src/views/passenger/BuyTicketView.vue:262-262]().
+*   **PaymentIntent (Stripe):** Objeto de estado do Stripe que representa uma transação financeira em curso, acompanhando o seu ciclo de vida desde a intenção de compra até ao sucesso [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:75-86]().
+*   **Stripe Webhook:** Endpoint no backend (`/api/payments/webhook`) registado no Stripe para receber notificações HTTP assíncronas sobre eventos de pagamento (ex: `payment_intent.succeeded`) com validação rigorosa de assinatura digital [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:116-127]().
 *   **Validação Zero-Trust:** Prática de validar todos os pedidos recebidos usando `@Valid` e anotações Jakarta Bean Validation [backend_java/src/main/java/pt/uminho/dai/pgu/api/ApiController.java:41-44]().
 
-**Fontes:** [backend_java/src/main/java/pt/uminho/dai/pgu/api/ApiController.java:41-80](), [frontend_vue/src/views/passenger/LiveMapView.vue:22-23](), [frontend_vue/src/views/passenger/HomeView.vue:105-108]()
+**Fontes:** [backend_java/src/main/java/pt/uminho/dai/pgu/api/ApiController.java:41-80](), [frontend_vue/src/views/passenger/LiveMapView.vue:22-23](), [frontend_vue/src/views/passenger/HomeView.vue:105-108](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:1-267]().
 
 ---
 

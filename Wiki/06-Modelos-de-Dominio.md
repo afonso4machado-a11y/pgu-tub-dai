@@ -19,6 +19,7 @@ graph TD
         U_NL["Passenger"]
         R_NL["Sensor Reading"]
         AL_NL["Alert"]
+        B_NL["Ticket / Pass"]
     end
 
     subgraph "Code Entity Space (pt.uminho.dai.pgu.models)"
@@ -29,6 +30,7 @@ graph TD
         R_CE["LeituraContagem.java"]
         AL_CE["Alerta.java"]
         T_CE["TipoAlerta.java"]
+        B_CE["Bilhete.java"]
     end
 
     A_NL --- A_CE
@@ -38,6 +40,7 @@ graph TD
     R_NL --- R_CE
     AL_NL --- AL_CE
     AL_NL --- T_CE
+    B_NL --- B_CE
 ```
 **Fontes:** [backend_java/src/main/java/pt/uminho/dai/pgu/models/Autocarro.java:12-27](), [backend_java/src/main/java/pt/uminho/dai/pgu/models/Linha.java:8-11](), [backend_java/src/main/java/pt/uminho/dai/pgu/models/Cliente.java:10-17]()
 
@@ -110,6 +113,18 @@ Esta classe encapsula a configuração do motor de alertas.
 ### Cliente
 Representa os utilizadores do sistema (passageiros). Armazena dados pessoais e uma lista de instâncias de `Alerta` recebidas pelo utilizador [backend_java/src/main/java/pt/uminho/dai/pgu/models/Cliente.java:10-17]().
 *   `receberAlertas(List<Alerta>)`: Anexa novos alertas ao histórico do utilizador [backend_java/src/main/java/pt/uminho/dai/pgu/models/Cliente.java:65-67]().
+
+### Bilhete
+Representa a entidade de um bilhete ou passe mensal comprado via Stripe e persistido na base de dados [backend_java/src/main/java/pt/uminho/dai/pgu/models/Bilhete.java:9-20]().
+*   **Campos de Dados**:
+    *   `id`: UUID gerado de forma única para identificação do bilhete no sistema.
+    *   `clienteId`: Associação ao `Cliente` comprador.
+    *   `tipo`: Categoria ('simples' para bilhete de viagem simples ou 'passe' para passe de 30 dias).
+    *   `nomeTipo`: Nome descritivo (ex: 'Bilhete Simples' ou 'Passe Mensal').
+    *   `dataCompra` / `dataValidade`: Carimbos de data/hora que definem o tempo de vida do bilhete (bilhete simples é válido por 2 horas, passe mensal é válido por 30 dias) [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:234-237]().
+    *   `estado`: Estado de ativação ('Ativo', 'Utilizado', 'Expirado').
+    *   `preco`: Valor decimal em Euros.
+    *   `paymentIntentId`: ID único correspondente à transação do Stripe.
 
 ### Linha e Paragem
 Estes modelos definem a topologia física da rede.
