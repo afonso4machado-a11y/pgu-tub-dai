@@ -13,6 +13,7 @@ import pt.uminho.dai.pgu.api.analitica_historico.*;
 
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.util.List;
 
 /**
  * DTO para atualização do perfil de cliente — Zero-Trust Input Validation.
@@ -24,9 +25,18 @@ public class AtualizarPerfilDTO {
  private String nif;
 
  private Boolean passeMensal;
+ private String tema;
+ private Boolean notificacoesAtivas;
+ private List<String> linhasFavoritas;
 
  public String getNif() { return nif; }
  public void setNif(String nif) { this.nif = nif; }
  public Boolean getPasseMensal() { return passeMensal; }
  public void setPasseMensal(Boolean passeMensal) { this.passeMensal = passeMensal; }
+ public String getTema() { return tema; }
+ public void setTema(String tema) { this.tema = tema; }
+ public Boolean getNotificacoesAtivas() { return notificacoesAtivas; }
+ public void setNotificacoesAtivas(Boolean notificacoesAtivas) { this.notificacoesAtivas = notificacoesAtivas; }
+ public List<String> getLinhasFavoritas() { return linhasFavoritas; }
+ public void setLinhasFavoritas(List<String> linhasFavoritas) { this.linhasFavoritas = linhasFavoritas; }
 }

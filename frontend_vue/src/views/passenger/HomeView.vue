@@ -91,10 +91,53 @@ function handlePlan() {
  }
 }
 
-const linhasFavoritas = ref([
- { id: 'L7', nome: 'Celeirós — S. Vítor', cor: '#0284c7' },
- { id: 'L43', nome: 'Estação — Universidade', cor: '#7c3aed' },
-])
+const availableLines = [
+  { id: 'L7', nome: 'Celeirós — S. Vítor', cor: '#0284c7' },
+  { id: 'L43', nome: 'Estação — Universidade', cor: '#7c3aed' },
+  { id: 'L2', nome: 'Braga Parque — Estação', cor: '#10b981' },
+  { id: 'L10', nome: 'U. Minho — Hospital', cor: '#f59e0b' },
+]
+
+const isFav = (id) => {
+  const favs = currentUser.value?.linhasFavoritas || ['L7', 'L43']
+  return favs.includes(id)
+}
+
+const toggleFavorite = async (id) => {
+  if (!currentUser.value) return;
+  
+  let favs = [...(currentUser.value.linhasFavoritas || ['L7', 'L43'])]
+  if (favs.includes(id)) {
+    favs = favs.filter(x => x !== id)
+  } else {
+    favs.push(id)
+  }
+  
+  // Atualizar reativamente no ecrã antes da chamada à API
+  currentUser.value = {
+    ...currentUser.value,
+    linhasFavoritas: favs
+  }
+  
+  if (currentUser.value.id && !currentUser.value.id.startsWith('demo-')) {
+    try {
+      const res = await fetch(`/api/auth/profile/${currentUser.value.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ linhasFavoritas: favs })
+      })
+      const data = await res.json()
+      if (data.status === 'sucesso') {
+        currentUser.value = { ...data.user, tipo: 'Utilizador' }
+        authService._setPassengerSession(currentUser.value)
+      }
+    } catch (e) {
+      console.error('Erro ao atualizar favoritos:', e)
+    }
+  } else {
+    authService._setPassengerSession(currentUser.value)
+  }
+}
 
 const proximosAutocarros = ref([
  { linha: 'L7', destino: 'S. Vítor', minutos: 3, lotacao: 45 },
@@ -266,19 +309,19 @@ function lotLabel(pct) {
  </div>
  </div>
 
- <!-- Linhas Favoritas -->
- <div class="section">
- <h3 class="section-title"><Star :size="18" /> As Tuas Linhas</h3>
- <div class="fav-list">
- <div v-for="l in linhasFavoritas" :key="l.id" class="fav-card">
- <div class="fav-left">
- <span class="fav-badge" :style="{background: l.cor}">{{ l.id }}</span>
- <span class="fav-nome">{{ l.nome }}</span>
- </div>
- <ChevronRight :size="18" class="fav-arrow" />
- </div>
- </div>
- </div>
+  <!-- Linhas Favoritas -->
+  <div class="section">
+  <h3 class="section-title"><Star :size="18" /> As Tuas Linhas</h3>
+  <div class="fav-list">
+  <div v-for="l in availableLines" :key="l.id" class="fav-card" @click="toggleFavorite(l.id)">
+  <div class="fav-left">
+  <span class="fav-badge" :style="{background: l.cor}">{{ l.id }}</span>
+  <span class="fav-nome">{{ l.nome }}</span>
+  </div>
+  <Star :size="18" :fill="isFav(l.id) ? '#f59e0b' : 'none'" :color="isFav(l.id) ? '#f59e0b' : '#cbd5e1'" class="fav-star" />
+  </div>
+  </div>
+  </div>
 
  <!-- Stats -->
  <div class="section stats-section">

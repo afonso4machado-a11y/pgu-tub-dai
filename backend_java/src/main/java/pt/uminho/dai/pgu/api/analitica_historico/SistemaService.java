@@ -131,28 +131,70 @@ public class SistemaService {
  }
 
  public Map<String, Object> loginCliente(String email, String password) throws Exception {
- return sistema.loginCliente(email, password)
- .map(c -> Map.of(
- "id", (Object)c.getId(), 
- "nome", (Object)c.getNome(), 
- "email", (Object)c.getEmail(),
- "nif", c.getNif() != null ? c.getNif() : "--- --- ---",
- "passeMensal", c.isPasseMensal()
- ))
- .orElseThrow(() -> new Exception("Credenciais inválidas"));
- }
+  return sistema.loginCliente(email, password)
+  .map(c -> {
+      List<Bilhete> bilhetes = new RepositorioBilhetes().listarPorCliente(c.getId());
+      List<Map<String, Object>> compras = bilhetes.stream().map(b -> {
+          Map<String, Object> map = new HashMap<>();
+          map.put("id", b.getId());
+          map.put("tipo", b.getTipo());
+          map.put("nomeTipo", b.getNomeTipo());
+          map.put("dataCompra", b.getDataCompra().toString());
+          map.put("dataValidade", b.getDataValidade().toString());
+          map.put("estado", b.getEstado());
+          map.put("preco", b.getPreco());
+          return map;
+      }).toList();
 
- public Map<String, Object> obterPerfilCliente(String id) throws Exception {
- return sistema.procurarClientePorId(id)
- .map(c -> Map.of(
- "id", (Object)c.getId(), 
- "nome", (Object)c.getNome(), 
- "email", (Object)c.getEmail(),
- "nif", c.getNif() != null ? c.getNif() : "--- --- ---",
- "passeMensal", c.isPasseMensal()
- ))
- .orElseThrow(() -> new Exception("Cliente não encontrado"));
- }
+      Map<String, Object> map = new HashMap<>();
+      map.put("id", c.getId());
+      map.put("nome", c.getNome());
+      map.put("email", c.getEmail());
+      map.put("nif", c.getNif() != null ? c.getNif() : "--- --- ---");
+      map.put("passeMensal", c.isPasseMensal());
+      map.put("definicoes", Map.of(
+          "tema", c.getTema(),
+          "notificacoesAtivas", c.isNotificacoesAtivas()
+      ));
+      map.put("linhasFavoritas", c.getLinhasFavoritas());
+      map.put("compras", compras);
+      return map;
+  })
+  .orElseThrow(() -> new Exception("Credenciais incorretas. Não foi possível iniciar sessão. Sugerimos que crie uma conta nova caso ainda não o tenha feito."));
+  }
+
+  public Map<String, Object> obterPerfilCliente(String id) throws Exception {
+  return sistema.procurarClientePorId(id)
+  .map(c -> {
+      List<Bilhete> bilhetes = new RepositorioBilhetes().listarPorCliente(c.getId());
+      List<Map<String, Object>> compras = bilhetes.stream().map(b -> {
+          Map<String, Object> map = new HashMap<>();
+          map.put("id", b.getId());
+          map.put("tipo", b.getTipo());
+          map.put("nomeTipo", b.getNomeTipo());
+          map.put("dataCompra", b.getDataCompra().toString());
+          map.put("dataValidade", b.getDataValidade().toString());
+          map.put("estado", b.getEstado());
+          map.put("preco", b.getPreco());
+          return map;
+      }).toList();
+
+      Map<String, Object> map = new HashMap<>();
+      map.put("id", c.getId());
+      map.put("nome", c.getNome());
+      map.put("email", c.getEmail());
+      map.put("nif", c.getNif() != null ? c.getNif() : "--- --- ---");
+      map.put("passeMensal", c.isPasseMensal());
+      map.put("definicoes", Map.of(
+          "tema", c.getTema(),
+          "notificacoesAtivas", c.isNotificacoesAtivas()
+      ));
+      map.put("linhasFavoritas", c.getLinhasFavoritas());
+      map.put("compras", compras);
+      return map;
+  })
+  .orElseThrow(() -> new Exception("Cliente não encontrado"));
+  }
 
  public boolean loginAdmin(String email, String password) {
  return sistema.loginAdmin(email, password);
@@ -182,27 +224,55 @@ public class SistemaService {
  }).toList();
  }
 
- public Map<String, Object> atualizarPerfilCliente(String id, AtualizarPerfilDTO dto) throws Exception {
- var cliente = sistema.procurarClientePorId(id)
- .orElseThrow(() -> new Exception("Cliente não encontrado"));
- 
- if (dto.getNif() != null) {
- cliente.setNif(dto.getNif());
- }
- if (dto.getPasseMensal() != null) {
- cliente.setPasseMensal(dto.getPasseMensal());
- }
- // Persistir alterações
- sistema.atualizarCliente(cliente);
- 
- return Map.of(
- "id", cliente.getId(),
- "nome", cliente.getNome(),
- "email", cliente.getEmail(),
- "nif", cliente.getNif() != null ? cliente.getNif() : "--- --- ---",
- "passeMensal", cliente.isPasseMensal()
- );
- }
+  public Map<String, Object> atualizarPerfilCliente(String id, AtualizarPerfilDTO dto) throws Exception {
+  var cliente = sistema.procurarClientePorId(id)
+  .orElseThrow(() -> new Exception("Cliente não encontrado"));
+  
+  if (dto.getNif() != null) {
+  cliente.setNif(dto.getNif());
+  }
+  if (dto.getPasseMensal() != null) {
+  cliente.setPasseMensal(dto.getPasseMensal());
+  }
+  if (dto.getTema() != null) {
+  cliente.setTema(dto.getTema());
+  }
+  if (dto.getNotificacoesAtivas() != null) {
+  cliente.setNotificacoesAtivas(dto.getNotificacoesAtivas());
+  }
+  if (dto.getLinhasFavoritas() != null) {
+  cliente.setLinhasFavoritas(dto.getLinhasFavoritas());
+  }
+  // Persistir alterações
+  sistema.atualizarCliente(cliente);
+  
+  List<Bilhete> bilhetes = new RepositorioBilhetes().listarPorCliente(cliente.getId());
+  List<Map<String, Object>> compras = bilhetes.stream().map(b -> {
+      Map<String, Object> map = new HashMap<>();
+      map.put("id", b.getId());
+      map.put("tipo", b.getTipo());
+      map.put("nomeTipo", b.getNomeTipo());
+      map.put("dataCompra", b.getDataCompra().toString());
+      map.put("dataValidade", b.getDataValidade().toString());
+      map.put("estado", b.getEstado());
+      map.put("preco", b.getPreco());
+      return map;
+  }).toList();
+
+  Map<String, Object> map = new HashMap<>();
+  map.put("id", cliente.getId());
+  map.put("nome", cliente.getNome());
+  map.put("email", cliente.getEmail());
+  map.put("nif", cliente.getNif() != null ? cliente.getNif() : "--- --- ---");
+  map.put("passeMensal", cliente.isPasseMensal());
+  map.put("definicoes", Map.of(
+      "tema", cliente.getTema(),
+      "notificacoesAtivas", cliente.isNotificacoesAtivas()
+  ));
+  map.put("linhasFavoritas", cliente.getLinhasFavoritas());
+  map.put("compras", compras);
+  return map;
+  }
 
  public boolean verificarConexaoBD() {
  try {

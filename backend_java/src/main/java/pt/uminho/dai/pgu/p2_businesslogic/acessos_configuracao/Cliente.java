@@ -21,6 +21,9 @@ public class Cliente {
  private String nif;
  private boolean passeMensal;
  private final List<Alerta> alertasRecebidos;
+ private String tema = "dark";
+ private boolean notificacoesAtivas = true;
+ private final List<String> linhasFavoritas = new ArrayList<>();
 
  public Cliente(String id, String nome, String email, String password) {
  this(id, nome, email, password, null, false);
@@ -34,6 +37,9 @@ public class Cliente {
  this.nif = nif;
  this.passeMensal = passeMensal;
  this.alertasRecebidos = new ArrayList<>();
+ // Default favorites for new accounts/fallback
+ this.linhasFavoritas.add("L7");
+ this.linhasFavoritas.add("L43");
  }
 
  public String getId() {
@@ -73,6 +79,18 @@ public class Cliente {
  }
 
  public List<Alerta> getAlertasRecebidos() {
- return Collections.unmodifiableList(alertasRecebidos);
- }
+  return Collections.unmodifiableList(alertasRecebidos);
+  }
+
+  public String getTema() { return tema; }
+  public void setTema(String tema) { this.tema = tema; }
+  public boolean isNotificacoesAtivas() { return notificacoesAtivas; }
+  public void setNotificacoesAtivas(boolean notificacoesAtivas) { this.notificacoesAtivas = notificacoesAtivas; }
+  public List<String> getLinhasFavoritas() { return new ArrayList<>(linhasFavoritas); }
+  public void setLinhasFavoritas(List<String> linhasFavoritas) {
+      this.linhasFavoritas.clear();
+      if (linhasFavoritas != null) {
+          this.linhasFavoritas.addAll(linhasFavoritas);
+      }
+  }
 }

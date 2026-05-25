@@ -15,10 +15,27 @@ export function usePassengerTheme() {
  document.documentElement.setAttribute('data-theme', effectiveTheme)
  }
 
- const setTheme = (theme) => {
+ const setTheme = async (theme) => {
  currentPassengerTheme.value = theme
  localStorage.setItem('pgu_passenger_theme', theme)
  applyTheme(theme)
+
+ const user = JSON.parse(localStorage.getItem('pgu_user') || 'null')
+ if (user && user.id && !user.id.startsWith('demo-')) {
+   try {
+     const res = await fetch(`/api/auth/profile/${user.id}`, {
+       method: 'PUT',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ tema: theme })
+     })
+     const data = await res.json()
+     if (data.status === 'sucesso') {
+       localStorage.setItem('pgu_user', JSON.stringify(data.user))
+     }
+   } catch (e) {
+     console.error('Erro ao guardar tema no servidor:', e)
+   }
+ }
  }
 
  const initTheme = () => {

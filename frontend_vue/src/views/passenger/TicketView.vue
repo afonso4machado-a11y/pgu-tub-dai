@@ -5,13 +5,28 @@ import { Ticket, Shield, Clock, RefreshCw, CheckCircle, QrCode } from 'lucide-vu
 import { authService } from '../../services/auth'
 
 const localUser = authService.getUser()
-const activeTicket = ref({
- tipo: localUser?.passeMensal ? 'Passe Mensal' : 'Bilhete Simples',
- zona: 'Zona Urbana Braga',
- validade: localUser?.passeMensal ? '2026-04-30' : '-',
- titular: localUser?.nome || 'Utilizador',
- nif: localUser?.nif || '--- --- ---',
- estado: localUser?.passeMensal ? 'Ativo' : 'Pendente',
+const activeTicket = computed(() => {
+  const compras = localUser?.compras || []
+  // Find the most recent active ticket or pass
+  const active = compras.find(b => b.estado === 'Ativo')
+  if (active) {
+    return {
+      tipo: active.nomeTipo,
+      zona: 'Zona Urbana Braga',
+      validade: active.dataValidade,
+      titular: localUser?.nome || 'Utilizador',
+      nif: localUser?.nif || '--- --- ---',
+      estado: active.estado,
+    }
+  }
+  return {
+    tipo: localUser?.passeMensal ? 'Passe Mensal' : 'Bilhete Simples',
+    zona: 'Zona Urbana Braga',
+    validade: localUser?.passeMensal ? '2026-04-30' : '-',
+    titular: localUser?.nome || 'Utilizador',
+    nif: localUser?.nif || '--- --- ---',
+    estado: localUser?.passeMensal ? 'Ativo' : 'Pendente',
+  }
 })
 
 const qrData = ref('')

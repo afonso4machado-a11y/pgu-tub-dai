@@ -43,6 +43,41 @@ public class RepositorioClientes {
  clientesByEmail.put(email.toLowerCase(), cliente);
  }
  }
+
+ // Carregar definições/configurações da base de dados
+ try (PreparedStatement psDef = conn.prepareStatement("SELECT cliente_id, tema, notificacoes_ativas FROM definicoes_cliente")) {
+ try (ResultSet rsDef = psDef.executeQuery()) {
+ while (rsDef.next()) {
+ String cid = rsDef.getString("cliente_id");
+ String tema = rsDef.getString("tema");
+ boolean notif = rsDef.getBoolean("notificacoes_ativas");
+ Cliente c = clientesById.get(cid);
+ if (c != null) {
+ c.setTema(tema);
+ c.setNotificacoesAtivas(notif);
+ }
+ }
+ }
+ }
+
+ // Carregar linhas favoritas da base de dados
+ try (PreparedStatement psFav = conn.prepareStatement("SELECT cliente_id, linha_id FROM linhas_favoritas")) {
+ try (ResultSet rsFav = psFav.executeQuery()) {
+ Map<String, List<String>> favs = new HashMap<>();
+ while (rsFav.next()) {
+ String cid = rsFav.getString("cliente_id");
+ String lid = rsFav.getString("linha_id");
+ favs.computeIfAbsent(cid, k -> new ArrayList<>()).add(lid);
+ }
+ for (Map.Entry<String, List<String>> entry : favs.entrySet()) {
+ Cliente c = clientesById.get(entry.getKey());
+ if (c != null) {
+ c.setLinhasFavoritas(entry.getValue());
+ }
+ }
+ }
+ }
+
  isLoaded = true;
  System.out.println("[DB] Clientes carregados: " + clientesById.size());
  } catch (SQLException e) {
@@ -56,8 +91,9 @@ public class RepositorioClientes {
  clientesByEmail.put(cliente.getEmail().toLowerCase(), cliente);
  }
  
- try (Connection conn = DatabaseConnection.obterConexao();
- PreparedStatement ps = conn.prepareStatement(
+ try (Connection conn = DatabaseConnection.obterConexao()) {
+ // 1. Inserir ou atualizar dados básicos do cliente
+ try (PreparedStatement ps = conn.prepareStatement(
  "INSERT INTO clientes (id, nome, email, password, nif, passe_mensal) VALUES (?, ?, ?, ?, ?, ?) " +
  "ON DUPLICATE KEY UPDATE nome = VALUES(nome), password = VALUES(password), nif = VALUES(nif), passe_mensal = VALUES(passe_mensal)")) {
  ps.setString(1, cliente.getId());
@@ -67,6 +103,34 @@ public class RepositorioClientes {
  ps.setString(5, cliente.getNif());
  ps.setBoolean(6, cliente.isPasseMensal());
  ps.executeUpdate();
+ }
+
+ // 2. Inserir ou atualizar definições do cliente
+ try (PreparedStatement psDef = conn.prepareStatement(
+ "INSERT INTO definicoes_cliente (cliente_id, tema, notificacoes_ativas) VALUES (?, ?, ?) " +
+ "ON DUPLICATE KEY UPDATE tema = VALUES(tema), notificacoes_ativas = VALUES(notificacoes_ativas)")) {
+ psDef.setString(1, cliente.getId());
+ psDef.setString(2, cliente.getTema());
+ psDef.setBoolean(3, cliente.isNotificacoesAtivas());
+ psDef.executeUpdate();
+ }
+
+ // 3. Persistir linhas favoritas do cliente
+ try (PreparedStatement psDel = conn.prepareStatement("DELETE FROM linhas_favoritas WHERE cliente_id = ?")) {
+ psDel.setString(1, cliente.getId());
+ psDel.executeUpdate();
+ }
+ List<String> favs = cliente.getLinhasFavoritas();
+ if (favs != null && !favs.isEmpty()) {
+ try (PreparedStatement psIns = conn.prepareStatement("INSERT INTO linhas_favoritas (cliente_id, linha_id) VALUES (?, ?)")) {
+ for (String lid : favs) {
+ psIns.setString(1, cliente.getId());
+ psIns.setString(2, lid);
+ psIns.addBatch();
+ }
+ psIns.executeBatch();
+ }
+ }
  } catch (SQLException e) {
  System.err.println("Erro ao guardar cliente: " + e.getMessage());
  }

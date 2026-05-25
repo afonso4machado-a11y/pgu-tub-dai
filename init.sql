@@ -125,3 +125,19 @@ CREATE TABLE IF NOT EXISTS bilhetes (
 
 CREATE INDEX idx_bilhetes_cliente ON bilhetes(cliente_id);
 CREATE INDEX idx_bilhetes_payment_intent ON bilhetes(payment_intent_id);
+
+-- Configurações e definições específicas de cada cliente
+CREATE TABLE IF NOT EXISTS definicoes_cliente (
+    cliente_id VARCHAR(50) PRIMARY KEY,
+    tema VARCHAR(20) NOT NULL DEFAULT 'dark',
+    notificacoes_ativas BOOLEAN NOT NULL DEFAULT TRUE,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+);
+
+-- Linhas preferidas do cliente
+CREATE TABLE IF NOT EXISTS linhas_favoritas (
+    cliente_id VARCHAR(50) NOT NULL,
+    linha_id VARCHAR(10) NOT NULL,
+    PRIMARY KEY (cliente_id, linha_id),
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+);

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import {
  User, CreditCard, Clock, MapPin, Star, Settings, ChevronRight,
  LogOut, Shield, Bell, Bus, Sun, Moon, Monitor
@@ -42,6 +42,17 @@ const tripHistory = ref([
  { data: '20/04/2026', linha: 'L43', origem: 'Estação CP', destino: 'Universidade', hora: '08:15', duracao: '18 min' },
  { data: '19/04/2026', linha: 'L43', origem: 'Universidade', destino: 'Estação CP', hora: '17:30', duracao: '22 min' },
 ])
+
+const comprasHistory = computed(() => user.value.compras || [])
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr)
+    return d.toLocaleDateString('pt-PT', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  } catch (e) {
+    return dateStr
+  }
+}
 
 const menuItems = [
  { icon: CreditCard, label: 'Métodos de Pagamento', sub: 'Gerir cartões' },
@@ -107,6 +118,28 @@ const menuItems = [
  </div>
  </div>
  </div>
+
+  <!-- Histórico de Pagamentos -->
+  <div class="section">
+  <h3 class="section-title"><CreditCard :size="18" /> Histórico de Pagamentos</h3>
+  <div class="trip-list" v-if="comprasHistory.length > 0">
+  <div v-for="compra in comprasHistory" :key="compra.id" class="trip-card">
+  <div class="trip-left">
+  <span class="trip-linha" :style="{background: compra.tipo === 'passe' ? '#10b981' : '#0284c7'}">
+  {{ compra.tipo === 'passe' ? 'PASSE' : 'BILHETE' }}
+  </span>
+  <div class="trip-info">
+  <span class="trip-route">{{ compra.nomeTipo }}</span>
+  <span class="trip-meta">Pago: {{ compra.preco.toFixed(2) }}€ · {{ formatDate(compra.dataCompra) }}</span>
+  </div>
+  </div>
+  <span class="status-badge" :class="compra.estado.toLowerCase()">{{ compra.estado }}</span>
+  </div>
+  </div>
+  <div v-else class="empty-history">
+  <span class="empty-text">Nenhuma compra registada.</span>
+  </div>
+  </div>
 
  <!-- Theme Switcher -->
  <div class="section">
@@ -260,4 +293,36 @@ const menuItems = [
  transition: all 0.15s, box-shadow 0.2s; box-shadow: 0 4px 20px rgba(0,0,0,0.02);
 }
 .logout-btn:active { background: #fee2e2; transform: scale(0.98); }
+
+.status-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 2rem;
+  text-transform: uppercase;
+}
+.status-badge.ativo {
+  background: #d1fae5;
+  color: #065f46;
+}
+.status-badge.expirado {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.status-badge.utilizado {
+  background: #f3f4f6;
+  color: #374151;
+}
+.empty-history {
+  background: var(--bg-surface);
+  padding: 1.25rem;
+  border-radius: 1.25rem;
+  text-align: center;
+  border: 1px dashed var(--border-light);
+}
+.empty-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
 </style>

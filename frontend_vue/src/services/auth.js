@@ -160,6 +160,14 @@ export const authService = {
  _setPassengerSession(user) {
  localStorage.setItem('pgu_user', JSON.stringify(user))
  localStorage.setItem('pgu_user_login_at', Date.now().toString())
+ if (user && user.definicoes && user.definicoes.tema) {
+   localStorage.setItem('pgu_passenger_theme', user.definicoes.tema)
+   // Apply theme immediately on session load
+   const effTheme = user.definicoes.tema === 'auto'
+     ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+     : user.definicoes.tema;
+   document.documentElement.setAttribute('data-theme', effTheme)
+ }
  },
 
  _clearPassengerSession() {

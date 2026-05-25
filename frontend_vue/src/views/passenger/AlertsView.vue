@@ -2,9 +2,13 @@
 import { ref, onMounted, computed } from 'vue'
 import { Bell, AlertTriangle, Info, Clock, Star, Settings, ChevronRight } from 'lucide-vue-next'
 
+import { authService } from '../../services/auth'
+
 import { apiFetch } from '../../services/api.js'
 const alerts = ref([])
-const linhaFavorita = ref('L43')
+
+const user = authService.getUser()
+const linhaFavorita = ref(user?.linhasFavoritas && user.linhasFavoritas.length > 0 ? user.linhasFavoritas[0] : 'L43')
 
 const sampleAlerts = [
  { id: 1, tipo: 'PERTURBAÇÃO', linha: 'L43', msg: 'Desvio temporário na Av. da Liberdade devido a obras. Paragem "Tribunal" suspensa até 30/04.', tempo: '12 min', lido: false },
