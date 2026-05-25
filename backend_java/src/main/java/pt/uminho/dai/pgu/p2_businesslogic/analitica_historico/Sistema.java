@@ -72,6 +72,9 @@ public class Sistema {
  }
 
  public void registarCliente(String id, String nome, String email, String password) {
+ if (repositorioClientes.procurarPorEmail(email).isPresent()) {
+ throw new IllegalArgumentException("Já existe uma conta com esse email.");
+ }
  repositorioClientes.guardar(new Cliente(id, nome, email, password));
  }
 
