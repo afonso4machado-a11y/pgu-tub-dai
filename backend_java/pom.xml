@@ -58,7 +58,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>pt.uminho.dai.pgu.api.Programa</mainClass>
+                    <mainClass>pt.uminho.dai.pgu.Programa</mainClass>
                 </configuration>
             </plugin>
         </plugins>
