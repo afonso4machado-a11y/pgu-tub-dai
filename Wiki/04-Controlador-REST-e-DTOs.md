@@ -13,7 +13,7 @@ O controlador delega a lógica de negócio para o `SistemaService` [backend_java
 4. **Execução do Serviço**: Os dados validados são entregues ao `SistemaService`.
 
 **Diagrama de Fluxo de Dados: Leitura IoT até Resposta de Alerta**
-Este diagrama ilustra como uma leitura de sensor IoT flui de `RegistarLeiturasDTO`, através do `ApiController`, até à lógica central.
+Este diagrama ilustra como uma leitura de sensor IoT flui de `RegistarLeiturasDTO`, através do `ApiController`
 
 ```mermaid
 sequenceDiagram
@@ -33,6 +33,13 @@ sequenceDiagram
  API-->>IoT: 200 OK {status: "sucesso", alertas: [...]}
  end
 ```
+
+#### 💡 Explicação do Diagrama de Fluxo de Processamento de Pedidos
+* **Explicação Simplória (Para Entender):**
+  Este diagrama de sequência é como a triagem de um hospital de dados. O sensor do autocarro tenta enviar dados de leitura. A nossa API (`ApiController`) atende e passa-os pela enfermeira de triagem (`RegistarLeiturasDTO`) que verifica: "Estes dados fazem sentido ou estão corrompidos?" Se a triagem falhar (ex: entradas negativas ou dados em falta), o pedido é rejeitado na hora com um erro 400 e nem chega a entrar no hospital. Se a validação for um sucesso, os dados entram e são tratados pelo médico de serviço (`SistemaService`), devolvendo os alertas resultantes.
+* **Explicação Técnica e Específica:**
+  Representação do pipeline de validação defensiva e tratamento de exceções no Spring MVC. O pedido HTTP `POST` contendo os dados brutos de contagem é intercetado pelo `ApiController`. O Spring aciona o mecanismo de validação Jakarta Bean Validation (`@Valid`) sobre a classe `RegistarLeiturasDTO`. Caso ocorra uma violação de restrições, é lançada a exceção `MethodArgumentNotValidException`, capturada pelo `@ExceptionHandler` que formata uma resposta REST estruturada (HTTP 400). Se os dados forem válidos, a execução síncrona prossegue para a camada de serviços da aplicação.
+
 **Fontes:** [backend_java/src/main/java/pt/uminho/dai/pgu/api/ApiController.java:82-94](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/RegistarLeiturasDTO.java:8-27]()
 
 ---
@@ -41,7 +48,7 @@ sequenceDiagram
 
 ### Gestão de Frota e Infraestrutura
 | Method | Endpoint | DTO / Payload | Descrição |
-|:---|:---|:---|:---|
+| :--- | :--- | :--- | :--- |
 | `POST` | `/autocarros` | `RegistarAutocarroDTO` | Regista um novo veículo com capacidade e matrícula [backend_java/src/main/java/pt/uminho/dai/pgu/api/ApiController.java:45-59](). |
 | `GET` | `/autocarros` | N/A | Lista todos os autocarros registados [backend_java/src/main/java/pt/uminho/dai/pgu/api/ApiController.java:108-116](). |
 | `GET` | `/autocarros/{id}` | N/A | Estado detalhado de um autocarro específico [backend_java/src/main/java/pt/uminho/dai/pgu/api/ApiController.java:96-106](). |
@@ -51,14 +58,14 @@ sequenceDiagram
 
 ### IoT e Analítica
 | Method | Endpoint | DTO / Payload | Descrição |
-|:---|:---|:---|:---|
+| :--- | :--- | :--- | :--- |
 | `POST` | `/leituras` | `RegistarLeiturasDTO` | Recebe dados de sensores (entradas/saídas) e devolve os alertas despoletados [backend_java/src/main/java/pt/uminho/dai/pgu/api/ApiController.java:82-94](). |
 | `GET` | `/dashboard` | N/A | KPIs agregados para o Backoffice [backend_java/src/main/java/pt/uminho/dai/pgu/api/ApiController.java:118-125](). |
 | `GET` | `/historico` | N/A | Dados históricos de lotação agrupados por dia [backend_java/src/main/java/pt/uminho/dai/pgu/api/ApiController.java:127-134](). |
 
 ### Autenticação e Perfis
 | Method | Endpoint | DTO / Payload | Descrição |
-|:---|:---|:---|:---|
+| :--- | :--- | :--- | :--- |
 | `POST` | `/login/admin` | `AdminLoginDTO` | Login do operador (requer email @uminho.pt) [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/AdminLoginDTO.java:7-20](). |
 | `POST` | `/login/cliente` | `ClienteLoginDTO` | Login do passageiro [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/ClienteLoginDTO.java:7-20](). |
 | `POST` | `/signup` | `ClienteSignupDTO` | Registo de passageiro [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/ClienteSignupDTO.java:8-28](). |
@@ -66,7 +73,7 @@ sequenceDiagram
 
 ### Processamento de Pagamentos (Stripe)
 | Method | Endpoint | DTO / Payload | Descrição |
-|:---|:---|:---|:---|
+| :--- | :--- | :--- | :--- |
 | `POST` | `/payments/create-intent` | `CreateIntentRequest` | Cria uma intenção de pagamento (Stripe PaymentIntent) com preços canónicos e Automatic Payment Methods [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:66-110](). |
 | `POST` | `/payments/webhook` | String (Stripe Event Payload) | Recebe notificações assíncronas do Stripe (`payment_intent.succeeded`) com validação de assinatura [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:116-147](). |
 | `GET` | `/payments/check-intent/{paymentIntentId}` | N/A | Verifica resilientemente o estado de um pagamento na BD local ou na API do Stripe (mecanismo anti-duplicação) [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:165-213](). |
@@ -134,6 +141,13 @@ classDiagram
  "AtualizarPerfilDTO" --|> "ApiController" : PUT /perfil
  "CreateIntentRequest" --|> "PaymentController" : POST /payments/create-intent
 ```
+
+#### 💡 Explicação do Diagrama de DTOs do Sistema
+* **Explicação Simplória (Para Entender):**
+  Este desenho em árvore (diagrama de classes) é como se fossem fichas de inscrição em papel. Cada bloco é um formulário diferente que o utilizador tem de preencher e que o servidor Java aceita. Por exemplo, a ficha `AdminLoginDTO` pede obrigatoriamente um email e uma password. O diagrama desenha uma seta mostrando que estes formulários são enviados para as portas corretas (`/login/admin`, `/signup`, etc.) do nosso sistema para serem carimbados e aceites.
+* **Explicação Técnico e Específica:**
+  Especificação do diagrama de classes UML para a camada de DTOs da API. Cada DTO atua como uma barreira rígida de validação (Zero-Trust) acionada antes do tratamento do controlador. As classes encapsulam campos específicos marcados com anotações padrão `@Email`, `@NotBlank`, `@Size` e `@Pattern` (que compilam para expressões regulares nativas). As associações unidirecionais de herança conceitual indicam que cada DTO é entregue a um endpoint específico exposto em `ApiController` ou `PaymentController` para garantir tipagem estrita nos pedidos.
+
 **Fontes:** [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/AdminLoginDTO.java:7-20](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/ClienteLoginDTO.java:7-20](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/ClienteSignupDTO.java:8-28](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/dto/AtualizarPerfilDTO.java:10-21](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:260-263]()
 
 ---

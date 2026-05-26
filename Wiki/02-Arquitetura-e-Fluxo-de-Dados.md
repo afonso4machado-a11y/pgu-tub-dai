@@ -21,9 +21,7 @@ Uma aplicação Spring Boot que atua como motor central. Trata de:
 Uma base de dados MySQL (implantada via Azure Flexible Server) que persiste o estado do sistema usando o padrão Repository sobre JDBC [README.md:15-15]().
 
 ### Diagrama de Mapeamento de Componentes
-O diagrama seguinte liga a arquitetura de alto nível às entidades de código específicas.
-
-**Mapeamento Arquitetura para Código**
+O diagrama seguinte liga a arquitetura de al**Mapeamento Arquitetura para Código**
 ```mermaid
 graph TD
  subgraph "Presentation (Vue.js)"
@@ -34,23 +32,30 @@ graph TD
 
  subgraph "Logic (Spring Boot)"
  API["ApiController.java"]
- SVC["SistemaService.java"]
- CORE["Sistema.java (Facade)"]
+ SS["SistemaService.java"]
+ CORE["Sistema.java (Facade in .business)"]
  AUTH["SecurityRateLimitFilter.java"]
  end
 
  subgraph "Data (MySQL)"
  DB[("init.sql Schema")]
- REPO["RepositorioAutocarros.java"]
+ REPO["Repositories (in .data)"]
  end
 
  UI --> API
- API --> SVC
- SVC --> CORE
+ API --> SS
+ SS --> CORE
  CORE --> REPO
  REPO --> DB
  API -.-> AUTH
 ```
+
+#### 💡 Explicação do Diagrama de Mapeamento de Componentes
+* **Explicação Simplória (Para Entender):**
+  Este diagrama mostra como os ficheiros de código reais se encaixam na nossa arquitetura. Imagina isto como um serviço de correio: a aplicação Vue no teu browser (a carta que o utilizador escreve) é enviada para a central de correio `ApiController`. A central passa a carta ao gerente `SistemaService` que a traduz para o cérebro do sistema (`Sistema.java` localizado na pasta `business`). Este cérebro atualiza as regras lógicas e, se necessário, manda os arquivistas (os Repositórios na pasta `data`) guardarem ou lerem a informação nas prateleiras físicas da base de dados MySQL.
+* **Explicação Técnica e Específica:**
+  Mapeamento de implementação física da arquitetura de 3 camadas da PGU/TUB. A camada de apresentação (Vue.js 3 SPA) realiza chamadas HTTP assíncronas para o `ApiController` (que é filtrado pelo `SecurityRateLimitFilter` para controlo de tráfego). O controller delega no padrão *Application Service* (`SistemaService.java`) que atua como orquestrador do Spring. Este comunica com a fachada de domínio `Sistema.java` (no pacote `pt.uminho.dai.pgu.business`), contendo toda a lógica de negócio pura (P2). Por fim, o domínio comunica com os componentes de persistência JDBC e repositórios (no pacote `pt.uminho.dai.pgu.data`) representando a camada P7, gravando o estado transacional final no MySQL.
+
 Fontes: [README.md:17-31](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/SpringConfig.java:16-17]()
 
 ## Fluxo de Dados IoT e Pipeline de Ingestão
@@ -83,6 +88,13 @@ sequenceDiagram
  C-->>A: Return Updated State
  A-->>S: 201 Created
 ```
+
+#### 💡 Explicação da Sequência de Ingestão de Dados IoT
+* **Explicação Simplória (Para Entender):**
+  Este gráfico de sequência detalha a linha de montagem das leituras de passageiros. O sensor do autocarro (ou simulador) bate à porta da nossa API (`POST /api/leituras`). O controlador atende e passa o pacote ao `SistemaService`, que o entrega ao cérebro do sistema (`Sistema.java`). O cérebro faz um exame rápido: "Este autocarro está cheio demais? Há leituras anómalas?" (`evaluateThresholds()`). Depois de tirar conclusões, entrega a leitura ao repositório de dados, que entra na base de dados e faz um `INSERT` para gravar as contagens. Por fim, respondemos de volta com um sinal verde "201 Created" confirmando que o autocarro foi processado com sucesso.
+* **Explicação Técnica e Específica:**
+  Diagrama de interação UML para o pipeline de processamento assíncrono de telemetria IoT. O sensor físico realiza um `POST` contendo as entradas/saídas e o timestamp em formato JSON. O `ApiController` processa a desserialização e delega em `SistemaService.java`. A chamada síncrona invoca o método de negócio `processarLeitura()` em `Sistema.java` (camada de domínio/business). A classe avalia os limites dinâmicos através da injeção de dependência de `ThresholdsAlerta`. Em seguida, o `RepositorioLeituras` (camada de persistência/data) executa um insert parametrizado via JDBC na base de dados. O estado atualizado da frota é retornado na resposta HTTP para otimização de latência.
+
 ## Processo de Pagamento Integrado (Stripe)
 
 O sistema de bilhética digital da PGU/TUB utiliza uma integração segura com a API do **Stripe** de ponta-a-ponta, assegurando a conformidade com as diretivas PCI-DSS ao processar dados de cartões diretamente do browser através de **Stripe Payment Elements** com suporte para múltiplos meios de pagamento automáticos (incluindo Cartões, MB WAY, Revolut Pay, Link e Bancontact) [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:28-38]().
@@ -135,8 +147,19 @@ sequenceDiagram
  C->>DB: INSERT INTO bilhetes (...)
  C-->>V: Retorna pago=true
  end
- V->>P: Apresenta ecrã de Sucesso e disponibiliza Bilhete Digital
+ P->>V: Apresenta ecrã de Sucesso e disponibiliza Bilhete Digital
 ```
+
+#### 💡 Explicação do Processo de Pagamento Stripe
+* **Explicação Simplória (Para Entender):**
+  Este grande diagrama mostra o processo super seguro de comprar um bilhete digital. 
+  1. Primeiro, avisas o backend Java que queres comprar um bilhete. O backend cria uma "Intenção de Compra" oficial no Stripe e recebe uma chave secreta.
+  2. O ecrã do telemóvel desenha o formulário seguro do Stripe. Inseres os teus dados de pagamento e envias-nos diretamente para o Stripe (não passam pelos nossos servidores, garantindo segurança total).
+  3. Assim que pagas, o Stripe avisa o nosso backend por uma porta traseira segura chamada "Webhook", que grava o bilhete na base de dados.
+  4. Se o teu telemóvel perder rede durante a compra, a nossa aplicação Vue faz uma verificação dupla inteligente (`check-intent`). Ela pergunta ao backend "Já temos o pagamento?" Se sim, emite o bilhete. Se o webhook tiver falhado ou atrasado, o backend vai ao próprio Stripe perguntar o estado e emite o bilhete na hora. Isto evita que o cliente pague e fique sem bilhete!
+* **Explicação Técnica e Específica:**
+  Fluxo de integração assíncrona, idempotente e em conformidade com as diretivas PCI-DSS. O `PaymentController` inicia a transação instanciando um `PaymentIntent` na API do Stripe usando preços definidos no backend para evitar adulteração de valores no cliente (*client-side tamperings*). O Stripe retorna o `clientSecret` para inicializar com segurança o *Stripe Elements* no Vue.js. Após a confirmação síncrona do lado do cliente com `stripe.confirmPayment()`, o Stripe dispara um evento assíncrono `payment_intent.succeeded` para o nosso endpoint de Webhook. Este valida a assinatura SHA256 usando o segredo de webhook e invoca `emitirBilhete()` de forma idempotente para persistir a compra no MySQL. O mecanismo de resiliência `/check-intent` atua como fallback em tempo real, mitigando cenários de quebra de ligação (*network partition*) no cliente.
+
 Fontes: [backend_java/src/main/java/pt/uminho/dai/pgu/api/PaymentController.java:28-60](), [frontend_vue/src/views/passenger/BuyTicketView.vue:4-41]()
 
 ## Inicialização e Configuração do Sistema
@@ -154,8 +177,9 @@ O estado do sistema é inicializado durante o arranque do Spring Boot, no fichei
 
 O método 4SRS (System Requirements Specification Strategy) é usado para mapear requisitos funcionais em componentes arquiteturais [README.md:9-10]().
 
-* **P2 (Lógica de Negócio):** Representada pelo pacote `pt.uminho.dai.pgu.services`. Encapsula o "Motor de Ingestão" e o "Motor de Correlação" centrais [README.md:77-77]().
-* **P5 (Interface de Utilizador):** Representada pela diretoria `frontend_vue/src/views`, separando vistas de operador e de passageiro [README.md:80-81]().
-* **P7 (Persistência de Dados):** Representada pelo pacote `pt.uminho.dai.pgu.repositories` e pelo esquema `init.sql` [README.md:78-78](), [README.md:87-87]().
+* **P2 (Lógica de Negócio):** Representada pelo pacote `pt.uminho.dai.pgu.business`. Encapsula as regras de domínio centralizadas na fachada `Sistema.java` e nos modelos.
+* **P5 (Interface de Utilizador):** Representada pela diretoria `frontend_vue/src/views`, separando vistas de operador e de passageiro.
+* **P7 (Persistência de Dados):** Representada pelo pacote `pt.uminho.dai.pgu.data` contendo os repositórios JDBC e a inicialização de base de dados.
 
 Fontes: [README.md:9-16](), [backend_java/src/main/java/pt/uminho/dai/pgu/api/SpringConfig.java:1-17]()
+

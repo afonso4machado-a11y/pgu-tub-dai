@@ -4,16 +4,15 @@ O backend PGU/TUB é um serviço web em Java construído sobre **Spring Boot 3.2
 
 ### Camadas Arquiteturais e Estrutura de Pacotes
 
-O backend está organizado em quatro pacotes principais que refletem as suas camadas arquiteturais:
+O backend está organizado em três pacotes lógicos principais na raiz `pt.uminho.dai.pgu` que refletem perfeitamente a arquitetura de 3 camadas mapeada no 4SRS (Presentation, business/P2 e data/P7):
 
 | Camada | Pacote | Responsabilidade |
 | :--- | :--- | :--- |
-| **API** | `pt.uminho.dai.pgu.api` | Controladores REST, configuração Spring e filtros de segurança. |
-| **Service** | `pt.uminho.dai.pgu.services` | Lógica de orquestração e a fachada principal `Sistema`. |
-| **Domain** | `pt.uminho.dai.pgu.models` | Entidades centrais (Autocarro, Cliente, etc.) e regras de negócio. |
-| **Data** | `pt.uminho.dai.pgu.database` | Implementações de repositórios e gestão de ligações JDBC. |
+| **API (Apresentação)** | `pt.uminho.dai.pgu.api` | Controladores REST, configuração global do Spring Boot, filtros de segurança e tratamento de exceções. |
+| **Business (P2: Lógica)** | `pt.uminho.dai.pgu.business` | Lógica de negócio, entidades de domínio (`Autocarro`, `Cliente`, etc.) e serviços core de controlo (Fachada principal `Sistema.java`). |
+| **Data (P7: Persistência)** | `pt.uminho.dai.pgu.data` | Persistência de dados, implementações de repositórios JDBC (ex: `RegistoViagemRepository.java`) e gestão de ligações SQL. |
 
-Para mais detalhes sobre o ponto de entrada, consulte `pt.uminho.dai.pgu.api.Programa` [backend_java/pom.xml:59-59]().
+Para mais detalhes sobre o ponto de entrada principal do servidor, consulte **`pt.uminho.dai.pgu.Programa`** (localizado agora na raiz de pacotes para permitir component scan automático do Spring Boot) [backend_java/pom.xml:59-59]().
 
 ### Diagrama de Interação entre Componentes
 
@@ -25,9 +24,9 @@ graph TD
  subgraph "Code Entity Space"
  Client["External Client (Vue.js/IoT)"] -- "HTTP Request" --> Controller["ApiController.java"]
  Controller -- "DTO" --> Service["SistemaService.java"]
- Service -- "Domain Logic" --> Facade["Sistema.java"]
- Facade -- "Entity Update" --> Domain["Domain Models (Autocarro, etc.)"]
- Facade -- "Persistence" --> Repo["Repositories (RepositorioAutocarros, etc.)"]
+ Service -- "Domain Logic" --> Facade["Sistema.java (.business)"]
+ Facade -- "Entity Update" --> Domain["Domain Models (Autocarro, etc. in .business)"]
+ Facade -- "Persistence" --> Repo["Repositories (in .data)"]
  Repo -- "SQL" --> DB["MySQL Database"]
  end
 
@@ -42,6 +41,13 @@ graph TD
  Facade -.-> Logic
  Repo -.-> Persistence
 ```
+
+#### 💡 Explicação do Fluxo de Pedidos no Backend
+* **Explicação Simplória (Para Entender):**
+  Este diagrama mostra a estrada pela qual a informação viaja dentro do nosso servidor. Quando um utilizador faz um clique no telemóvel (ex: pede para ver os autocarros) ou um sensor envia dados, um pedido HTTP bate à porta do `ApiController`. O controlador valida o pedido usando pacotes de dados básicos (DTOs) e entrega-o ao `SistemaService`. Este, por sua vez, fala com o cérebro da aplicação (`Sistema.java`) que decide o que fazer, atualiza os dados dos autocarros e chama o repositório de dados para escrever as alterações no banco de dados MySQL final.
+* **Explicação Técnica e Específica:**
+  Fluxo de controlo síncrono e arquitetura desacoplada no Spring Boot. O cliente HTTP dispara um pedido para a camada REST (`api`). O `ApiController` mapeia o pedido e delega para o `SistemaService` (padrão Application Service). Este orquestra a chamada de negócio invocando a fachada de domínio `Sistema.java` (localizada no pacote `business`), que realiza as transações lógicas sobre as entidades e modelos (como `Autocarro` e `Cliente`). A persistência é concretizada via JDBC pelos Repositórios (no pacote `data`), que efetuam instruções SQL nativas sobre o MySQL Flexible Server na Cloud Azure.
+
 **Fontes:** [backend_java/src/main/java/pt/uminho/dai/pgu/api/SpringConfig.java:1-61](), [backend_java/pom.xml:23-50]()
 
 ### Configuração Spring e Injeção de Dependências

@@ -81,6 +81,12 @@ graph TD
  B -->|"JDBC Connection"| M
 ```
 
+#### 💡 Explicação da Infraestrutura de Runtime do Desenvolvimento
+* **Explicação Simplória (Para Entender):**
+  Este gráfico mostra como o nosso ecossistema corre dentro do computador do programador. O **Docker Engine** funciona como uma bolha isolada que divide a nossa aplicação em 3 caixas (containers): o frontend (o site), o backend (o motor Java) e a base de dados MySQL. Em baixo, mostramos os ficheiros de texto do código (como o `.env` com as passwords e o `init.sql` com as tabelas) que são usados para ligar e configurar cada uma dessas caixas de forma automática.
+* **Explicação Técnica e Específica:**
+  Especificação da topologia de execução do ambiente de desenvolvimento orquestrada via Docker Compose. Os três containers residem na rede bridge isolada `pgu-network`. O container `tub_mysql` é provisionado com o script `init.sql` para seeding inicial. O container `tub_backend` recebe injeção dinâmica de variáveis de ambiente a partir do ficheiro `.env` e configura a sua ligação JDBC usando o pool HikariCP mapeado no `application.properties`. As requisições HTTP do frontend são direcionadas à API REST, que por sua vez acede de forma segura ao MySQL.
+
 **Fontes:**
 - `docker-compose.yml:20-44`
 - `backend_java/src/main/resources/application.properties:1-12`
@@ -113,6 +119,16 @@ sequenceDiagram
  B-->>F: JSON Response
  F-->>Dev: Render UI
 ```
+
+#### 💡 Explicação da Interação Local entre Componentes
+* **Explicação Simplória (Para Entender):**
+  Este diagrama de sequência detalha os bastidores de quando carregas num botão do site.
+  1. O teu browser liga-se ao site no porto 80 (`tub_frontend`).
+  2. O site envia uma chamada para a API no porto 8080 (`GET /api/autocarros`).
+  3. O backend em Java recebe o pedido, cria uma query SQL (`SELECT * FROM Autocarro`) e pergunta à base de dados no porto 3306.
+  4. A base de dados responde ao Java, que converte a tabela em formato de texto JSON e envia de volta ao site, desenhando os dados no teu ecrã.
+* **Explicação Técnica e Específica:**
+  Ciclo de processamento síncrono *request-response* no ambiente Docker local. O browser inicia a navegação na SPA hospedada no Nginx. A aplicação Vue 3 dispara um pedido HTTP `GET` assíncrono para a rota `/api/autocarros`. O `ApiController` processa a rota e solicita a listagem. A persistência aciona uma instrução SQL `SELECT` sobre a ligação JDBC no porto 3306 do `tub_mysql`, que retorna o `ResultSet`. O controlador serializa os objetos em JSON, enviando de volta a resposta HTTP 200 para renderização dinâmica no browser do utilizador.
 
 **Fontes:**
 - `backend_java/src/main/resources/application.properties:14-25`

@@ -22,7 +22,7 @@ graph TD
  B_NL["Ticket / Pass"]
  end
 
- subgraph "Code Entity Space (pt.uminho.dai.pgu.models)"
+ subgraph "Code Entity Space (pt.uminho.dai.pgu.business)"
  A_CE["Autocarro.java"]
  L_CE["Linha.java"]
  S_CE["Paragem.java"]
@@ -42,7 +42,14 @@ graph TD
  AL_NL --- T_CE
  B_NL --- B_CE
 ```
-**Fontes:** [backend_java/src/main/java/pt/uminho/dai/pgu/models/Autocarro.java:12-27](), [backend_java/src/main/java/pt/uminho/dai/pgu/models/Linha.java:8-11](), [backend_java/src/main/java/pt/uminho/dai/pgu/models/Cliente.java:10-17]()
+
+#### 💡 Explicação do Mapa de Entidades de Domínio
+* **Explicação Simplória (Para Entender):**
+  Este diagrama mostra como os elementos que existem nas ruas de Braga (os autocarros da TUB, os bilhetes dos passageiros, as paragens, as linhas e as contagens dos sensores) se transformam em ficheiros de código Java dentro do nosso computador. Por exemplo, o autocarro físico é representado pelo ficheiro `Autocarro.java` e o bilhete que compras é representado pelo ficheiro `Bilhete.java` na nossa camada de lógica.
+* **Explicação Técnica e Específica:**
+  Mapeamento de domínio da arquitetura orientada a objetos (camada *Domain Model* do padrão P2). Traduz conceitos do espaço do problema (entidades de negócio reais como rotas, veículos e alarmes) para as suas representações programáticas no pacote `pt.uminho.dai.pgu.business.operacao_tempo_real` e `pt.uminho.dai.pgu.business.acessos_configuracao`. Trata-se de modelos de domínio ricos, onde o comportamento e o estado das entidades (ex: cálculo de lotação no `Autocarro` ou verificação de validade de um `Bilhete`) são encapsulados nas próprias classes.
+
+Fontes: [backend_java/src/main/java/pt/uminho/dai/pgu/business/operacao_tempo_real/Autocarro.java:12-27](), [backend_java/src/main/java/pt/uminho/dai/pgu/business/operacao_tempo_real/Linha.java:8-11](), [backend_java/src/main/java/pt/uminho/dai/pgu/business/acessos_configuracao/Cliente.java:10-17]()
 
 ---
 
@@ -55,7 +62,7 @@ A classe `Autocarro` é o principal contentor de estado. Mantém os níveis de l
 * **Acompanhamento de Estado**: Mantém o registo de `passageirosAtuais`, `totalPassageirosTransportados` e `ultimaLeitura` [backend_java/src/main/java/pt/uminho/dai/pgu/models/Autocarro.java:22-24]().
 
 ### O Método `processarLeitura()`
-Esta é a função central de lógica de negócio. Recebe um `LeituraContagem` e um `ThresholdsAlerta`, atualiza o estado do autocarro e devolve uma lista dos alertas gerados [backend_java/src/main/java/pt/uminho/dai/pgu/models/Autocarro.java:121-184]().
+Esta é a função central de lógica de negócio. Recebe um `LeituraContagem` e um `ThresholdsAlerta`, atualiza o estado do autocarro e devolve uma lista dos alertas gerados [backend_java/src/main/java/pt/uminho/dai/pgu/business/operacao_tempo_real/Autocarro.java:121-184]().
 
 **Fluxo Lógico de `processarLeitura()`**
 ```mermaid
@@ -77,7 +84,18 @@ flowchart TD
  OCC_AL -- "No" --> END["Return List of Alerta"]
  AL_HIGH --> END
 ```
-**Fontes:** [backend_java/src/main/java/pt/uminho/dai/pgu/models/Autocarro.java:121-184](), [backend_java/src/main/java/pt/uminho/dai/pgu/models/ThresholdsAlerta.java:7-10]()
+
+#### 💡 Explicação do Fluxo Lógico de `processarLeitura()`
+* **Explicação Simplória (Para Entender):**
+  Este fluxograma mostra como o autocarro pensa sempre que alguém entra ou sai. Ele recebe a leitura e segue um caminho com perguntas:
+  1. "Passou demasiado tempo sem receber dados?" Se sim, gera alerta de falta de leitura.
+  2. "Entraram 50 pessoas de uma vez só?" Se for estranho, gera alerta de leitura anómala.
+  3. "A lotação ficou abaixo de zero?" (Impossível fisicamente!) Se sim, corrige para zero e avisa que o sensor falhou.
+  4. "O autocarro está quase a rebentar pelas costuras?" Se passar dos 90%, avisa que o autocarro está sobrelotado.
+* **Explicação Técnico e Específica:**
+  Fluxo algorítmico do motor de processamento local da classe `Autocarro.java`. A rotina corre em tempo real sobre a instância da entidade. Executa validações de janela temporal (*gap detection*) contra o threshold injetado; avalia discrepâncias de pico instantâneo para entradas/saídas; calcula o novo estado de passageiros com validação de limites inferiores (*clamping* a zero) e limite superior de segurança (*clamping* à capacidade total do veículo); e, por fim, compara a taxa final de ocupação contra o limite parametrizado para instanciar alertas reativos.
+
+**Fontes:** [backend_java/src/main/java/pt/uminho/dai/pgu/business/operacao_tempo_real/Autocarro.java:121-184](), [backend_java/src/main/java/pt/uminho/dai/pgu/business/operacao_tempo_real/ThresholdsAlerta.java:7-10]()
 
 ---
 
@@ -128,11 +146,11 @@ Representa a entidade de um bilhete ou passe mensal comprado via Stripe e persis
 
 ### Linha e Paragem
 Estes modelos definem a topologia física da rede.
-* **Linha**: Contém uma lista de objetos `Paragem` [backend_java/src/main/java/pt/uminho/dai/pgu/models/Linha.java:8-15]().
-* **Paragem**: Wrapper simples para o nome de uma paragem [backend_java/src/main/java/pt/uminho/dai/pgu/models/Paragem.java:5-9]().
+* **Linha**: Contém uma lista de objetos `Paragem` [backend_java/src/main/java/pt/uminho/dai/pgu/business/operacao_tempo_real/Linha.java:8-15]().
+* **Paragem**: Wrapper simples para o nome de uma paragem [backend_java/src/main/java/pt/uminho/dai/pgu/business/operacao_tempo_real/Paragem.java:5-9]().
 
 ### LeituraContagem
-Um data transfer object (DTO) usado pela pipeline de ingestão IoT. É imutável e valida que as entradas/saídas são não negativas [backend_java/src/main/java/pt/uminho/dai/pgu/models/LeituraContagem.java:8-20]().
+Um data transfer object (DTO) usado pela pipeline de ingestão IoT. É imutável e valida que as entradas/saídas são não negativas [backend_java/src/main/java/pt/uminho/dai/pgu/business/operacao_tempo_real/LeituraContagem.java:8-20]().
 
 ---
 
@@ -161,4 +179,15 @@ sequenceDiagram
  Note over A: "Check occupancy %"
  A-->>S: "List<Alerta>"
 ```
-**Fontes:** [backend_java/src/main/java/pt/uminho/dai/pgu/models/Autocarro.java:121-184](), [backend_java/src/main/java/pt/uminho/dai/pgu/models/LeituraContagem.java:13-20](), [backend_java/src/main/java/pt/uminho/dai/pgu/models/ThresholdsAlerta.java:16-26]()
+
+#### 💡 Explicação do Fluxo de Dados de Ingestão IoT
+* **Explicação Simplória (Para Entender):**
+  Este diagrama de sequência mostra como o autocarro decide criar um alerta na hora.
+  1. O sensor lê "Entraram 10 pessoas, saíram 2".
+  2. Ele pergunta aos limites configurados: "Qual é o máximo de pessoas permitidas a entrar ao mesmo tempo?" O limite responde "7".
+  3. Como entraram 10 (que é maior que 7), o autocarro aciona um alarme de "Entrada Anómala" imediatamente.
+  4. Depois, o autocarro faz as contas e atualiza a sua lotação atual na base de dados, devolvendo a lista de alertas para serem mostrados no ecrã.
+* **Explicação Técnica e Específica:**
+  Análise da comunicação entre os objetos de domínio em tempo de execução. O sensor passa um payload bruto instanciado em `LeituraContagem`. O modelo `Autocarro` recebe o DTO no método `processarLeitura()` e consulta o Singleton `ThresholdsAlerta` via `getLeiturasAnomalasSimultaneas()`. Ao validar que a leitura excede o limite estrito (10 > 7), o autocarro instancia um novo record imutável `Alerta` com a flag `LEITURA_ANOMALA_ENTRADA`. O estado interno é recalculado, verificado contra a taxa máxima (`getLimiteOcupacao()`) e a coleção resultante de alertas é retornada para tratamento no controlador REST.
+
+**Fontes:** [backend_java/src/main/java/pt/uminho/dai/pgu/business/operacao_tempo_real/Autocarro.java:121-184](), [backend_java/src/main/java/pt/uminho/dai/pgu/business/operacao_tempo_real/LeituraContagem.java:13-20](), [backend_java/src/main/java/pt/uminho/dai/pgu/business/operacao_tempo_real/ThresholdsAlerta.java:16-26]()
