@@ -1,19 +1,19 @@
 package pt.uminho.dai.pgu.api.analitica_historico;
 
-import pt.uminho.dai.pgu.p2_businesslogic.acessos_configuracao.*;
-import pt.uminho.dai.pgu.p2_businesslogic.operacao_tempo_real.*;
-import pt.uminho.dai.pgu.p2_businesslogic.analitica_historico.*;
-import pt.uminho.dai.pgu.p7_data.*;
-import pt.uminho.dai.pgu.p7_data.acessos_configuracao.*;
-import pt.uminho.dai.pgu.p7_data.operacao_tempo_real.*;
-import pt.uminho.dai.pgu.p7_data.analitica_historico.*;
+import pt.uminho.dai.pgu.business.acessos_configuracao.*;
+import pt.uminho.dai.pgu.business.operacao_tempo_real.*;
+import pt.uminho.dai.pgu.business.analitica_historico.*;
+import pt.uminho.dai.pgu.data.*;
+import pt.uminho.dai.pgu.data.acessos_configuracao.*;
+import pt.uminho.dai.pgu.data.operacao_tempo_real.*;
+import pt.uminho.dai.pgu.data.analitica_historico.*;
 import pt.uminho.dai.pgu.api.acessos_configuracao.*;
 import pt.uminho.dai.pgu.api.operacao_tempo_real.*;
 import pt.uminho.dai.pgu.api.analitica_historico.*;
 
-import pt.uminho.dai.pgu.p2_businesslogic.operacao_tempo_real.Alerta;
-import pt.uminho.dai.pgu.p2_businesslogic.operacao_tempo_real.Autocarro;
-import pt.uminho.dai.pgu.p2_businesslogic.analitica_historico.Sistema;
+import pt.uminho.dai.pgu.business.operacao_tempo_real.Alerta;
+import pt.uminho.dai.pgu.business.operacao_tempo_real.Autocarro;
+import pt.uminho.dai.pgu.business.analitica_historico.Sistema;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -276,7 +276,7 @@ public class SistemaService {
 
  public boolean verificarConexaoBD() {
  try {
- var conn = pt.uminho.dai.pgu.p7_data.DatabaseConnection.obterConexao();
+ var conn = pt.uminho.dai.pgu.data.DatabaseConnection.obterConexao();
  boolean valid = conn.isValid(2);
  conn.close();
  return valid;
