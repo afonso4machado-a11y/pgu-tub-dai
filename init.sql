@@ -109,6 +109,25 @@ CREATE INDEX idx_horarios_viagem ON horarios(viagem_id);
 CREATE INDEX idx_leituras_timestamp ON leituras(timestamp);
 CREATE INDEX idx_alertas_timestamp ON alertas(timestamp);
 
+-- Seed de linhas TUB adicionais (inserção idempotente)
+INSERT INTO linhas (id, nome, descricao) VALUES
+ ('L2',  'Ponte de Prado — Bom Jesus', 'Linha interligando Ponte de Prado à zona do Bom Jesus.'),
+ ('L3',  'Avenida Central — Ruães', 'Linha ligando Avenida Central a Ruães.'),
+ ('L5',  'Dume — Quinta da Capela', 'Serviço entre Dume e Quinta da Capela.'),
+ ('L6',  'Av. Gen. Norton de Matos — Gondizalves/Semelhe', 'Linha servindo a Av. Gen. Norton de Matos e a zona de Gondizalves/Semelhe.'),
+ ('L7',  'Celeirós — S. Vítor', 'Linha já existente de Celeirós a São Vítor.'),
+ ('L8',  'Rua 25 de Abril — Sete Fontes', 'Ligação entre Rua 25 de Abril e Sete Fontes.'),
+ ('L9',  'Ruães — Nogueira (Barral)', 'Linha de Ruães até Nogueira (Barral).'),
+ ('L12', 'Av. da Liberdade — Lageosa/Pedralva via Gualtar', 'Linha entre Av. da Liberdade e Lageosa/Pedralva via Gualtar.'),
+ ('L13', 'Av. Gen. Norton de Matos — Lageosa/Pedralva', 'Linha entre Av. Gen. Norton de Matos e Lageosa/Pedralva.'),
+ ('L14', 'Praça Conde de Agrolongo — Priscos', 'Linha de Praça Conde de Agrolongo a Priscos.'),
+ ('L18', 'Rua do Raio — Pinheiro do Bicho via Esporões', 'Linha de Rua do Raio a Pinheiro do Bicho via Esporões.'),
+ ('L19', 'Areal — Boavista', 'Linha ligando Areal a Boavista.'),
+ ('L20', 'Av. da Liberdade — Escudeiros via Ponte Nova', 'Linha entre Av. da Liberdade e Escudeiros via Ponte Nova.'),
+ ('L40', 'Gualtar — Real', 'Linha do Hospital de Gualtar até Real.'),
+ ('L43', 'Estação — Universidade', 'Linha entre a Estação CP e a Universidade de Minho.')
+ON DUPLICATE KEY UPDATE nome = VALUES(nome), descricao = VALUES(descricao);
+
 -- Tabela de bilhetes comprados via Stripe
 CREATE TABLE IF NOT EXISTS bilhetes (
     id VARCHAR(50) PRIMARY KEY,                        -- UUID gerado no backend

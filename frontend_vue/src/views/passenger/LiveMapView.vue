@@ -37,6 +37,51 @@ const paragens = [
  // Linha 43H — Estação CP ↔ Universidade
  { nome: 'Estação C.P.', lat: 41.5489, lng: -8.4341 },
  { nome: 'Universidade do Minho', lat: 41.5614, lng: -8.3966 },
+ // Linha 02H — Ponte de Prado ↔ Bom Jesus
+ { nome: 'Ponte de Prado', lat: 41.5612, lng: -8.4315 },
+ { nome: 'Avenida da Liberdade', lat: 41.5510, lng: -8.4210 },
+ { nome: 'Terminal Intermodal', lat: 41.5503, lng: -8.4227 },
+ { nome: 'Santuário do Bom Jesus', lat: 41.5621, lng: -8.4147 },
+ // Linha 03H — Avenida Central ↔ Ruães
+ { nome: 'Avenida Central / Hospital', lat: 41.5578, lng: -8.3843 },
+ { nome: 'Praça Conde de Agrolongo', lat: 41.5542, lng: -8.4335 },
+ { nome: 'Ruães', lat: 41.5476, lng: -8.4395 },
+ // Linha 12H — Av. da Liberdade ↔ Lageosa/Pedralva via Gualtar
+ { nome: 'Avenida da Liberdade', lat: 41.5510, lng: -8.4210 },
+ { nome: 'Gualtar / Universidade', lat: 41.5590, lng: -8.3980 },
+ { nome: 'Lageosa', lat: 41.5813, lng: -8.4047 },
+ { nome: 'Pedralva', lat: 41.5942, lng: -8.3961 },
+ // Linha 19H — Areal ↔ Boavista
+ { nome: 'Areal', lat: 41.5514, lng: -8.4094 },
+ { nome: 'Jardim da Ponte', lat: 41.5528, lng: -8.4065 },
+ { nome: 'Boavista', lat: 41.5607, lng: -8.4160 },
+ // Linha 05H — Dume ↔ Quinta da Capela
+ { nome: 'Igreja de Dume', lat: 41.5569, lng: -8.4270 },
+ { nome: 'Dume / Ruas de Dume', lat: 41.5580, lng: -8.4325 },
+ { nome: 'Quinta da Capela', lat: 41.5785, lng: -8.4182 },
+ // Linha 06H — Av. Gen. Norton de Matos ↔ Gondizalves/Semelhe
+ { nome: 'Av. Gen. Norton de Matos', lat: 41.5600, lng: -8.4200 },
+ { nome: 'Semelhe', lat: 41.5828, lng: -8.4182 },
+ { nome: 'Gondizalves', lat: 41.5770, lng: -8.3974 },
+ // Linha 08H — Rua 25 de Abril ↔ Sete Fontes
+ { nome: 'Rua 25 de Abril', lat: 41.5466, lng: -8.4312 },
+ { nome: 'Sete Fontes', lat: 41.5397, lng: -8.4471 },
+ // Linha 09H — Ruães ↔ Nogueira (Barral)
+ { nome: 'Ruães', lat: 41.5476, lng: -8.4395 },
+ { nome: 'Nogueira (Barral)', lat: 41.5620, lng: -8.4480 },
+ // Linha 13H — Av. Gen. Norton de Matos ↔ Lageosa/Pedralva
+ { nome: 'Av. Gen. Norton de Matos', lat: 41.5600, lng: -8.4200 },
+ { nome: 'Lageosa', lat: 41.5813, lng: -8.4047 },
+ // Linha 14H — Praça Conde de Agrolongo ↔ Priscos
+ { nome: 'Praça Conde de Agrolongo', lat: 41.5542, lng: -8.4335 },
+ { nome: 'Priscos', lat: 41.5655, lng: -8.4728 },
+ // Linha 18H — Rua do Raio ↔ Pinheiro do Bicho via Esporões
+ { nome: 'Rua do Raio', lat: 41.5837, lng: -8.3962 },
+ { nome: 'Esporões', lat: 41.5766, lng: -8.4816 },
+ { nome: 'Pinheiro do Bicho', lat: 41.5772, lng: -8.4954 },
+ // Linha 20H — Av. da Liberdade ↔ Escudeiros via Ponte Nova
+ { nome: 'Ponte Nova', lat: 41.5598, lng: -8.4022 },
+ { nome: 'Escudeiros', lat: 41.5735, lng: -8.4052 },
  // Pontos de referência urbana
  { nome: 'Terminal Intermodal', lat: 41.5503, lng: -8.4227 },
  { nome: 'Maximinos', lat: 41.5461, lng: -8.4378 },
