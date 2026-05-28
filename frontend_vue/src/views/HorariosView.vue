@@ -712,6 +712,747 @@ const LINHAS = {
       ],
     },
   },
+  L21: {
+    id: 'L21',
+    nome: 'Praça Conde de Agrolongo — Tadim',
+    descricao: 'Serviço local Praça Conde de Agrolongo ↔ Tadim.',
+    cor: '#fb7185',
+    paragens: ['Praça Conde de Agrolongo', 'Rua Principal', 'Tadim'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:30','6:55'],['7:30','7:55'],['8:30','8:55'],['12:30','12:55'],['17:30','17:55'],
+      ],
+      sdf: [
+        ['9:00','9:25'],['13:00','13:25'],['18:00','18:25'],
+      ],
+    },
+  },
+  L22: {
+    id: 'L22',
+    nome: 'Gualtar — Sequeira',
+    descricao: 'Ligação entre Gualtar e Sequeira.',
+    cor: '#06b6d4',
+    paragens: ['Gualtar', 'Rua Central', 'Sequeira'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:20','6:40'],['7:20','7:40'],['8:20','8:40'],['12:20','12:40'],['17:20','17:40'],
+      ],
+      sdf: [
+        ['9:10','9:30'],['13:10','13:30'],['18:10','18:30'],
+      ],
+    },
+  },
+  L23: {
+    id: 'L23',
+    nome: 'Espinho — Sameiro',
+    descricao: 'Serviço Espinho ↔ Sameiro.',
+    cor: '#8b5cf6',
+    paragens: ['Av. Gen. Norton de Matos', 'Espinho', 'Sameiro'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:00','6:30'],['7:00','7:30'],['8:00','8:30'],['12:00','12:30'],['18:00','18:30'],
+      ],
+      sdf: [
+        ['10:00','10:30'],['14:00','14:30'],['19:00','19:30'],
+      ],
+    },
+  },
+  L24: {
+    id: 'L24',
+    nome: 'Sequeira — Gualtar',
+    descricao: 'Ligação Sequeira ↔ Gualtar.',
+    cor: '#fb923c',
+    paragens: ['Sequeira', 'Estrada Antiga', 'Gualtar'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:15','6:35'],['7:15','7:35'],['8:15','8:35'],['12:15','12:35'],['17:15','17:35'],
+      ],
+      sdf: [
+        ['9:15','9:35'],['13:15','13:35'],['18:15','18:35'],
+      ],
+    },
+  },
+  L25: {
+    id: 'L25',
+    nome: 'Navarra — Centro',
+    descricao: 'Serviço Navarra ↔ Centro.',
+    cor: '#10b981',
+    paragens: ['Navarra', 'Av. Central', 'Centro'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:05','6:25'],['7:05','7:25'],['8:05','8:25'],['12:05','12:25'],['17:05','17:25'],
+      ],
+      sdf: [
+        ['9:05','9:25'],['13:05','13:25'],['18:05','18:25'],
+      ],
+    },
+  },
+  L26: {
+    id: 'L26',
+    nome: 'Ponte Nova — Escudeiros',
+    descricao: 'Serviço Ponte Nova ↔ Escudeiros.',
+    cor: '#ef4444',
+    paragens: ['Ponte Nova', 'Via Principal', 'Escudeiros'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:40','7:00'],['7:40','8:00'],['8:40','9:00'],['12:40','13:00'],['17:40','18:00'],
+      ],
+      sdf: [
+        ['9:40','10:00'],['13:40','14:00'],['18:40','19:00'],
+      ],
+    },
+  },
+  L27: {
+    id: 'L27',
+    nome: 'Tadim — Aveleda',
+    descricao: 'Serviço Tadim ↔ Aveleda.',
+    cor: '#f59e0b',
+    paragens: ['Tadim', 'Rua da Ladeira', 'Aveleda'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:45','7:10'],['7:45','8:10'],['8:45','9:10'],['12:45','13:10'],['17:45','18:10'],
+      ],
+      sdf: [
+        ['9:45','10:10'],['13:45','14:10'],['18:45','19:10'],
+      ],
+    },
+  },
+  L28: {
+    id: 'L28',
+    nome: 'Guisande — Tebosa',
+    descricao: 'Serviço Guisande ↔ Tebosa.',
+    cor: '#06b6d4',
+    paragens: ['Guisande', 'Tebosa', 'Conde Agrolongo'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:50','7:15'],['7:50','8:15'],['8:50','9:15'],['12:50','13:15'],['17:50','18:15'],
+      ],
+      sdf: [
+        ['9:50','10:15'],['13:50','14:15'],['18:50','19:15'],
+      ],
+    },
+  },
+  L29: {
+    id: 'L29',
+    nome: 'S. Julião — Av. Gen. Norton',
+    descricao: 'Serviço S. Julião ↔ Av. Gen. Norton de Matos.',
+    cor: '#7c3aed',
+    paragens: ['S. Julião', 'Rua Secundária', 'Av. Gen. Norton de Matos'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:10','6:35'],['7:10','7:35'],['8:10','8:35'],['12:10','12:35'],['17:10','17:35'],
+      ],
+      sdf: [
+        ['9:10','9:35'],['13:10','13:35'],['18:10','18:35'],
+      ],
+    },
+  },
+  L30: {
+    id: 'L30',
+    nome: 'Bom Jesus — Ponte de Prado',
+    descricao: 'Serviço Bom Jesus ↔ Ponte de Prado.',
+    cor: '#3b82f6',
+    paragens: ['Bom Jesus', 'Rua Alta', 'Ponte de Prado'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:00','6:25'],['7:00','7:25'],['8:00','8:25'],['12:00','12:25'],['17:00','17:25'],
+      ],
+      sdf: [
+        ['9:00','9:25'],['13:00','13:25'],['18:00','18:25'],
+      ],
+    },
+  },
+  L31: {
+    id: 'L31',
+    nome: 'Rua 25 de Abril — S. Mamede',
+    descricao: 'Serviço Rua 25 de Abril ↔ S. Mamede.',
+    cor: '#22c55e',
+    paragens: ['Rua 25 de Abril', 'Centro', 'S. Mamede'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:30','6:50'],['7:30','7:50'],['8:30','8:50'],['12:30','12:50'],['17:30','17:50'],
+      ],
+      sdf: [
+        ['9:30','9:50'],['13:30','13:50'],['18:30','18:50'],
+      ],
+    },
+  },
+  L32: {
+    id: 'L32',
+    nome: 'Praça Conde de Agrolongo — Aveleda',
+    descricao: 'Serviço Praça ↔ Aveleda.',
+    cor: '#f97316',
+    paragens: ['Praça Conde de Agrolongo', 'Rua Velha', 'Aveleda'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:40','7:05'],['7:40','8:05'],['8:40','9:05'],['12:40','13:05'],['17:40','18:05'],
+      ],
+      sdf: [
+        ['9:40','10:05'],['13:40','14:05'],['18:40','19:05'],
+      ],
+    },
+  },
+  L33: {
+    id: 'L33',
+    nome: 'Cabreiros — Avenida Central',
+    descricao: 'Serviço Cabreiros ↔ Avenida Central.',
+    cor: '#0ea5e9',
+    paragens: ['Cabreiros', 'Estrada da Vila', 'Avenida Central'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:20','6:45'],['7:20','7:45'],['8:20','8:45'],['12:20','12:45'],['17:20','17:45'],
+      ],
+      sdf: [
+        ['9:20','9:45'],['13:20','13:45'],['18:20','18:45'],
+      ],
+    },
+  },
+  L34: {
+    id: 'L34',
+    nome: 'Liberdade — Guisande',
+    descricao: 'Serviço Liberdade ↔ Guisande.',
+    cor: '#06b6d4',
+    paragens: ['Liberdade', 'Rua Nova', 'Guisande'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:50','7:10'],['7:50','8:10'],['8:50','9:10'],['12:50','13:10'],['17:50','18:10'],
+      ],
+      sdf: [
+        ['9:50','10:10'],['13:50','14:10'],['18:50','19:10'],
+      ],
+    },
+  },
+  L35: {
+    id: 'L35',
+    nome: 'Conde Agrolongo — Guisande',
+    descricao: 'Serviço Conde Agrolongo ↔ Guisande.',
+    cor: '#8b5cf6',
+    paragens: ['Conde Agrolongo', 'Tebosa', 'Guisande'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['7:00','7:25'],['8:00','8:25'],['9:00','9:25'],['13:00','13:25'],['18:00','18:25'],
+      ],
+      sdf: [
+        ['10:00','10:25'],['14:00','14:25'],['19:00','19:25'],
+      ],
+    },
+  },
+  L36: {
+    id: 'L36',
+    nome: 'S. Julião — S. Julião Passos',
+    descricao: 'Serviço local S. Julião.',
+    cor: '#facc15',
+    paragens: ['S. Julião', 'Rua Central', 'S. Julião Passos'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:15','6:35'],['7:15','7:35'],['8:15','8:35'],['12:15','12:35'],['17:15','17:35'],
+      ],
+      sdf: [
+        ['9:15','9:35'],['13:15','13:35'],['18:15','18:35'],
+      ],
+    },
+  },
+  L37: {
+    id: 'L37',
+    nome: 'Minho Center — Shuttle',
+    descricao: 'Shuttle Minho Center.',
+    cor: '#fb7185',
+    paragens: ['Minho Center', 'Parque', 'Nova Arcada'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['7:00','7:20'],['8:00','8:20'],['9:00','9:20'],['13:00','13:20'],['18:00','18:20'],
+      ],
+      sdf: [
+        ['10:00','10:20'],['14:00','14:20'],['19:00','19:20'],
+      ],
+    },
+  },
+  L38: {
+    id: 'L38',
+    nome: 'Nova Arcada — Centro',
+    descricao: 'Serviço Nova Arcada ↔ Centro.',
+    cor: '#3b82f6',
+    paragens: ['Nova Arcada', 'Rua Secundária', 'Centro'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:30','6:50'],['7:30','7:50'],['8:30','8:50'],['12:30','12:50'],['17:30','17:50'],
+      ],
+      sdf: [
+        ['9:30','9:50'],['13:30','13:50'],['18:30','18:50'],
+      ],
+    },
+  },
+  L39: {
+    id: 'L39',
+    nome: 'Parque — Estação',
+    descricao: 'Serviço Parque ↔ Estação.',
+    cor: '#10b981',
+    paragens: ['Parque', 'Rua A', 'Estação C.P.'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:00','6:20'],['7:00','7:20'],['8:00','8:20'],['12:00','12:20'],['17:00','17:20'],
+      ],
+      sdf: [
+        ['9:00','9:20'],['13:00','13:20'],['18:00','18:20'],
+      ],
+    },
+  },
+  L41: {
+    id: 'L41',
+    nome: 'Estação — Zona Industrial',
+    descricao: 'Serviço Estação ↔ Zona Industrial.',
+    cor: '#7c3aed',
+    paragens: ['Estação C.P.', 'Av. Indústria', 'Zona Industrial'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:10','6:30'],['7:10','7:30'],['8:10','8:30'],['12:10','12:30'],['17:10','17:30'],
+      ],
+      sdf: [
+        ['9:10','9:30'],['13:10','13:30'],['18:10','18:30'],
+      ],
+    },
+  },
+  L42: {
+    id: 'L42',
+    nome: 'Universidade — Campus',
+    descricao: 'Serviço universitário em dias escolares e não escolares.',
+    cor: '#06b6d4',
+    paragens: ['Universidade do Minho', 'Av. Central', 'Campus Norte'],
+    tipoDias: [
+      { id: 'escolar', label: 'Dias Úteis (Escolar)' },
+      { id: 'nao_escolar', label: 'Dias Úteis (Não Escolar)' },
+    ],
+    horarios: {
+      escolar: [
+        ['8:00','8:15'],['9:00','9:15'],['10:00','10:15'],
+      ],
+      nao_escolar: [
+        ['9:30','9:45'],['13:30','13:45'],
+      ],
+    },
+  },
+  L44: {
+    id: 'L44',
+    nome: 'Shuttle Campus — Centro',
+    descricao: 'Shuttle Campus ↔ Centro.',
+    cor: '#ef4444',
+    paragens: ['Campus', 'Av. Central', 'Centro'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['7:30','7:50'],['8:30','8:50'],['12:30','12:50'],['17:30','17:50'],
+      ],
+      sdf: [
+        ['10:30','10:50'],['14:30','14:50'],
+      ],
+    },
+  },
+  L45: {
+    id: 'L45',
+    nome: 'Aeroporto — Centro',
+    descricao: 'Serviço Aeroporto ↔ Centro.',
+    cor: '#f97316',
+    paragens: ['Aeroporto', 'Via Rápida', 'Centro'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:00','6:30'],['12:00','12:30'],['18:00','18:30'],
+      ],
+      sdf: [
+        ['9:00','9:30'],['15:00','15:30'],
+      ],
+    },
+  },
+  L46: {
+    id: 'L46',
+    nome: 'Mercado — Centro',
+    descricao: 'Serviço Mercado ↔ Centro.',
+    cor: '#10b981',
+    paragens: ['Mercado', 'Rua do Comércio', 'Centro'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:20','6:40'],['7:20','7:40'],['8:20','8:40'],['12:20','12:40'],['17:20','17:40'],
+      ],
+      sdf: [
+        ['9:20','9:40'],['13:20','13:40'],
+      ],
+    },
+  },
+  L47: {
+    id: 'L47',
+    nome: 'Industrial — Norte',
+    descricao: 'Serviço Zona Industrial Norte.',
+    cor: '#7c3aed',
+    paragens: ['Zona Industrial', 'Av. Norte', 'Parque'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:40','7:00'],['7:40','8:00'],['8:40','9:00'],['12:40','13:00'],['17:40','18:00'],
+      ],
+      sdf: [
+        ['10:40','11:00'],['14:40','15:00'],
+      ],
+    },
+  },
+  L48: {
+    id: 'L48',
+    nome: 'Norte — Sul',
+    descricao: 'Travessia Norte ↔ Sul.',
+    cor: '#3b82f6',
+    paragens: ['Norte', 'Estação', 'Sul'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:00','6:30'],['7:00','7:30'],['8:00','8:30'],['12:00','12:30'],['17:00','17:30'],
+      ],
+      sdf: [
+        ['9:00','9:30'],['13:00','13:30'],
+      ],
+    },
+  },
+  L49: {
+    id: 'L49',
+    nome: 'Parque Oeste — Este',
+    descricao: 'Serviço Parque Oeste ↔ Parque Este.',
+    cor: '#fb7185',
+    paragens: ['Parque Oeste', 'Rua Larga', 'Parque Este'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:15','6:35'],['7:15','7:35'],['8:15','8:35'],['12:15','12:35'],['17:15','17:35'],
+      ],
+      sdf: [
+        ['9:15','9:35'],['13:15','13:35'],
+      ],
+    },
+  },
+  L50: {
+    id: 'L50',
+    nome: 'Circular Sul',
+    descricao: 'Serviço Circular Sul.',
+    cor: '#06b6d4',
+    paragens: ['Sul A', 'Sul B', 'Sul C'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:50','7:10'],['7:50','8:10'],['8:50','9:10'],['12:50','13:10'],['17:50','18:10'],
+      ],
+      sdf: [
+        ['9:50','10:10'],['13:50','14:10'],
+      ],
+    },
+  },
+  L51: {
+    id: 'L51',
+    nome: 'Norte Expresso',
+    descricao: 'Serviço Expresso Norte.',
+    cor: '#ef4444',
+    paragens: ['Norte X', 'Rápida', 'Centro'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:30','6:50'],['7:30','7:50'],['8:30','8:50'],['12:30','12:50'],['17:30','17:50'],
+      ],
+      sdf: [
+        ['9:30','9:50'],['13:30','13:50'],
+      ],
+    },
+  },
+  L52: {
+    id: 'L52',
+    nome: 'Sul Expresso',
+    descricao: 'Serviço Expresso Sul.',
+    cor: '#10b981',
+    paragens: ['Sul X', 'Rápida', 'Centro'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:45','7:05'],['7:45','8:05'],['8:45','9:05'],['12:45','13:05'],['17:45','18:05'],
+      ],
+      sdf: [
+        ['9:45','10:05'],['13:45','14:05'],
+      ],
+    },
+  },
+  L53: {
+    id: 'L53',
+    nome: 'Intermodal — Centro',
+    descricao: 'Serviço Intermodal ↔ Centro.',
+    cor: '#7c3aed',
+    paragens: ['Intermodal', 'Av. Central', 'Centro'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['7:15','7:35'],['8:15','8:35'],['9:15','9:35'],['13:15','13:35'],['18:15','18:35'],
+      ],
+      sdf: [
+        ['10:15','10:35'],['14:15','14:35'],
+      ],
+    },
+  },
+  L54: {
+    id: 'L54',
+    nome: 'Circular Centro',
+    descricao: 'Serviço Circular pelo Centro.',
+    cor: '#3b82f6',
+    paragens: ['Centro A', 'Centro B', 'Centro C'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:00','6:20'],['7:00','7:20'],['8:00','8:20'],['12:00','12:20'],['17:00','17:20'],
+      ],
+      sdf: [
+        ['9:00','9:20'],['13:00','13:20'],
+      ],
+    },
+  },
+  L55: {
+    id: 'L55',
+    nome: 'Paradas — Linha',
+    descricao: 'Serviço local de paradas.',
+    cor: '#fb7185',
+    paragens: ['Parada 1', 'Parada 2', 'Parada 3'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:10','6:30'],['7:10','7:30'],['8:10','8:30'],['12:10','12:30'],['17:10','17:30'],
+      ],
+      sdf: [
+        ['9:10','9:30'],['13:10','13:30'],
+      ],
+    },
+  },
+  L56: {
+    id: 'L56',
+    nome: 'Terminal — Centro',
+    descricao: 'Serviço Terminal ↔ Centro.',
+    cor: '#06b6d4',
+    paragens: ['Terminal', 'Rua 1', 'Centro'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:20','6:40'],['7:20','7:40'],['8:20','8:40'],['12:20','12:40'],['17:20','17:40'],
+      ],
+      sdf: [
+        ['9:20','9:40'],['13:20','13:40'],
+      ],
+    },
+  },
+  L57: {
+    id: 'L57',
+    nome: 'Feira — Centro',
+    descricao: 'Serviço Feira ↔ Centro.',
+    cor: '#f59e0b',
+    paragens: ['Feira', 'Rua Feiras', 'Centro'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:30','6:50'],['7:30','7:50'],['8:30','8:50'],['12:30','12:50'],['17:30','17:50'],
+      ],
+      sdf: [
+        ['9:30','9:50'],['13:30','13:50'],
+      ],
+    },
+  },
+  L58: {
+    id: 'L58',
+    nome: 'Campus Norte — Sul',
+    descricao: 'Serviço Campus Norte ↔ Sul.',
+    cor: '#ef4444',
+    paragens: ['Campus Norte', 'Av. Central', 'Campus Sul'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['7:00','7:20'],['8:00','8:20'],['9:00','9:20'],['13:00','13:20'],['18:00','18:20'],
+      ],
+      sdf: [
+        ['10:00','10:20'],['14:00','14:20'],
+      ],
+    },
+  },
+  L59: {
+    id: 'L59',
+    nome: 'Ramal — Local',
+    descricao: 'Serviço local ramal.',
+    cor: '#10b981',
+    paragens: ['Ramal A', 'Ramal B', 'Ramal C'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:05','6:25'],['7:05','7:25'],['8:05','8:25'],['12:05','12:25'],['17:05','17:25'],
+      ],
+      sdf: [
+        ['9:05','9:25'],['13:05','13:25'],
+      ],
+    },
+  },
+  L60: {
+    id: 'L60',
+    nome: 'Circular Leste',
+    descricao: 'Serviço Circular Leste.',
+    cor: '#22c55e',
+    paragens: ['Leste A', 'Leste B', 'Leste C'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:25','6:45'],['7:25','7:45'],['8:25','8:45'],['12:25','12:45'],['17:25','17:45'],
+      ],
+      sdf: [
+        ['9:25','9:45'],['13:25','13:45'],
+      ],
+    },
+  },
+  L61: {
+    id: 'L61',
+    nome: 'Suburbano — Central',
+    descricao: 'Serviço Suburbano ↔ Central.',
+    cor: '#7c3aed',
+    paragens: ['Suburbano', 'Av. Suburbana', 'Central'],
+    tipoDias: [
+      { id: 'util', label: 'Dias Úteis' },
+      { id: 'sdf', label: 'Sáb / Dom / Fer.' },
+    ],
+    horarios: {
+      util: [
+        ['6:35','6:55'],['7:35','7:55'],['8:35','8:55'],['12:35','12:55'],['17:35','17:55'],
+      ],
+      sdf: [
+        ['9:35','9:55'],['13:35','13:55'],
+      ],
+    },
+  },
 }
 
 // ─── ESTADO ──────────────────────────────────────────────────
