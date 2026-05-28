@@ -2,11 +2,12 @@
 import { ref, onMounted, computed } from 'vue'
 import {
  User, CreditCard, Clock, MapPin, Star, Settings, ChevronRight,
- LogOut, Shield, Bell, Bus, Sun, Moon, Monitor
+ LogOut, Shield, Bell, Bus, Sun, Moon, Monitor, Database, Wifi
 } from 'lucide-vue-next'
 
 import { authService } from '../../services/auth'
 import { usePassengerTheme } from '../../composables/usePassengerTheme'
+import { demoModeRef, setDemoMode } from '../../services/api'
 
 const { currentPassengerTheme, setTheme } = usePassengerTheme()
 
@@ -140,6 +141,42 @@ const menuItems = [
   <span class="empty-text">Nenhuma compra registada.</span>
   </div>
   </div>
+
+ <!-- Data Source Toggle -->
+ <div class="section">
+ <h3 class="section-title"><Database :size="18" /> Fonte de Dados</h3>
+ <div class="data-source-card" role="group" aria-label="Seleção da fonte de dados">
+ <button
+ class="ds-option"
+ :class="{ active: demoModeRef }"
+ @click="setDemoMode(true)"
+ aria-label="Usar dados simulados"
+ :aria-pressed="String(demoModeRef)"
+ >
+ <Database :size="20" class="ds-icon" />
+ <div class="ds-text">
+ <span class="ds-label">Simulados</span>
+ <span class="ds-sub">Dados de demonstração</span>
+ </div>
+ </button>
+ <button
+ class="ds-option"
+ :class="{ active: !demoModeRef }"
+ @click="setDemoMode(false)"
+ aria-label="Usar dados reais"
+ :aria-pressed="String(!demoModeRef)"
+ >
+ <Wifi :size="20" class="ds-icon" />
+ <div class="ds-text">
+ <span class="ds-label">Reais</span>
+ <span class="ds-sub">API em tempo real</span>
+ </div>
+ </button>
+ </div>
+ <p class="ds-note" v-if="!demoModeRef">
+ <Wifi :size="12" /> A sincronizar com o servidor a cada 5 segundos
+ </p>
+ </div>
 
  <!-- Theme Switcher -->
  <div class="section">
@@ -324,5 +361,48 @@ const menuItems = [
   font-size: 0.85rem;
   color: var(--text-muted);
   font-weight: 600;
+}
+
+/* Data Source Toggle */
+.data-source-card {
+  display: flex;
+  background: var(--bg-surface);
+  padding: 0.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  gap: 0.5rem;
+}
+.ds-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.75rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+.ds-option.active {
+  background: var(--bg-primary);
+  color: #0284c7;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.ds-icon { flex-shrink: 0; }
+.ds-text { display: flex; flex-direction: column; }
+.ds-label { font-size: 0.85rem; font-weight: 700; }
+.ds-sub { font-size: 0.7rem; opacity: 0.7; margin-top: 0.1rem; }
+.ds-note {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+  font-size: 0.72rem;
+  color: #10b981;
+  font-weight: 600;
+  padding-left: 0.25rem;
 }
 </style>

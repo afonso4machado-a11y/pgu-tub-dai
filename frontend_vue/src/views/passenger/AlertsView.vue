@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { Bell, AlertTriangle, Info, Clock, Star, Settings, ChevronRight } from 'lucide-vue-next'
 
 import { authService } from '../../services/auth'
@@ -17,8 +17,7 @@ const sampleAlerts = [
  { id: 4, tipo: 'LOTAÇÃO', linha: 'L43', msg: 'Autocarro das 08:15 na L43 com lotação elevada (87%). Considere o próximo às 08:30.', tempo: '3 h', lido: true },
 ]
 
-onMounted(async () => {
- // Merge real alerts from API with sample passenger-facing alerts
+async function fetchAlerts() {
  try {
  const { data } = await apiFetch('/dashboard')
  if (data.status === 'sucesso') {
@@ -30,14 +29,27 @@ onMounted(async () => {
  tempo: 'agora',
  lido: false,
  }))
- alerts.value = [...apiAlerts, ...sampleAlerts]
- } else {
+ // Merge: keep read state of existing alerts
+ const existingIds = new Set(alerts.value.map(a => a.id))
+ const newApiAlerts = apiAlerts.filter(a => !existingIds.has(a.id))
+ alerts.value = [...newApiAlerts, ...alerts.value.filter(a => a.id >= 1 && a.id < 100)]
+ if (alerts.value.length === 0) alerts.value = sampleAlerts
+ } else if (alerts.value.length === 0) {
  alerts.value = sampleAlerts
  }
  } catch(e) {
- alerts.value = sampleAlerts
+ if (alerts.value.length === 0) alerts.value = sampleAlerts
  }
+}
+
+onMounted(fetchAlerts)
+
+// Polling a cada 5 segundos para alertas em tempo real
+let _alertsInterval = null
+onMounted(() => {
+ _alertsInterval = setInterval(fetchAlerts, 5000)
 })
+onUnmounted(() => { if (_alertsInterval) clearInterval(_alertsInterval) })
 
 function tipoIcon(tipo) {
  if (tipo === 'PERTURBAÇÃO' || tipo === 'ATRASO') return AlertTriangle

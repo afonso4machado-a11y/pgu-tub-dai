@@ -293,6 +293,41 @@ public class Sistema {
  return new ArrayList<>(repositorioAutocarros.listarTodos());
  }
 
+ /**
+  * Soft delete — marca o autocarro como eliminado. Dados históricos preservados.
+  * @throws NoSuchElementException se o autocarro não existir
+  * @throws IllegalStateException se já estiver eliminado
+  */
+ public void eliminarAutocarro(String id) {
+ Autocarro autocarro = repositorioAutocarros.procurarPorIdIncluindoEliminados(id)
+  .orElseThrow(() -> new NoSuchElementException("Autocarro nao encontrado: " + id));
+ if (autocarro.isDeleted()) {
+  throw new IllegalStateException("Autocarro ja se encontra eliminado: " + id);
+ }
+ repositorioAutocarros.marcarComoEliminado(id);
+ dashboardCache = null; // Invalidar cache
+ }
+
+ /**
+  * Restaura um autocarro previamente eliminado.
+  * @throws NoSuchElementException se o autocarro não existir
+  * @throws IllegalStateException se o autocarro não estiver eliminado
+  */
+ public void restaurarAutocarro(String id) {
+ Autocarro autocarro = repositorioAutocarros.procurarPorIdIncluindoEliminados(id)
+  .orElseThrow(() -> new NoSuchElementException("Autocarro nao encontrado: " + id));
+ if (!autocarro.isDeleted()) {
+  throw new IllegalStateException("Autocarro nao esta eliminado: " + id);
+ }
+ repositorioAutocarros.restaurar(id);
+ dashboardCache = null; // Invalidar cache
+ }
+
+ /** Retorna a lista de autocarros eliminados (para visualização e restauro) */
+ public List<Autocarro> obterAutocarrosEliminados() {
+ return new ArrayList<>(repositorioAutocarros.listarEliminados());
+ }
+
  public List<String> obterTodasParagens() {
  return repositorioParagens.listarTodas();
  }
@@ -327,10 +362,14 @@ public class Sistema {
  .mapToInt(m -> (int) m.get("totalEntradas")).sum();
 
  if (totalEntradasGeral > 0) {
- bilheticaSimulada.put("Estudante", (int)(totalEntradasGeral * 0.35));
- bilheticaSimulada.put("Sénior", (int)(totalEntradasGeral * 0.20));
- bilheticaSimulada.put("Passe Normal", (int)(totalEntradasGeral * 0.30));
- bilheticaSimulada.put("Zapping", (int)(totalEntradasGeral * 0.15));
+   int estudante = (int) Math.round(totalEntradasGeral * 0.35);
+   int senior = (int) Math.round(totalEntradasGeral * 0.20);
+   int passeNormal = (int) Math.round(totalEntradasGeral * 0.30);
+   int zapping = totalEntradasGeral - estudante - senior - passeNormal; // resto garante soma exacta
+   bilheticaSimulada.put("Estudante", estudante);
+   bilheticaSimulada.put("Sénior", senior);
+   bilheticaSimulada.put("Passe Normal", passeNormal);
+   bilheticaSimulada.put("Zapping", zapping);
  }
 
  // 5. Métricas de Correlação Calculadas 

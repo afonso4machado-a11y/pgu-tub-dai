@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { Search, Bus, Info, AlertTriangle, Activity, ShieldCheck } from 'lucide-vue-next'
+import { Search, Bus, Info, AlertTriangle, Activity, ShieldCheck, Trash2, RotateCcw } from 'lucide-vue-next'
 
 import { apiFetch } from '../services/api.js'
 const apiUrl = '/api'
@@ -18,6 +18,13 @@ const leitId = ref('')
 const leitIn = ref('')
 const leitOut = ref('')
 const autoAlerts = ref([])
+
+// Eliminação
+const deleteId = ref('')
+const deletedBuses = ref([])
+const showConfirmDelete = ref(false)
+const deleteTargetId = ref('')
+const deleteFeedback = ref(null)
 
 // Estado de validação
 const formTouched = ref(false)
@@ -195,6 +202,50 @@ async function handleRegLeitura() {
  alert("Erro ao reportar leitura ao servidor.")
  }
 }
+
+function confirmDelete(id) {
+ deleteTargetId.value = id
+ showConfirmDelete.value = true
+}
+
+async function handleEliminarAutocarro() {
+ showConfirmDelete.value = false
+ const id = deleteTargetId.value || deleteId.value.trim()
+ if (!id) return
+ try {
+ const req = await fetch(`${apiUrl}/autocarros/${encodeURIComponent(id)}`, { method: 'DELETE' })
+ const res = await req.json()
+ deleteFeedback.value = { ok: res.status === 'sucesso', msg: res.mensagem }
+ if (res.status === 'sucesso') {
+ deleteId.value = ''
+ await loadEliminados()
+ }
+ } catch(e) {
+ deleteFeedback.value = { ok: false, msg: 'Erro de comunicação com o servidor.' }
+ }
+}
+
+async function handleRestaurarAutocarro(id) {
+ try {
+ const req = await fetch(`${apiUrl}/autocarros/${encodeURIComponent(id)}/restaurar`, { method: 'POST' })
+ const res = await req.json()
+ if (res.status === 'sucesso') {
+ await loadEliminados()
+ deleteFeedback.value = { ok: true, msg: `Autocarro ${id} restaurado com sucesso.` }
+ } else {
+ deleteFeedback.value = { ok: false, msg: res.mensagem }
+ }
+ } catch(e) {
+ deleteFeedback.value = { ok: false, msg: 'Erro de comunicação com o servidor.' }
+ }
+}
+
+async function loadEliminados() {
+ try {
+ const { data } = await apiFetch('/autocarros/eliminados')
+ if (data.status === 'sucesso') deletedBuses.value = data.autocarros || []
+ } catch(e) { /* silently ignore */ }
+}
 </script>
 
 <template>
@@ -332,6 +383,59 @@ async function handleRegLeitura() {
  </div>
  </div>
  
+ <!-- Eliminação de Viatura (Soft Delete) -->
+ <div class="glass-panel" style="grid-column: 1 / -1;">
+ <h3 class="panel-title"><Trash2 class="icon-inline" style="color: #ef4444;"/> Eliminar / Restaurar Viatura</h3>
+ <p class="panel-desc">O autocarro fica marcado como eliminado — os dados históricos são preservados. A ação pode ser revertida.</p>
+
+ <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+ <div class="input-group" style="flex: 1; min-width: 200px;">
+ <label>ID do Autocarro a Eliminar</label>
+ <input v-model="deleteId" class="input-field fira-code" placeholder="Ex: TUB-101" />
+ </div>
+ <button class="btn btn-danger" @click="deleteId.trim() && confirmDelete(deleteId.trim())" :disabled="!deleteId.trim()">
+ <Trash2 :size="16" /> Eliminar
+ </button>
+ <button class="btn btn-outline" @click="loadEliminados">
+ <RotateCcw :size="16" /> Atualizar Lista
+ </button>
+ </div>
+
+ <div v-if="deleteFeedback" class="delete-feedback" :class="{ 'feedback-ok': deleteFeedback.ok, 'feedback-err': !deleteFeedback.ok }">
+ {{ deleteFeedback.msg }}
+ </div>
+
+ <!-- Lista de eliminados -->
+ <div v-if="deletedBuses.length" class="deleted-list mt-4">
+ <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.75rem;">Autocarros Eliminados (Reversível)</h4>
+ <div v-for="bus in deletedBuses" :key="bus.id" class="deleted-item">
+ <span class="deleted-badge">ELIMINADO</span>
+ <span class="fira-code" style="font-weight: 700;">{{ bus.id }}</span>
+ <span class="dim">{{ bus.matricula }} — {{ bus.marca }} {{ bus.modelo }}</span>
+ <button class="btn-restore" @click="handleRestaurarAutocarro(bus.id)">
+ <RotateCcw :size="14" /> Restaurar
+ </button>
+ </div>
+ </div>
+ <div v-else class="empty-state" style="margin-top: 1rem;">
+ <RotateCcw :size="20" class="dim" />
+ <p>Sem viaturas eliminadas. Clique em "Atualizar Lista" para verificar.</p>
+ </div>
+ </div>
+
+ </div>
+ </div>
+
+ <!-- Diálogo de Confirmação de Eliminação -->
+ <div v-if="showConfirmDelete" class="confirm-overlay" @click.self="showConfirmDelete = false">
+ <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+ <h3 id="confirm-title"><Trash2 :size="20" style="color: #ef4444;"/> Confirmar Eliminação</h3>
+ <p>Tem a certeza que pretende eliminar o autocarro <strong class="fira-code">{{ deleteTargetId }}</strong>?</p>
+ <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Esta ação é reversível — poderá restaurar o autocarro a qualquer momento.</p>
+ <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem; justify-content: flex-end;">
+ <button class="btn btn-outline" @click="showConfirmDelete = false">Cancelar</button>
+ <button class="btn btn-danger" @click="handleEliminarAutocarro"><Trash2 :size="16" /> Confirmar Eliminação</button>
+ </div>
  </div>
  </div>
 </template>
@@ -459,5 +563,109 @@ button:disabled {
  background: rgba(0,0,0,0.2);
  border-radius: 0.5rem;
  border: 1px dashed var(--border-light);
+}
+
+/* Soft Delete UI */
+.btn-danger {
+ background: #ef4444;
+ color: #fff;
+ border: none;
+ padding: 0.65rem 1.25rem;
+ border-radius: 0.5rem;
+ font-weight: 700;
+ cursor: pointer;
+ display: flex;
+ align-items: center;
+ gap: 0.4rem;
+ transition: background 0.2s;
+}
+.btn-danger:hover:not(:disabled) { background: #dc2626; }
+.btn-danger:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-outline {
+ background: transparent;
+ color: var(--text-muted);
+ border: 1px solid var(--border-light);
+ padding: 0.65rem 1.25rem;
+ border-radius: 0.5rem;
+ font-weight: 600;
+ cursor: pointer;
+ display: flex;
+ align-items: center;
+ gap: 0.4rem;
+ transition: all 0.2s;
+}
+.btn-outline:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+.delete-feedback {
+ margin-top: 0.75rem;
+ padding: 0.65rem 1rem;
+ border-radius: 0.5rem;
+ font-size: 0.85rem;
+ font-weight: 600;
+}
+.feedback-ok { background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+.feedback-err { background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+.deleted-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.deleted-item {
+ display: flex;
+ align-items: center;
+ gap: 0.75rem;
+ padding: 0.65rem 1rem;
+ background: rgba(239,68,68,0.05);
+ border: 1px solid rgba(239,68,68,0.2);
+ border-radius: 0.5rem;
+ flex-wrap: wrap;
+}
+.deleted-badge {
+ font-size: 0.65rem;
+ font-weight: 800;
+ background: #ef4444;
+ color: #fff;
+ padding: 0.15rem 0.5rem;
+ border-radius: 0.25rem;
+ letter-spacing: 0.05em;
+}
+.btn-restore {
+ margin-left: auto;
+ display: flex;
+ align-items: center;
+ gap: 0.35rem;
+ padding: 0.4rem 0.85rem;
+ background: rgba(16,185,129,0.1);
+ color: #10b981;
+ border: 1px solid rgba(16,185,129,0.3);
+ border-radius: 0.4rem;
+ cursor: pointer;
+ font-size: 0.8rem;
+ font-weight: 700;
+ transition: all 0.2s;
+}
+.btn-restore:hover { background: rgba(16,185,129,0.2); }
+
+/* Confirmation Modal */
+.confirm-overlay {
+ position: fixed;
+ inset: 0;
+ background: rgba(0,0,0,0.5);
+ z-index: 9999;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ backdrop-filter: blur(4px);
+}
+.confirm-dialog {
+ background: var(--bg-surface);
+ border: 1px solid var(--border-light);
+ border-radius: 1rem;
+ padding: 2rem;
+ max-width: 420px;
+ width: 90%;
+ box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.confirm-dialog h3 {
+ display: flex;
+ align-items: center;
+ gap: 0.5rem;
+ margin-bottom: 1rem;
+ font-size: 1.1rem;
 }
 </style>

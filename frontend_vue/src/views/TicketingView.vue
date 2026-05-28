@@ -101,7 +101,7 @@ const donutOptions = {
  plugins: {
  legend: {
  position: 'bottom',
- labels: { color: '#e2e8f0', padding: 16, usePointStyle: true, font: { size: 12 } }
+ labels: { color: '#1e293b', padding: 16, usePointStyle: true, font: { size: 12 } }
  }
  }
 }

@@ -224,6 +224,30 @@ public class SistemaService {
  }).toList();
  }
 
+ /** Elimina um autocarro (soft delete — reversível) */
+ public void eliminarAutocarro(String id) throws Exception {
+ sistema.eliminarAutocarro(id);
+ }
+
+ /** Restaura um autocarro eliminado */
+ public void restaurarAutocarro(String id) throws Exception {
+ sistema.restaurarAutocarro(id);
+ }
+
+ /** Lista autocarros eliminados para visualização e restauro */
+ public List<Map<String, Object>> listarAutocarrosEliminados() {
+ return sistema.obterAutocarrosEliminados().stream().map(a -> {
+  Map<String, Object> map = new java.util.HashMap<>();
+  map.put("id", a.getId());
+  map.put("matricula", a.getMatricula() != null ? a.getMatricula() : "N/A");
+  map.put("marca", a.getMarca() != null ? a.getMarca() : "N/A");
+  map.put("modelo", a.getModelo() != null ? a.getModelo() : "N/A");
+  map.put("linhaId", a.getLinhaId() != null ? a.getLinhaId() : "N/A");
+  map.put("eliminado", true);
+  return map;
+ }).toList();
+ }
+
   public Map<String, Object> atualizarPerfilCliente(String id, AtualizarPerfilDTO dto) throws Exception {
   var cliente = sistema.procurarClientePorId(id)
   .orElseThrow(() -> new Exception("Cliente não encontrado"));

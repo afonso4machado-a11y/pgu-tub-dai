@@ -64,28 +64,28 @@ const DEMO_DASHBOARD = {
 
 const DEMO_CORRELACAO = {
  metricas: {
- totalPassageirosContados: 4280,
- totalViagensProgramadas: 312,
- ratioProcuraOferta: 13.7,
+ totalPassageirosContados: 3995, // soma de procuraPorHora.entradas
+ totalViagensProgramadas: 142,   // soma de ofertaPorLinha.viagensProgramadas
+ ratioProcuraOferta: 28.13,      // 3995 / 142 = 28.13
  periodoInicio: '2026-03-21',
  periodoFim: '2026-04-20',
  },
  procuraPorLinha: [
-		{ linhaId: 'L7', totalEntradas: 1850, totalSaidas: 1790, diasComDados: 28, totalLeituras: 340 },
-		{ linhaId: 'L43', totalEntradas: 1620, totalSaidas: 1580, diasComDados: 25, totalLeituras: 280 },
-		{ linhaId: 'L40', totalEntradas: 810, totalSaidas: 780, diasComDados: 20, totalLeituras: 150 },
-		{ linhaId: 'L2', totalEntradas: 430, totalSaidas: 400, diasComDados: 18, totalLeituras: 90 },
-		{ linhaId: 'L3', totalEntradas: 520, totalSaidas: 490, diasComDados: 18, totalLeituras: 100 },
-		{ linhaId: 'L12', totalEntradas: 630, totalSaidas: 600, diasComDados: 22, totalLeituras: 120 },
-		{ linhaId: 'L19', totalEntradas: 380, totalSaidas: 350, diasComDados: 16, totalLeituras: 75 },
-		{ linhaId: 'L5', totalEntradas: 210, totalSaidas: 200, diasComDados: 14, totalLeituras: 45 },
-		{ linhaId: 'L6', totalEntradas: 340, totalSaidas: 320, diasComDados: 16, totalLeituras: 70 },
-		{ linhaId: 'L8', totalEntradas: 150, totalSaidas: 140, diasComDados: 12, totalLeituras: 30 },
-		{ linhaId: 'L9', totalEntradas: 260, totalSaidas: 250, diasComDados: 15, totalLeituras: 58 },
-		{ linhaId: 'L13', totalEntradas: 400, totalSaidas: 380, diasComDados: 18, totalLeituras: 80 },
-		{ linhaId: 'L14', totalEntradas: 120, totalSaidas: 110, diasComDados: 10, totalLeituras: 20 },
-		{ linhaId: 'L18', totalEntradas: 95, totalSaidas: 90, diasComDados: 8, totalLeituras: 15 },
-		{ linhaId: 'L20', totalEntradas: 180, totalSaidas: 170, diasComDados: 12, totalLeituras: 36 },
+    { linhaId: 'L7', totalEntradas: 925, totalSaidas: 762, diasComDados: 28, totalLeituras: 340 },
+    { linhaId: 'L43', totalEntradas: 810, totalSaidas: 672, diasComDados: 25, totalLeituras: 280 },
+    { linhaId: 'L40', totalEntradas: 405, totalSaidas: 332, diasComDados: 20, totalLeituras: 150 },
+    { linhaId: 'L2', totalEntradas: 215, totalSaidas: 170, diasComDados: 18, totalLeituras: 90 },
+    { linhaId: 'L3', totalEntradas: 260, totalSaidas: 209, diasComDados: 18, totalLeituras: 100 },
+    { linhaId: 'L12', totalEntradas: 315, totalSaidas: 255, diasComDados: 22, totalLeituras: 120 },
+    { linhaId: 'L19', totalEntradas: 190, totalSaidas: 149, diasComDados: 16, totalLeituras: 75 },
+    { linhaId: 'L5', totalEntradas: 105, totalSaidas: 85, diasComDados: 14, totalLeituras: 45 },
+    { linhaId: 'L6', totalEntradas: 170, totalSaidas: 136, diasComDados: 16, totalLeituras: 70 },
+    { linhaId: 'L8', totalEntradas: 75, totalSaidas: 60, diasComDados: 12, totalLeituras: 30 },
+    { linhaId: 'L9', totalEntradas: 130, totalSaidas: 106, diasComDados: 15, totalLeituras: 58 },
+    { linhaId: 'L13', totalEntradas: 200, totalSaidas: 162, diasComDados: 18, totalLeituras: 80 },
+    { linhaId: 'L14', totalEntradas: 60, totalSaidas: 47, diasComDados: 10, totalLeituras: 20 },
+    { linhaId: 'L18', totalEntradas: 48, totalSaidas: 38, diasComDados: 8, totalLeituras: 15 },
+    { linhaId: 'L20', totalEntradas: 87, totalSaidas: 72, diasComDados: 12, totalLeituras: 36 },
  ],
  ofertaPorLinha: [
 		{ linhaId: 'L7', tipoDia: 'UTIL', viagensProgramadas: 42 },
@@ -129,12 +129,14 @@ const DEMO_CORRELACAO = {
  { hora: 19, entradas: 190, saidas: 295 },
  { hora: 20, entradas: 75, saidas: 160 },
  { hora: 21, entradas: 35, saidas: 85 },
+ // Total entradas: 3995 | Total saidas: 3255
  ],
  bilheticaSimulada: {
- 'Estudante': 1712,
- 'Sénior': 856,
- 'Passe Normal': 1070,
- 'Zapping': 642,
+ // Base: 3995 passageiros | Estudante=35% Sénior=20% Passe Normal=30% Zapping=resto
+ 'Estudante': 1398,   // Math.round(3995 * 0.35)
+ 'Sénior': 799,       // Math.round(3995 * 0.20)
+ 'Passe Normal': 1199, // Math.round(3995 * 0.30)
+ 'Zapping': 599,      // 3995 - 1398 - 799 - 1199 (resto: garante soma exacta = 3995)
  },
 }
 
@@ -230,8 +232,13 @@ export async function apiFetch(endpoint, options = {}) {
 // ────────────────────── DADOS DEMO POR ENDPOINT ──────────────────────
 
 function getDemoData(endpoint) {
+ // Endpoint de autocarros eliminados — lista vazia em modo demo
+ if (endpoint === '/autocarros/eliminados') {
+ return { status: 'sucesso', autocarros: [] }
+ }
+
  // Endpoint individual: /autocarros/TUB-101
- if (endpoint.startsWith('/autocarros/')) {
+ if (endpoint.startsWith('/autocarros/') && !endpoint.endsWith('/restaurar')) {
  const id = endpoint.split('/')[2]
  const bus = DEMO_AUTOCARROS.find(a => a.id === id)
  if (bus) return { status: 'sucesso', ...bus, numeroAlertas: bus.ocupacao > 80 ? 2 : 0 }

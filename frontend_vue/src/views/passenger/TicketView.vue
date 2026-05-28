@@ -4,28 +4,33 @@ import { Ticket, Shield, Clock, RefreshCw, CheckCircle, QrCode } from 'lucide-vu
 
 import { authService } from '../../services/auth'
 
-const localUser = authService.getUser()
+// Reactive ref so ticket updates when profile syncs from BD
+const userRef = ref(authService.getUser() || {})
+
 const activeTicket = computed(() => {
-  const compras = localUser?.compras || []
-  // Find the most recent active ticket or pass
-  const active = compras.find(b => b.estado === 'Ativo')
+  const u = userRef.value
+  const compras = u?.compras || []
+  // Bilhete activo com maior dataValidade
+  const active = compras
+    .filter(b => b.estado === 'Ativo')
+    .sort((a, b) => new Date(b.dataValidade) - new Date(a.dataValidade))[0]
   if (active) {
     return {
       tipo: active.nomeTipo,
       zona: 'Zona Urbana Braga',
-      validade: active.dataValidade,
-      titular: localUser?.nome || 'Utilizador',
-      nif: localUser?.nif || '--- --- ---',
+      validade: active.dataValidade?.substring(0, 10), // normalizar para YYYY-MM-DD
+      titular: u?.nome || 'Utilizador',
+      nif: u?.nif || '--- --- ---',
       estado: active.estado,
     }
   }
   return {
-    tipo: localUser?.passeMensal ? 'Passe Mensal' : 'Bilhete Simples',
+    tipo: u?.passeMensal ? 'Passe Mensal' : 'Bilhete Simples',
     zona: 'Zona Urbana Braga',
-    validade: localUser?.passeMensal ? '2026-04-30' : '-',
-    titular: localUser?.nome || 'Utilizador',
-    nif: localUser?.nif || '--- --- ---',
-    estado: localUser?.passeMensal ? 'Ativo' : 'Pendente',
+    validade: u?.passeMensal ? (u?.validadePasse || '-') : '-',
+    titular: u?.nome || 'Utilizador',
+    nif: u?.nif || '--- --- ---',
+    estado: u?.passeMensal ? 'Ativo' : 'Pendente',
   }
 })
 
@@ -86,19 +91,38 @@ const validadeFormatted = computed(() => {
 })
 
 const diasRestantes = computed(() => {
- if (activeTicket.value.validade === '-') return '-'
- const diff = new Date(activeTicket.value.validade) - new Date()
- return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+  if (activeTicket.value.validade === '-') return '-'
+  // Parse as local date (end of expiry day at 23:59:59) to avoid UTC offset issues
+  const parts = activeTicket.value.validade.split('-').map(Number)
+  const expiry = new Date(parts[0], parts[1] - 1, parts[2], 23, 59, 59)
+  const diff = expiry - new Date()
+  if (diff < 0) return 'expirado'
+  return Math.ceil(diff / (1000 * 60 * 60 * 24))
 })
 
-onMounted(() => {
+onMounted(async () => {
+ // Sincronizar bilhete com a BD (apenas utilizadores reais, não demo)
+ const localUser = authService.getUser()
+ if (localUser?.id && !localUser.id.startsWith('demo-')) {
+  try {
+   const res = await fetch(`/api/auth/profile/${localUser.id}`)
+   const data = await res.json()
+   if (data.status === 'sucesso') {
+    const updated = { ...data.user, tipo: 'Utilizador' }
+    userRef.value = updated
+    localStorage.setItem('pgu_user', JSON.stringify(updated))
+   }
+  } catch (e) {
+   console.warn('[TicketView] Falha ao sincronizar bilhete da BD:', e)
+  }
+ }
  refreshQR()
  countdownTimer = setInterval(() => {
- if (qrCountdown.value > 0) {
- qrCountdown.value--
- } else {
- qrExpired.value = true
- refreshQR()
+  if (qrCountdown.value > 0) {
+  qrCountdown.value--
+  } else {
+  qrExpired.value = true
+  refreshQR()
  }
  }, 1000)
 })
@@ -134,10 +158,11 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
  </div>
  <div class="tc-detail">
  <span class="tc-label">Restam</span>
- <span class="tc-value tc-days">
- <template v-if="diasRestantes !== '-'">{{ diasRestantes }} dias</template>
- <template v-else>-</template>
- </span>
+  <span class="tc-value tc-days" :class="{'tc-expired': diasRestantes === 'expirado'}">
+  <template v-if="diasRestantes === 'expirado'">Expirado</template>
+  <template v-else-if="diasRestantes !== '-'">{{ diasRestantes }} dias</template>
+  <template v-else>-</template>
+  </span>
  </div>
  </div>
 
@@ -228,6 +253,7 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
 .tc-label { font-size: 0.7rem; opacity: 0.6; text-transform: uppercase; font-weight: 600; letter-spacing: 0.04em; }
 .tc-value { font-size: 0.95rem; font-weight: 700; }
 .tc-days { color: #7dd3fc; }
+.tc-expired { color: #ef4444 !important; }
 
 /* Tear Line */
 .tear-line {

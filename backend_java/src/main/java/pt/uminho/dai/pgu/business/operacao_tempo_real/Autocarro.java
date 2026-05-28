@@ -31,6 +31,7 @@ public class Autocarro {
  private final List<LeituraContagem> historicoLeituras;
  private final List<Alerta> historicoAlertas;
  private String linhaId;
+ private boolean deleted = false;
 
  public Autocarro(String id, int capacidadeMaxima) {
  this(id, capacidadeMaxima, null, null, null);
@@ -66,6 +67,14 @@ public class Autocarro {
 
  public String getLinhaId() {
  return linhaId;
+ }
+
+ public boolean isDeleted() {
+ return deleted;
+ }
+
+ public void setDeleted(boolean deleted) {
+ this.deleted = deleted;
  }
 
  public String getId() {

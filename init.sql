@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS autocarros (
     linha_id VARCHAR(10) NULL,
     passageiros_atuais INT NOT NULL DEFAULT 0,
     total_passageiros_transportados INT NOT NULL DEFAULT 0,
-    ultima_leitura DATETIME NULL
+    ultima_leitura DATETIME NULL,
+    deleted BOOLEAN NOT NULL DEFAULT FALSE  -- Soft delete: TRUE = eliminado (reversível)
 );
 
 CREATE TABLE IF NOT EXISTS clientes (
@@ -154,6 +155,8 @@ CREATE TABLE IF NOT EXISTS definicoes_cliente (
 );
 
 -- Linhas preferidas do cliente
+-- Nota: sem FK para linhas.id porque as linhas podem ser IDs externos (GTFS)
+-- que podem não ter sido registados via API antes de serem adicionados como favoritos
 CREATE TABLE IF NOT EXISTS linhas_favoritas (
     cliente_id VARCHAR(50) NOT NULL,
     linha_id VARCHAR(10) NOT NULL,

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { MapPin, Navigation, Clock, Bus, ChevronRight, Zap, Star, TrendingUp } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { authService } from '../../services/auth'
@@ -174,6 +174,21 @@ onMounted(async () => {
  }
  } catch(e) { /* offline mode */ }
 })
+
+// Polling a cada 5 segundos para sincronização em tempo real
+let _dashboardInterval = null
+onMounted(() => {
+ _dashboardInterval = setInterval(async () => {
+  try {
+   const { data } = await apiFetch('/dashboard')
+   if (data.status === 'sucesso') {
+    busCount.value = data.dashboard?.totalAutocarros || 0
+    avgOcc.value = Math.round(data.dashboard?.taxaOcupacaoMedia || 0)
+   }
+  } catch (e) { /* silent fail */ }
+ }, 5000)
+})
+onUnmounted(() => { if (_dashboardInterval) clearInterval(_dashboardInterval) })
 
 function lotColor(pct) {
  if (pct > 80) return '#ef4444'
@@ -415,8 +430,8 @@ function lotLabel(pct) {
 }
 .res-msg { font-size: 0.85rem; font-weight: 700; color: #0369a1; }
 .result-body { display: flex; gap: 1rem; }
-.res-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: #475569; }
-.res-item strong { color: var(--text-main); }
+.res-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: #0c4a6e; }
+.res-item strong { color: #0c4a6e; font-weight: 800; }
 
 
 /* Section */

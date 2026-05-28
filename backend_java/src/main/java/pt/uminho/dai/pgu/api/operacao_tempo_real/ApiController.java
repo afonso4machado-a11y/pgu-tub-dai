@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @RestController
@@ -110,6 +111,47 @@ public class ApiController {
  try {
  List<Map<String, Object>> lista = sistemaService.listarAutocarros();
  return ResponseEntity.ok(Map.of("status", "sucesso", "autocarros", lista));
+ } catch (Exception e) {
+ return ResponseEntity.status(500).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+ }
+ }
+
+ /** Lista autocarros marcados como eliminados (para visualização + restauro no backoffice) */
+ @GetMapping("/autocarros/eliminados")
+ public ResponseEntity<Map<String, Object>> listarAutocarrosEliminados() {
+ try {
+ List<Map<String, Object>> lista = sistemaService.listarAutocarrosEliminados();
+ return ResponseEntity.ok(Map.of("status", "sucesso", "autocarros", lista));
+ } catch (Exception e) {
+ return ResponseEntity.status(500).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+ }
+ }
+
+ /** Soft delete — autocarro marcado como eliminado, dados preservados */
+ @DeleteMapping("/autocarros/{id}")
+ public ResponseEntity<Map<String, String>> eliminarAutocarro(@PathVariable String id) {
+ try {
+ sistemaService.eliminarAutocarro(id);
+ return ResponseEntity.ok(Map.of("status", "sucesso", "mensagem", "Autocarro eliminado (reversível). Use /restaurar para desfazer."));
+ } catch (java.util.NoSuchElementException e) {
+ return ResponseEntity.status(404).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+ } catch (IllegalStateException e) {
+ return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", e.getMessage()));
+ } catch (Exception e) {
+ return ResponseEntity.status(500).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+ }
+ }
+
+ /** Restaura um autocarro previamente eliminado */
+ @PostMapping("/autocarros/{id}/restaurar")
+ public ResponseEntity<Map<String, String>> restaurarAutocarro(@PathVariable String id) {
+ try {
+ sistemaService.restaurarAutocarro(id);
+ return ResponseEntity.ok(Map.of("status", "sucesso", "mensagem", "Autocarro restaurado com sucesso."));
+ } catch (java.util.NoSuchElementException e) {
+ return ResponseEntity.status(404).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+ } catch (IllegalStateException e) {
+ return ResponseEntity.badRequest().body(Map.of("status", "erro", "mensagem", e.getMessage()));
  } catch (Exception e) {
  return ResponseEntity.status(500).body(Map.of("status", "erro", "mensagem", e.getMessage()));
  }
