@@ -125,7 +125,7 @@ watch(demoModeRef, () => fetchAlerts())
  <!-- Header -->
  <div class="glass-panel main-header">
  <div class="head-left">
- <h3 class="panel-title"><ShieldAlert class="icon-inline" /> Central de Alertas Operacionais</h3>
+ <h3 class="panel-title">Central de Alertas Operacionais</h3>
  <p class="panel-desc">UC 4.5: Monitorização, triagem e reconhecimento de eventos críticos</p>
  </div>
  <div class="header-actions">
@@ -141,22 +141,18 @@ watch(demoModeRef, () => fetchAlerts())
  <!-- KPI Stats -->
  <div class="stats-row">
  <div class="glass-panel stat-chip">
- <Bell :size="18" />
  <span class="sc-val fira-code">{{ stats.total }}</span>
  <span class="sc-label">Total</span>
  </div>
  <div class="glass-panel stat-chip chip-critical">
- <AlertOctagon :size="18" />
  <span class="sc-val fira-code text-danger">{{ stats.critical }}</span>
  <span class="sc-label">Críticos</span>
  </div>
  <div class="glass-panel stat-chip chip-pending">
- <Clock :size="18" />
  <span class="sc-val fira-code text-warning">{{ stats.pending }}</span>
  <span class="sc-label">Pendentes</span>
  </div>
  <div class="glass-panel stat-chip chip-ack">
- <CheckCircle :size="18" />
  <span class="sc-val fira-code text-teal">{{ stats.ack }}</span>
  <span class="sc-label">Reconhecidos</span>
  </div>
@@ -164,7 +160,6 @@ watch(demoModeRef, () => fetchAlerts())
 
  <!-- Filters -->
  <div class="glass-panel filter-bar">
- <Filter :size="16" class="dim" />
  <select v-model="filterType" class="filter-select">
  <option value="">Todas as Severidades</option>
  <option value="critical">Crítico</option>
@@ -190,25 +185,18 @@ watch(demoModeRef, () => fetchAlerts())
  'alert-ack': isAcknowledged(alert.uid)
  }"
  >
- <div class="ac-indicator">
- <AlertOctagon v-if="alert.severity === 'critical'" class="text-danger" :size="22" />
- <AlertTriangle v-else-if="alert.severity === 'warning'" class="text-warning" :size="22" />
- <Activity v-else class="text-info" :size="22" />
- </div>
-
  <div class="ac-content">
  <div class="ac-top">
  <span class="ac-severity-badge" :class="'badge-' + alert.severity">
  {{ alert.severityLabel }}
  </span>
- <span class="ac-bus fira-code"><Bus :size="14" /> {{ alert.autocarroId }}</span>
- <span class="ac-time dim"><Clock :size="12" /> {{ formatDate(alert.timestamp) }}</span>
+ <span class="ac-bus fira-code">Viatura: {{ alert.autocarroId }}</span>
+ <span class="ac-time dim">{{ formatDate(alert.timestamp) }}</span>
  </div>
  <p class="ac-message">{{ alert.mensagem }}</p>
 
  <!-- Ação Corretiva -->
  <div v-if="isAcknowledged(alert.uid)" class="ac-ack-info fade-in">
- <CheckCircle :size="14" class="text-teal" />
  <input
  type="text"
  :value="acknowledgeNotes[alert.uid]"
@@ -225,14 +213,13 @@ watch(demoModeRef, () => fetchAlerts())
  class="btn btn-ack"
  @click="acknowledgeAlert(alert.uid)"
  >
- <CheckCircle :size="14" /> Acknowledge
+ Acknowledge
  </button>
- <span v-else class="ack-badge"><CheckCircle :size="14" /> ACK</span>
+ <span v-else class="ack-badge">ACK</span>
  </div>
  </div>
 
  <div v-if="filteredAlerts.length === 0" class="empty-state glass-panel">
- <CheckCircle :size="40" class="text-teal" />
  <p>Nenhum alerta encontrado com os filtros atuais.</p>
  <p class="dim">A operação decorre dentro dos parâmetros normais.</p>
  </div>

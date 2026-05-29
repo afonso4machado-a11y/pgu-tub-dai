@@ -191,10 +191,6 @@ async function handleConsulta() {
 }
 
 async function handleRegLeitura() {
-  if (!leitPerfil.value) {
-    alert("O tipo de passageiro é obrigatório. Por favor, selecione uma opção.")
-    return
-  }
   try {
     const req = await fetch(`${apiUrl}/leituras`, {
       method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -202,7 +198,7 @@ async function handleRegLeitura() {
         id: leitId.value, 
         entradas: leitIn.value, 
         saidas: leitOut.value,
-        tipoPassageiro: leitPerfil.value
+        tipoPassageiro: leitPerfil.value || null
       })
     })
     const res = await req.json()
@@ -269,7 +265,7 @@ async function loadEliminados() {
  <div class="dual-grid">
  <!-- Registar -->
  <div class="glass-panel">
- <h3 class="panel-title"><Bus class="icon-inline"/> Nova Viatura na Frota</h3>
+ <h3 class="panel-title">Nova Viatura na Frota</h3>
  <p class="panel-desc">Atribuição de matrícula interna e definição de lotação</p>
  
  <form @submit.prevent="handleRegistarAutocarro" class="form-stack" novalidate>
@@ -324,7 +320,7 @@ async function loadEliminados() {
  
  <!-- Simulação Manual de Sensores (Registo Leituras) -->
  <div class="glass-panel">
- <h3 class="panel-title"><Activity class="icon-inline"/> Registo Manual de Tráfego</h3>
+ <h3 class="panel-title">Registo Manual de Tráfego</h3>
  <p class="panel-desc">Injeção mecânica das métricas para simular sensores da porta</p>
  
  <form @submit.prevent="handleRegLeitura" class="form-stack">
@@ -334,9 +330,9 @@ async function loadEliminados() {
  </div>
  
  <div class="input-group">
- <label>Tipo de Passageiro <span class="required">*</span></label>
- <select v-model="leitPerfil" class="input-field" required>
-   <option value="" disabled selected>Selecione o tipo de passageiro (Obrigatório)</option>
+ <label>Tipo de Passageiro</label>
+ <select v-model="leitPerfil" class="input-field">
+   <option value="">Selecione o tipo de passageiro (Opcional)</option>
    <option value="Estudante">Estudante</option>
    <option value="Sénior">Sénior</option>
    <option value="Passe Normal">Passe Normal</option>
@@ -360,7 +356,6 @@ async function loadEliminados() {
  <!-- Manifestação de Alertas da Injeção -->
  <div v-if="autoAlerts.length" class="alert-manifest fade-in mt-4">
  <div class="alert-header">
- <AlertTriangle :size="20" class="text-danger"/>
  <span style="font-weight: 600; color: var(--danger)">Limiares Excedidos</span>
  </div>
  <ul class="alert-list">
@@ -373,12 +368,12 @@ async function loadEliminados() {
  
  <!-- Consultar -->
  <div class="glass-panel">
- <h3 class="panel-title"><Search class="icon-inline"/> Consultar Viatura</h3>
+ <h3 class="panel-title">Consultar Viatura</h3>
  <p class="panel-desc">Telemetria direta da viatura no Data Lake</p>
  
  <form @submit.prevent="handleConsulta" class="search-form">
  <input v-model="consId" class="search-input fira-code" placeholder="ID (ex: TUB-101)" required />
- <button class="btn btn-secondary"><Search :size="18"/></button>
+ <button class="btn btn-secondary">Procurar</button>
  </form>
 
  <div v-if="consRes" class="metric-results scale-in">
@@ -399,19 +394,17 @@ async function loadEliminados() {
  <span class="res-val" :class="{'text-danger': consRes.taxaOcupacao > 80}">{{ consRes.taxaOcupacao }}%</span>
  </div>
  <div class="res-item warning-box" v-if="consRes.numeroAlertas > 0">
- <AlertTriangle class="text-warning"/>
  <span>{{ consRes.numeroAlertas }} Infrações (Alertas)</span>
  </div>
  </div>
  <div v-else class="empty-state">
- <Info :size="24" class="dim" />
  <p>Introduza uma matrícula para obter o seu estado atual.</p>
  </div>
  </div>
  
  <!-- Eliminação de Viatura (Soft Delete) -->
  <div class="glass-panel" style="grid-column: 1 / -1;">
- <h3 class="panel-title"><Trash2 class="icon-inline" style="color: #ef4444;"/> Eliminar / Restaurar Viatura</h3>
+ <h3 class="panel-title">Eliminar / Restaurar Viatura</h3>
  <p class="panel-desc">O autocarro fica marcado como eliminado — os dados históricos são preservados. A ação pode ser revertida.</p>
 
  <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
@@ -420,10 +413,10 @@ async function loadEliminados() {
  <input v-model="deleteId" class="input-field fira-code" placeholder="Ex: TUB-101" />
  </div>
  <button class="btn btn-danger" @click="deleteId.trim() && confirmDelete(deleteId.trim())" :disabled="!deleteId.trim()">
- <Trash2 :size="16" /> Eliminar
+ Eliminar
  </button>
  <button class="btn btn-outline" @click="loadEliminados">
- <RotateCcw :size="16" /> Atualizar Lista
+ Atualizar Lista
  </button>
  </div>
 
@@ -439,12 +432,11 @@ async function loadEliminados() {
  <span class="fira-code" style="font-weight: 700;">{{ bus.id }}</span>
  <span class="dim">{{ bus.matricula }} — {{ bus.marca }} {{ bus.modelo }}</span>
  <button class="btn-restore" @click="handleRestaurarAutocarro(bus.id)">
- <RotateCcw :size="14" /> Restaurar
+ Restaurar
  </button>
  </div>
  </div>
  <div v-else class="empty-state" style="margin-top: 1rem;">
- <RotateCcw :size="20" class="dim" />
  <p>Sem viaturas eliminadas. Clique em "Atualizar Lista" para verificar.</p>
  </div>
  </div>
@@ -454,12 +446,12 @@ async function loadEliminados() {
  <!-- Diálogo de Confirmação de Eliminação -->
  <div v-if="showConfirmDelete" class="confirm-overlay" @click.self="showConfirmDelete = false">
  <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
- <h3 id="confirm-title"><Trash2 :size="20" style="color: #ef4444;"/> Confirmar Eliminação</h3>
+ <h3 id="confirm-title">Confirmar Eliminação</h3>
  <p>Tem a certeza que pretende eliminar o autocarro <strong class="fira-code">{{ deleteTargetId }}</strong>?</p>
  <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Esta ação é reversível — poderá restaurar o autocarro a qualquer momento.</p>
  <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem; justify-content: flex-end;">
  <button class="btn btn-outline" @click="showConfirmDelete = false">Cancelar</button>
- <button class="btn btn-danger" @click="handleEliminarAutocarro"><Trash2 :size="16" /> Confirmar Eliminação</button>
+ <button class="btn btn-danger" @click="handleEliminarAutocarro">Confirmar Eliminação</button>
  </div>
  </div>
  </div>

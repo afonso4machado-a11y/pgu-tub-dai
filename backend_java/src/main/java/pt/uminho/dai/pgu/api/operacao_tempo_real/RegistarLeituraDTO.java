@@ -29,8 +29,7 @@ public class RegistarLeituraDTO {
   @Max(value = 10000, message = "Saídas excedem o máximo permitido (10000).")
   private int saidas;
 
-  @NotBlank(message = "O tipo de passageiro é obrigatório.")
-  @Pattern(regexp = "^(Estudante|Sénior|Passe Normal|Zapping)$", message = "Tipo de passageiro inválido. Escolha entre Estudante, Sénior, Passe Normal ou Zapping.")
+  @Pattern(regexp = "^(Estudante|Sénior|Passe Normal|Zapping)?$", message = "Tipo de passageiro inválido. Escolha entre Estudante, Sénior, Passe Normal ou Zapping.")
   private String tipoPassageiro;
 
   public String getId() { return id; }

@@ -1,7 +1,5 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { Clock, Bus, ChevronRight, ArrowLeftRight, CalendarDays } from 'lucide-vue-next'
-
 // ─── DADOS DOS HORÁRIOS (dos CSVs) ───────────────────────────
 
 const LINHAS = {
@@ -1536,7 +1534,6 @@ function selectLine(id) {
       <div v-if="nextTrip" class="next-time">
         <span class="next-hour">{{ nextTrip[0] }}</span>
         <span class="next-countdown">
-          <Clock :size="13" />
           {{ minutosParaProxima === 0 ? 'Agora' : `em ${minutosParaProxima} min` }}
         </span>
       </div>
@@ -1548,7 +1545,7 @@ function selectLine(id) {
 
     <!-- Seletor de Linha -->
     <div class="section">
-      <h3 class="section-title"><Bus :size="16" /> Linha</h3>
+      <h3 class="section-title">Linha</h3>
       <div class="line-selector">
         <button
           v-for="(l, key) in LINHAS"
@@ -1565,7 +1562,7 @@ function selectLine(id) {
 
     <!-- Tipo de Dia -->
     <div class="section">
-      <h3 class="section-title"><CalendarDays :size="16" /> Tipo de Dia</h3>
+      <h3 class="section-title">Tipo de Dia</h3>
       <div class="day-tabs">
         <button
           v-for="td in linha.tipoDias"
@@ -1581,7 +1578,7 @@ function selectLine(id) {
 
     <!-- Direção (só L43) -->
     <div v-if="isL43" class="section">
-      <h3 class="section-title"><ArrowLeftRight :size="16" /> Direção</h3>
+      <h3 class="section-title">Direção</h3>
       <div class="day-tabs">
         <button
           v-for="dir in linha.direcoes"
@@ -1597,7 +1594,7 @@ function selectLine(id) {
 
     <!-- Cabeçalho das Paragens -->
     <div class="section">
-      <h3 class="section-title"><ChevronRight :size="16" /> Paragens</h3>
+      <h3 class="section-title">Paragens</h3>
       <div class="stops-header">
         <div
           v-for="(p, i) in paragens"
@@ -1613,7 +1610,6 @@ function selectLine(id) {
     <!-- Tabela de Horários -->
     <div class="section">
       <h3 class="section-title">
-        <Clock :size="16" />
         {{ trips.length }} viagens
       </h3>
 

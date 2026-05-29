@@ -1,6 +1,5 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
-import { MapPin, Route, Settings2, Bus, Users, AlertTriangle, Radio, Locate, Layers } from 'lucide-vue-next'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -366,7 +365,7 @@ watch(demoModeRef, () => {
  <!-- Toolbar -->
  <div class="map-toolbar glass-panel">
  <div class="toolbar-left">
- <h3 class="panel-title"><Route class="icon-inline" /> Mapa Operacional — Rede TUB</h3>
+ <h3 class="panel-title">Mapa Operacional — Rede TUB</h3>
  <p class="panel-desc">Monitorização geoespacial em tempo real da frota</p>
  </div>
  <div class="toolbar-controls">
@@ -376,10 +375,10 @@ watch(demoModeRef, () => {
  </select>
  <label class="toggle-label">
  <input type="checkbox" v-model="showOnlyCritical" />
- <AlertTriangle :size="14" /> Só Críticos
+ Só Críticos
  </label>
  <button class="btn btn-secondary btn-sm" @click="centerMap">
- <Locate :size="16" /> Centrar
+ Centrar
  </button>
  </div>
  </div>
@@ -392,22 +391,18 @@ watch(demoModeRef, () => {
  <!-- Overlay Stats -->
  <div class="map-overlay-stats">
  <div class="ov-stat">
- <Bus :size="16" />
  <span class="ov-val fira-code">{{ fleetStats.total }}</span>
  <span class="ov-label">Frota</span>
  </div>
  <div class="ov-stat">
- <Radio :size="16" class="pulse-green" />
  <span class="ov-val fira-code text-teal">{{ fleetStats.online }}</span>
  <span class="ov-label">Online</span>
  </div>
  <div class="ov-stat">
- <AlertTriangle :size="16" class="text-danger" />
  <span class="ov-val fira-code text-danger">{{ fleetStats.critical }}</span>
  <span class="ov-label">Críticos</span>
  </div>
  <div class="ov-stat">
- <Users :size="16" />
  <span class="ov-val fira-code">{{ fleetStats.avgOcc }}%</span>
  <span class="ov-label">Média</span>
  </div>
@@ -417,7 +412,7 @@ watch(demoModeRef, () => {
  <!-- Sidebar com lista da frota -->
  <div class="fleet-sidebar">
  <div class="glass-panel sidebar-header">
- <h4><Bus class="icon-inline" :size="18" /> Veículos Ativos</h4>
+ <h4>Veículos Ativos</h4>
  <span class="badge fira-code">{{ filteredBuses.length }}</span>
  </div>
  <div class="fleet-list">
@@ -459,7 +454,7 @@ watch(demoModeRef, () => {
  <!-- Detail Panel -->
  <div v-if="selectedBus" class="detail-panel glass-panel fade-in">
  <div class="dp-header">
- <h4><Bus class="icon-inline" :size="18" /> Detalhes — {{ selectedBus.id }}</h4>
+ <h4>Detalhes — {{ selectedBus.id }}</h4>
  <button class="btn-close" @click="selectedBus = null"></button>
  </div>
  <div class="dp-grid">

@@ -1,6 +1,5 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
-import { RefreshCw, Users, Bus, Percent, AlertTriangle, Info, Bell, Activity, TrendingUp } from 'lucide-vue-next'
 import { apiFetch, demoModeRef } from '../services/api.js'
 import { authService } from '../services/auth'
 import BaseSkeleton from '../components/BaseSkeleton.vue'
@@ -165,12 +164,12 @@ const chartOptions = {
     <div class="action-bar">
       <h3 class="section-title">Painel de Operações</h3>
       <button @click="carregarDashboard" class="btn btn-secondary" :disabled="loading">
-        <RefreshCw :class="{'spin': loading}" :size="16"/> Sincronizar
+        Sincronizar
       </button>
     </div>
 
     <div v-if="err" class="error-banner">
-      <AlertTriangle /> {{ err }}
+      {{ err }}
     </div>
 
     <!-- Quick stats -->
@@ -189,7 +188,6 @@ const chartOptions = {
       <template v-else-if="dashboardStats">
         <div class="stat-card glass-panel">
           <div class="stat-content">
-            <div class="stat-icon"><Percent /></div>
             <div class="stat-info">
               <span class="stat-value">{{ Number(dashboardStats.taxaOcupacaoMedia || 0).toFixed(1) }}%</span>
               <span class="stat-label">Taxa Ocupação Média</span>
@@ -211,7 +209,6 @@ const chartOptions = {
 
         <div class="stat-card glass-panel">
           <div class="stat-content">
-            <div class="stat-icon"><Users /></div>
             <div class="stat-info">
               <span class="stat-value">{{ dashboardStats.volumeTotalPassageiros }}</span>
               <span class="stat-label">Volume Passageiros</span>
@@ -229,7 +226,6 @@ const chartOptions = {
 
         <div class="stat-card glass-panel">
           <div class="stat-content">
-            <div class="stat-icon"><Bus /></div>
             <div class="stat-info">
               <span class="stat-value">{{ dashboardStats.totalAutocarros }}</span>
               <span class="stat-label">Autocarros Ativos</span>
@@ -244,7 +240,6 @@ const chartOptions = {
 
         <div class="stat-card glass-panel">
           <div class="stat-content">
-            <div class="stat-icon icon-success"><Activity /></div>
             <div class="stat-info">
               <span class="stat-value text-success">OK</span>
               <span class="stat-label">Estado PGU</span>
@@ -263,7 +258,6 @@ const chartOptions = {
     <div class="chart-section glass-panel">
       <div class="chart-header">
         <div class="chart-title-group">
-          <TrendingUp class="chart-icon" :size="20" />
           <div style="width: 100%;">
             <template v-if="loading">
               <BaseSkeleton width="220px" height="1.25rem" style="margin-bottom: 0.35rem;" />
@@ -293,7 +287,6 @@ const chartOptions = {
         </template>
         <template v-else-if="dashboardStats">
           <div v-if="(dashboardStats.volumePorHora ?? []).length === 0" class="chart-empty">
-            <TrendingUp :size="40" class="text-muted" />
             <p>Sem leituras registadas hoje.</p>
             <span>Assim que chegarem dados do sensor, o gráfico será preenchido automaticamente.</span>
           </div>
@@ -310,7 +303,7 @@ const chartOptions = {
     <!-- ── Painéis Inferiores ───────────────────────────────────────── -->
     <div class="dashboard-content">
       <div class="content-section autocarros-criticos">
-        <h4><AlertTriangle class="text-warning"/> Veículos em Lotação Crítica</h4>
+        <h4>Veículos em Lotação Crítica</h4>
         <div class="list-container glass-panel">
           <template v-if="loading">
             <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%; padding: 0.5rem 0;">
@@ -333,7 +326,7 @@ const chartOptions = {
       </div>
 
       <div class="content-section avisos-recentes">
-        <h4><Bell class="text-accent"/> Avisos do Sistema</h4>
+        <h4>Avisos do Sistema</h4>
         <div class="list-container glass-panel">
           <template v-if="loading">
             <div style="display: flex; flex-direction: column; gap: 1.25rem; width: 100%; padding: 0.5rem 0;">
@@ -351,10 +344,6 @@ const chartOptions = {
               Nenhum aviso recente.
             </div>
             <div v-for="(a, i) in (dashboardStats.avisosRecentes || [])" :key="i" class="list-item aviso-item">
-              <div class="aviso-icon">
-                <AlertTriangle v-if="a.tipo === 'LOTACAO_CRITICA'" class="text-danger" size="18"/>
-                <Info v-else class="text-warning" size="18" />
-              </div>
               <div class="aviso-detalhes">
                 <span class="aviso-msg">{{ a.mensagem }}</span>
                 <span class="aviso-meta">Veículo {{ a.autocarroId }} • {{ formatDate(a.timestamp) }}</span>

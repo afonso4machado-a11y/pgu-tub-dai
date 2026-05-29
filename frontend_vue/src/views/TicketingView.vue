@@ -132,7 +132,7 @@ function exportCSV() {
  <!-- Header -->
  <div class="glass-panel main-header">
  <div class="head-left">
- <h3 class="panel-title"><Ticket class="icon-inline" /> Bilhética Digital — Análise de Validações</h3>
+ <h3 class="panel-title">Bilhética Digital — Análise de Validações</h3>
  <p class="panel-desc">Vertical 3.3: Distribuição por perfil de passageiro e receitas</p>
  </div>
  <div class="header-actions">

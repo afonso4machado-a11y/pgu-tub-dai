@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
-import { Activity, Radio, AlertOctagon, Calendar, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
 import { apiFetch, demoModeRef } from '../services/api.js'
 const telemetries = ref([])
@@ -117,7 +117,7 @@ watch(demoModeRef, () => {
  <!-- Header -->
  <div class="glass-panel main-header">
  <div class="head-left">
- <h3 class="panel-title"><Radio class="icon-inline pulse"/> Telemetria de Lotação Em Tempo Real</h3>
+ <h3 class="panel-title">Telemetria de Lotação Em Tempo Real</h3>
  <p class="panel-desc">Vertical 3.4: Stream direto dos sensores de portas e contadores stereoscópicos</p>
  </div>
  <button class="btn btn-secondary" @click="fetchHistorico">Atualizar Histórico</button>
@@ -145,13 +145,13 @@ watch(demoModeRef, () => {
  </div>
 
  <div class="alerts-panel">
- <div v-if="criticalBus" class="glass-panel critical-bg fade-in">
- <h4 class="alert-title"><AlertOctagon /> Atenção Requerida</h4>
- <p class="alert-text">O veículo <strong>{{ criticalBus.id }}</strong> excedeu a lotação de segurança ({{ criticalBus.occ }}%). Recomenda-se reforço para a Linha {{ criticalBus.route }}.</p>
- <button class="btn btn-secondary mt-2">Avisar Motorista</button>
- </div>
- <div v-else class="glass-panel safe-bg fade-in">
- <h4 class="alert-title text-success"><Activity /> Operação Estável</h4>
+  <div v-if="criticalBus" class="glass-panel critical-bg fade-in">
+  <h4 class="alert-title">Atenção Requerida</h4>
+  <p class="alert-text">O veículo <strong>{{ criticalBus.id }}</strong> excedeu a lotação de segurança ({{ criticalBus.occ }}%). Recomenda-se reforço para a Linha {{ criticalBus.route }}.</p>
+  <button class="btn btn-secondary mt-2">Avisar Motorista</button>
+  </div>
+  <div v-else class="glass-panel safe-bg fade-in">
+  <h4 class="alert-title text-success">Operação Estável</h4>
  <p class="alert-text">Nenhuma viatura em estado crítico. A frota opera dentro dos parâmetros de segurança.</p>
  </div>
  </div>
@@ -160,7 +160,7 @@ watch(demoModeRef, () => {
  <!-- Secção Calendário Histórico -->
  <div class="glass-panel calendar-section mt-4">
  <div class="cal-header">
- <h4 class="cal-title"><Calendar class="icon-inline" /> Histórico de Ocupação por Dia</h4>
+ <h4 class="cal-title">Histórico de Ocupação por Dia</h4>
  <div class="cal-nav">
  <button class="nav-btn" @click="prevMonth"><ChevronLeft :size="18"/></button>
  <span class="cal-month">{{ calendarTitle }}</span>
@@ -227,7 +227,7 @@ watch(demoModeRef, () => {
  </div>
  </div>
  <p class="paragens-note">
- <AlertTriangle :size="14" class="icon-inline" /> A divisão por paragens estará disponível quando os horários com paragens forem configurados na base de dados.
+ A divisão por paragens estará disponível quando os horários com paragens forem configurados na base de dados.
  </p>
  </div>
  <div v-else-if="selectedDay" class="no-data-day">

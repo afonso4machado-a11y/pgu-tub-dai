@@ -1,6 +1,5 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
-import { GitCompare, TrendingUp, Calendar, BarChart3, Users, Bus, AlertTriangle, Download } from 'lucide-vue-next'
 
 import { apiFetch, demoModeRef } from '../services/api.js'
 const loading = ref(false)
@@ -96,7 +95,7 @@ function exportCSV() {
  <!-- Header -->
  <div class="glass-panel main-header">
  <div class="head-left">
- <h3 class="panel-title"><GitCompare class="icon-inline"/> Motor de Correlação — Procura vs Oferta</h3>
+ <h3 class="panel-title">Motor de Correlação — Procura vs Oferta</h3>
  <p class="panel-desc">UC 4.3: Cruzamento de dados de contagem com GTFS e bilhética</p>
  </div>
  <div class="header-controls">
@@ -109,37 +108,34 @@ function exportCSV() {
  <input type="date" v-model="dataFim" class="date-input fira-code" />
  </div>
  <button class="btn btn-primary" @click="carregarCorrelacao" :disabled="loading">
- <TrendingUp :size="16" :class="{'spin': loading}" /> Correlacionar
+ Correlacionar
  </button>
  <button v-if="correlacao" class="btn btn-secondary" @click="exportCSV">
- <Download :size="16" /> CSV
+ CSV
  </button>
  </div>
  </div>
 
  <!-- Error -->
  <div v-if="err" class="error-banner fade-in">
- <AlertTriangle /> {{ err }}
+ {{ err }}
  </div>
 
  <!-- Métricas KPI -->
  <div v-if="correlacao" class="kpi-grid mt-4">
  <div class="glass-panel kpi-card">
- <div class="kpi-icon"><Users /></div>
  <div class="kpi-info">
  <span class="kpi-value fira-code">{{ correlacao.metricas.totalPassageirosContados }}</span>
  <span class="kpi-label">Passageiros Contados</span>
  </div>
  </div>
  <div class="glass-panel kpi-card">
- <div class="kpi-icon"><Bus /></div>
  <div class="kpi-info">
  <span class="kpi-value fira-code">{{ correlacao.metricas.totalViagensProgramadas }}</span>
  <span class="kpi-label">Viagens Programadas (GTFS)</span>
  </div>
  </div>
  <div class="glass-panel kpi-card highlight">
- <div class="kpi-icon"><TrendingUp /></div>
  <div class="kpi-info">
  <span class="kpi-value fira-code" :style="{color: ratioColor(correlacao.metricas.ratioProcuraOferta)}">
  {{ correlacao.metricas.ratioProcuraOferta }}
@@ -148,7 +144,6 @@ function exportCSV() {
  </div>
  </div>
  <div class="glass-panel kpi-card">
- <div class="kpi-icon"><Calendar /></div>
  <div class="kpi-info">
  <span class="kpi-value fira-code text-cyan">{{ correlacao.metricas.periodoInicio }}</span>
  <span class="kpi-label">→ {{ correlacao.metricas.periodoFim }}</span>
@@ -161,7 +156,7 @@ function exportCSV() {
 
  <!-- Procura por Linha -->
  <div class="glass-panel section">
- <h4><BarChart3 class="icon-inline" /> Procura Real por Linha</h4>
+ <h4>Procura Real por Linha</h4>
  <p class="section-desc">Volume de passageiros contados por sensores/QR em cada linha</p>
  <div v-if="correlacao.procuraPorLinha.length === 0" class="empty-state">
  Sem dados de contagem no período seleccionado.
@@ -180,7 +175,7 @@ function exportCSV() {
 
  <!-- Oferta GTFS -->
  <div class="glass-panel section">
- <h4><Bus class="icon-inline" /> Oferta Planeada (GTFS)</h4>
+ <h4>Oferta Planeada (GTFS)</h4>
  <p class="section-desc">Viagens programadas extraídas dos horários importados</p>
  <div v-if="correlacao.ofertaPorLinha.length === 0" class="empty-state">
  Sem dados GTFS. Execute <code>import_horarios.py</code> primeiro.
@@ -196,7 +191,7 @@ function exportCSV() {
 
  <!-- Distribuição Horária -->
  <div class="glass-panel section">
- <h4><Calendar class="icon-inline" /> Distribuição Horária da Procura</h4>
+ <h4>Distribuição Horária da Procura</h4>
  <p class="section-desc">Picos de hora de ponta identificados no período</p>
  <div v-if="correlacao.procuraPorHora.length === 0" class="empty-state">
  Sem dados horários no período.
@@ -213,7 +208,7 @@ function exportCSV() {
 
  <!-- Bilhética Simulada -->
  <div class="glass-panel section">
- <h4><Users class="icon-inline" /> Bilhética Simulada (Perfis)</h4>
+ <h4>Bilhética Simulada (Perfis)</h4>
  <p class="section-desc">Distribuição estimada por tipo de título de transporte</p>
  <div class="perfil-list">
  <div v-for="(count, perfil) in correlacao.bilheticaSimulada" :key="perfil" class="perfil-row">
@@ -222,7 +217,7 @@ function exportCSV() {
  </div>
  </div>
  <p class="simulated-note">
- <div class="lucide-warning-wrap"><AlertTriangle :size="16" /></div> Dados simulados proporcionalmente às entradas reais. A integração com a API de bilhética (vertical 3.3) substituirá estes valores.
+ Dados simulados proporcionalmente às entradas reais. A integração com a API de bilhética (vertical 3.3) substituirá estes valores.
  </p>
  </div>
  </div>
