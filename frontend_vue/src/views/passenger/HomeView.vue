@@ -4,7 +4,7 @@ import { MapPin, Navigation, Clock, Bus, ChevronRight, Zap, Star, TrendingUp } f
 import { useRouter } from 'vue-router'
 import { authService } from '../../services/auth'
 
-import { apiFetch } from '../../services/api.js'
+import { apiFetch, isDemoMode } from '../../services/api.js'
 const router = useRouter()
 const currentUser = ref(authService.getUser())
 const greeting = ref('')
@@ -139,67 +139,128 @@ const toggleFavorite = async (id) => {
   }
 }
 
-const proximosAutocarros = ref([
- { linha: 'L7', destino: 'S. Vítor', minutos: 3, lotacao: 45 },
- { linha: 'L43', destino: 'Universidade', minutos: 8, lotacao: 72 },
- { linha: 'L7', destino: 'Celeirós', minutos: 14, lotacao: 28 },
-])
+const proximosAutocarros = ref([])
+
+function getLineColor(linhaId) {
+  const line = availableLines.find(l => l.id === linhaId)
+  return line ? line.cor : '#64748b'
+}
+
+async function updateProximos() {
+  if (isDemoMode()) {
+    proximosAutocarros.value = [
+      { linha: 'L7', destino: 'S. Vítor', minutos: 3, lotacao: 45 },
+      { linha: 'L43', destino: 'Universidade', minutos: 8, lotacao: 72 },
+      { linha: 'L7', destino: 'Celeirós', minutes: 14, lotacao: 28 },
+    ]
+    return
+  }
+
+  try {
+    const { data } = await apiFetch('/autocarros')
+    if (data.status === 'sucesso' && data.autocarros?.length > 0) {
+      const mapped = data.autocarros
+        .filter(b => b.linhaId && !b.deleted)
+        .map(b => {
+          let destino = 'Centro'
+          if (b.linhaId === 'L43') destino = 'Universidade'
+          else if (b.linhaId === 'L7') destino = b.id.charCodeAt(b.id.length - 1) % 2 === 0 ? 'S. Vítor' : 'Celeirós'
+          else if (b.linhaId === 'L40') destino = 'Gualtar'
+          else if (b.linhaId === 'L2') destino = 'Bom Jesus'
+          else if (b.linhaId === 'L3') destino = 'Ruães'
+          else if (b.linhaId === 'L12') destino = 'Pedralva'
+          else if (b.linhaId === 'L19') destino = 'Boavista'
+
+          const nowMin = new Date().getMinutes()
+          const idNum = parseInt(b.id.replace(/\D/g, '')) || 7
+          const minutos = Math.max(1, (idNum + nowMin) % 18)
+
+          const lotacao = Math.round((b.passageirosAtuais / b.capacidadeMaxima) * 100)
+
+          return {
+            linha: b.linhaId,
+            destino,
+            minutos,
+            lotacao
+          }
+        })
+        .sort((a, b) => a.minutos - b.minutos)
+        .slice(0, 4)
+
+      if (mapped.length > 0) {
+        proximosAutocarros.value = mapped
+      } else {
+        proximosAutocarros.value = [
+          { linha: 'L7', destino: 'Sem viaturas ativas', minutos: '--', lotacao: 0 },
+          { linha: 'L43', destino: 'Sem viaturas ativas', minutos: '--', lotacao: 0 }
+        ]
+      }
+    } else {
+      proximosAutocarros.value = []
+    }
+  } catch (e) {
+    proximosAutocarros.value = []
+  }
+}
 
 onMounted(async () => {
- const hour = new Date().getHours()
- if (hour < 12) greeting.value = 'Bom dia'
- else if (hour < 19) greeting.value = 'Boa tarde'
- else greeting.value = 'Boa noite'
+  const hour = new Date().getHours()
+  if (hour < 12) greeting.value = 'Bom dia'
+  else if (hour < 19) greeting.value = 'Boa tarde'
+  else greeting.value = 'Boa noite'
 
- try {
- const { data } = await apiFetch('/dashboard')
- if (data.status === 'sucesso') {
- busCount.value = data.dashboard?.totalAutocarros || 0
- avgOcc.value = Math.round(data.dashboard?.taxaOcupacaoMedia || 0)
- }
+  try {
+    const { data } = await apiFetch('/dashboard')
+    if (data.status === 'sucesso') {
+      busCount.value = data.dashboard?.totalAutocarros || 0
+      avgOcc.value = Math.round(data.dashboard?.taxaOcupacaoMedia || 0)
+    }
 
- // Fetch Paragens
- const { data: pData } = await apiFetch('/paragens')
- if (pData.status === 'sucesso' && pData.paragens?.length > 0) {
- paragensBraga.value = pData.paragens
- } else {
- paragensBraga.value = [
- "S. Mamede d' Este", "Avenida da Liberdade", "Igreja S Lázaro", "Celeirós",
- "Rua 25 de Abril", "Parque Infantil",
- "Hospital", "Rua Egídio Guimarães", "Avenida Central", "Rua Mário de Almeida",
- "Estação C.P.", "U.Minho", "Universidade do Minho",
- "Terminal Intermodal", "São Vítor", "Maximinos", "Bom Jesus",
- "Nogueiró", "Gualtar", "Braga Parque", "Estádio Municipal",
- ]
- }
- } catch(e) { /* offline mode */ }
+    // Fetch Paragens
+    const { data: pData } = await apiFetch('/paragens')
+    if (pData.status === 'sucesso' && pData.paragens?.length > 0) {
+      paragensBraga.value = pData.paragens
+    } else {
+      paragensBraga.value = [
+        "S. Mamede d' Este", "Avenida da Liberdade", "Igreja S Lázaro", "Celeirós",
+        "Rua 25 de Abril", "Parque Infantil",
+        "Hospital", "Rua Egídio Guimarães", "Avenida Central", "Rua Mário de Almeida",
+        "Estação C.P.", "U.Minho", "Universidade do Minho",
+        "Terminal Intermodal", "São Vítor", "Maximinos", "Bom Jesus",
+        "Nogueiró", "Gualtar", "Braga Parque", "Estádio Municipal",
+      ]
+    }
+  } catch(e) { /* offline mode */ }
+  
+  await updateProximos()
 })
 
 // Polling a cada 5 segundos para sincronização em tempo real
 let _dashboardInterval = null
 onMounted(() => {
- _dashboardInterval = setInterval(async () => {
-  try {
-   const { data } = await apiFetch('/dashboard')
-   if (data.status === 'sucesso') {
-    busCount.value = data.dashboard?.totalAutocarros || 0
-    avgOcc.value = Math.round(data.dashboard?.taxaOcupacaoMedia || 0)
-   }
-  } catch (e) { /* silent fail */ }
- }, 5000)
+  _dashboardInterval = setInterval(async () => {
+    try {
+      const { data } = await apiFetch('/dashboard')
+      if (data.status === 'sucesso') {
+        busCount.value = data.dashboard?.totalAutocarros || 0
+        avgOcc.value = Math.round(data.dashboard?.taxaOcupacaoMedia || 0)
+      }
+      await updateProximos()
+    } catch (e) { /* silent fail */ }
+  }, 5000)
 })
 onUnmounted(() => { if (_dashboardInterval) clearInterval(_dashboardInterval) })
 
 function lotColor(pct) {
- if (pct > 80) return '#ef4444'
- if (pct > 60) return '#eab308'
- return '#10b981'
+  if (pct > 80) return '#ef4444'
+  if (pct > 60) return '#eab308'
+  return '#10b981'
 }
 
 function lotLabel(pct) {
- if (pct > 80) return 'Lotado'
- if (pct > 60) return 'Moderado'
- return 'Livre'
+  if (pct > 80) return 'Lotado'
+  if (pct > 60) return 'Moderado'
+  return 'Livre'
 }
 </script>
 
@@ -304,7 +365,7 @@ function lotLabel(pct) {
  <div class="bus-list">
  <div v-for="bus in proximosAutocarros" :key="bus.linha + bus.destino" class="bus-card">
  <div class="bus-left">
- <span class="bus-linha" :style="{background: bus.linha === 'L7' ? '#0284c7' : '#7c3aed'}">
+ <span class="bus-linha" :style="{background: getLineColor(bus.linha)}">
  {{ bus.linha }}
  </span>
  <div class="bus-info">

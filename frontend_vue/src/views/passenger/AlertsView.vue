@@ -4,7 +4,7 @@ import { Bell, AlertTriangle, Info, Clock, Star, Settings, ChevronRight } from '
 
 import { authService } from '../../services/auth'
 
-import { apiFetch } from '../../services/api.js'
+import { apiFetch, isDemoMode } from '../../services/api.js'
 const alerts = ref([])
 
 const user = authService.getUser()
@@ -19,26 +19,40 @@ const sampleAlerts = [
 
 async function fetchAlerts() {
  try {
- const { data } = await apiFetch('/dashboard')
- if (data.status === 'sucesso') {
- const apiAlerts = (data.dashboard?.avisosRecentes || []).map((a, i) => ({
- id: 100 + i,
- tipo: 'SISTEMA',
- linha: a.autocarroId || '',
- msg: a.mensagem,
- tempo: 'agora',
- lido: false,
- }))
- // Merge: keep read state of existing alerts
- const existingIds = new Set(alerts.value.map(a => a.id))
- const newApiAlerts = apiAlerts.filter(a => !existingIds.has(a.id))
- alerts.value = [...newApiAlerts, ...alerts.value.filter(a => a.id >= 1 && a.id < 100)]
- if (alerts.value.length === 0) alerts.value = sampleAlerts
- } else if (alerts.value.length === 0) {
- alerts.value = sampleAlerts
- }
+  const { data } = await apiFetch('/dashboard')
+  if (data.status === 'sucesso') {
+   const apiAlerts = (data.dashboard?.avisosRecentes || []).map((a, i) => ({
+    id: 100 + i,
+    tipo: 'SISTEMA',
+    linha: a.autocarroId || '',
+    msg: a.mensagem,
+    tempo: 'agora',
+    lido: false,
+   }))
+   
+   if (isDemoMode()) {
+    // Merge: keep read state of existing alerts
+    const existingIds = new Set(alerts.value.map(a => a.id))
+    const newApiAlerts = apiAlerts.filter(a => !existingIds.has(a.id))
+    alerts.value = [...newApiAlerts, ...alerts.value.filter(a => a.id >= 1 && a.id < 100)]
+    if (alerts.value.length === 0) alerts.value = sampleAlerts
+   } else {
+    // Modo Dados Reais: apenas alertas da API, sem misturar samples
+    alerts.value = apiAlerts
+   }
+  } else {
+   if (isDemoMode()) {
+    if (alerts.value.length === 0) alerts.value = sampleAlerts
+   } else {
+    alerts.value = []
+   }
+  }
  } catch(e) {
- if (alerts.value.length === 0) alerts.value = sampleAlerts
+  if (isDemoMode()) {
+   if (alerts.value.length === 0) alerts.value = sampleAlerts
+  } else {
+   alerts.value = []
+  }
  }
 }
 
