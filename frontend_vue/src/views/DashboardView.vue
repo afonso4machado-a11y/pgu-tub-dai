@@ -59,34 +59,59 @@ function formatDate(ds) {
 // ── Chart.js: dados e opções ──────────────────────────────────────────
 
 const chartData = computed(() => {
- const raw = dashboardStats.value?.volumePorHora ?? []
- const labels = raw.map(r => `${String(r.hora).padStart(2, '0')}h`)
- const values = raw.map(r => r.passageiros)
+  const raw = dashboardStats.value?.volumePorHora ?? []
+  if (raw.length === 0) {
+    return { labels: [], datasets: [] }
+  }
 
- return {
- labels,
- datasets: [
- {
- label: 'Passageiros / hora',
- data: values,
- fill: true,
- tension: 0.45,
- borderColor: '#06b6d4',
- borderWidth: 2.5,
- pointBackgroundColor: '#06b6d4',
- pointBorderColor: '#0e1117',
- pointRadius: 4,
- pointHoverRadius: 7,
- backgroundColor: (ctx) => {
- const canvas = ctx.chart.canvas
- const gradient = canvas.getContext('2d').createLinearGradient(0, 0, 0, canvas.height)
- gradient.addColorStop(0, 'rgba(6,182,212,0.35)')
- gradient.addColorStop(1, 'rgba(6,182,212,0.00)')
- return gradient
- },
- },
- ],
- }
+  // 1. Encontrar o início (primeiro registo) e a maior hora com dados
+  const startHour = raw[0].hora
+  const maxRawHour = raw[raw.length - 1].hora
+
+  // 2. Definir a hora de fim (hora atual + 1, estendendo conforme os dados)
+  const currentHour = new Date().getHours()
+  const endHour = Math.max(startHour + 1, currentHour + 1, maxRawHour)
+
+  const labels = []
+  const values = []
+
+  // Criar mapa de consulta rápida para passageiros reais por hora
+  const passageirosMap = new Map()
+  raw.forEach(r => {
+    passageirosMap.set(r.hora, r.passageiros)
+  })
+
+  // 3. Preencher a linha do tempo sem saltos de hora e com preenchimento de zeros para o futuro
+  for (let h = startHour; h <= endHour; h++) {
+    if (h > 23) break
+    labels.push(`${String(h).padStart(2, '0')}h`)
+    values.push(passageirosMap.get(h) ?? 0)
+  }
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'Passageiros / hora',
+        data: values,
+        fill: true,
+        tension: 0.45,
+        borderColor: '#06b6d4',
+        borderWidth: 2.5,
+        pointBackgroundColor: '#06b6d4',
+        pointBorderColor: '#0e1117',
+        pointRadius: 4,
+        pointHoverRadius: 7,
+        backgroundColor: (ctx) => {
+          const canvas = ctx.chart.canvas
+          const gradient = canvas.getContext('2d').createLinearGradient(0, 0, 0, canvas.height)
+          gradient.addColorStop(0, 'rgba(6,182,212,0.35)')
+          gradient.addColorStop(1, 'rgba(6,182,212,0.00)')
+          return gradient
+        },
+      },
+    ],
+  }
 })
 
 const chartOptions = {
