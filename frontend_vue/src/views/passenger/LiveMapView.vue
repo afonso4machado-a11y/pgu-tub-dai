@@ -158,8 +158,7 @@ function initMap() {
  map.on('moveend', () => { isZooming = false })
 
  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
- maxZoom: 19,
- noWrap: true
+ maxZoom: 19
  }).addTo(map)
 
  // Force recalculation after flexbox/DOM layout settles
@@ -256,17 +255,38 @@ function centerMap() {
 
 function dismissCard() { selectedBus.value = null }
 
+let resizeObserver = null
+
 onMounted(() => {
- initMap()
- fetchBuses()
- timer = setInterval(fetchBuses, 5000)
+  initMap()
+  fetchBuses()
+  timer = setInterval(fetchBuses, 5000)
+
+  // Fix for map rendering incorrectly or showing blank areas when container resizes
+  const mapEl = document.getElementById('passenger-map')
+  if (mapEl && typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => {
+      if (map) {
+        map.invalidateSize({ debounceMove: false })
+        requestAnimationFrame(() => {
+          if (map) map.invalidateSize({ debounceMove: false })
+        })
+      }
+    })
+    resizeObserver.observe(mapEl)
+  }
 })
+
 onUnmounted(() => {
- if (timer) clearInterval(timer)
- markersCache.clear()
- positionsCache.clear()
- lastColorCache.clear()
- if (map) { map.remove(); map = null }
+  if (timer) clearInterval(timer)
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+  markersCache.clear()
+  positionsCache.clear()
+  lastColorCache.clear()
+  if (map) { map.remove(); map = null }
 })
 </script>
 

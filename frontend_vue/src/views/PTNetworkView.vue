@@ -4,7 +4,10 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 import { apiFetch, demoModeRef } from '../services/api.js'
+import { useSidebar } from '../composables/useSidebar'
+
 const apiUrl = '/api'
+const { isSidebarCollapsed } = useSidebar()
 let map = null
 let markersLayer = null
 let timer = null
@@ -176,8 +179,7 @@ function initMap() {
 
  // Standard OpenStreetMap tiles (Free)
  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
- maxZoom: 19,
- noWrap: true
+ maxZoom: 19
  }).addTo(map)
 
  // Fix for map rendering incorrectly or zoomed out when container resizes
@@ -340,17 +342,65 @@ function centerMap() {
  if (map) map.setView([41.5503, -8.4227], 14)
 }
 
+let resizeObserver = null
+let mainContentEl = null
+
+const handleTransition = () => {
+  if (map) {
+    map.invalidateSize({ debounceMove: false })
+  }
+}
+
+watch(isSidebarCollapsed, () => {
+  if (map) {
+    map.invalidateSize({ debounceMove: false })
+    // Forçar recalculação durante e após a transição da sidebar (300ms)
+    setTimeout(() => { if (map) map.invalidateSize({ debounceMove: false }) }, 100)
+    setTimeout(() => { if (map) map.invalidateSize({ debounceMove: false }) }, 200)
+    setTimeout(() => { if (map) map.invalidateSize({ debounceMove: false }) }, 300)
+    setTimeout(() => { if (map) map.invalidateSize({ debounceMove: false }) }, 450)
+  }
+})
+
 onMounted(() => {
- initMap()
- fetchFleet()
- timer = setInterval(fetchFleet, 5000)
+  initMap()
+  fetchFleet()
+  timer = setInterval(fetchFleet, 5000)
+
+  // Ouvir o fim da transição do sidebar na main-content
+  mainContentEl = document.querySelector('.main-content')
+  if (mainContentEl) {
+    mainContentEl.addEventListener('transitionend', handleTransition)
+  }
+
+  // Fix for map rendering incorrectly or showing blank areas when sidebar collapses/window resizes
+  const mapEl = document.getElementById('fleet-map')
+  if (mapEl && typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => {
+      if (map) {
+        map.invalidateSize({ debounceMove: false })
+        requestAnimationFrame(() => {
+          if (map) map.invalidateSize({ debounceMove: false })
+        })
+      }
+    })
+    resizeObserver.observe(mapEl)
+  }
 })
 
 onUnmounted(() => {
- if (timer) clearInterval(timer)
- markersCache.clear()
- positionsCache.clear()
- if (map) { map.remove(); map = null }
+  if (timer) clearInterval(timer)
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+  if (mainContentEl) {
+    mainContentEl.removeEventListener('transitionend', handleTransition)
+    mainContentEl = null
+  }
+  markersCache.clear()
+  positionsCache.clear()
+  if (map) { map.remove(); map = null }
 })
 
 watch(demoModeRef, () => {
