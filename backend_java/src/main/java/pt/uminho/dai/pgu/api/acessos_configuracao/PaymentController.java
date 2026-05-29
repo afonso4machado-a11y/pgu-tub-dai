@@ -61,13 +61,14 @@ public class PaymentController {
 
  @PostConstruct
  public void init() {
- String secretKey = System.getenv("STRIPE_SECRET_KEY");
- if (secretKey == null || secretKey.isBlank()) {
- throw new IllegalStateException(
- "[Stripe] STRIPE_SECRET_KEY nao configurada. Defina a variavel de ambiente.");
- }
+ String secretKey = pt.uminho.dai.pgu.data.DatabaseConnection.getEnv("STRIPE_SECRET_KEY", "");
+ if (secretKey == null || secretKey.isBlank() || secretKey.startsWith("insira_aqui") || secretKey.startsWith("sk_test_example")) {
+ System.out.println("[Stripe] STRIPE_SECRET_KEY nao configurada ou e um placeholder. A funcionalidade real de pagamentos estara indisponivel.");
+ Stripe.apiKey = "";
+ } else {
  Stripe.apiKey = secretKey;
  System.out.println("[Stripe] SDK inicializado com sucesso.");
+ }
  }
 
  // 
@@ -130,11 +131,11 @@ public class PaymentController {
  @RequestBody String payload) throws IOException {
 
  String sigHeader = request.getHeader("Stripe-Signature");
- String webhookSecret = System.getenv("STRIPE_WEBHOOK_SECRET");
+ String webhookSecret = pt.uminho.dai.pgu.data.DatabaseConnection.getEnv("STRIPE_WEBHOOK_SECRET", "");
 
- if (webhookSecret == null || webhookSecret.isBlank()) {
- System.err.println("[Stripe] STRIPE_WEBHOOK_SECRET nao configurado — webhook rejeitado.");
- return ResponseEntity.status(400).body("Webhook secret nao configurado.");
+ if (webhookSecret == null || webhookSecret.isBlank() || webhookSecret.startsWith("insira_aqui") || webhookSecret.startsWith("whsec_example")) {
+ System.err.println("[Stripe] STRIPE_WEBHOOK_SECRET nao configurado ou e um placeholder — webhook rejeitado.");
+ return ResponseEntity.status(400).body("Webhook secret nao configurado ou invalido.");
  }
 
  Event event;

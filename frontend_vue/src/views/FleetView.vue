@@ -424,7 +424,6 @@ async function loadEliminados() {
  </div>
 
  </div>
- </div>
 
  <!-- Diálogo de Confirmação de Eliminação -->
  <div v-if="showConfirmDelete" class="confirm-overlay" @click.self="showConfirmDelete = false">
@@ -435,6 +434,7 @@ async function loadEliminados() {
  <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem; justify-content: flex-end;">
  <button class="btn btn-outline" @click="showConfirmDelete = false">Cancelar</button>
  <button class="btn btn-danger" @click="handleEliminarAutocarro"><Trash2 :size="16" /> Confirmar Eliminação</button>
+ </div>
  </div>
  </div>
  </div>
