@@ -149,6 +149,7 @@ public class Sistema {
 
  repositorioAutocarros.atualizarEstado(autocarro);
  notificarClientes(alertas);
+ dashboardCache = null; // Invalida cache de dashboard
  return alertas;
  }
 

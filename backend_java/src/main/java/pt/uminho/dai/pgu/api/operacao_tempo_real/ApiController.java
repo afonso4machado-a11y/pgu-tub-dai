@@ -20,6 +20,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -47,6 +48,7 @@ public class ApiController {
  * Se o input falhar, o ExceptionHandler abaixo retorna HTTP 400 com erros detalhados.
  */
  @PostMapping("/autocarros")
+ @CacheEvict(value = "dashboardCache", allEntries = true)
  public ResponseEntity<Map<String, String>> registarAutocarro(@Valid @RequestBody RegistarAutocarroDTO dto) {
  try {
  sistemaService.registarAutocarro(
@@ -84,6 +86,7 @@ public class ApiController {
  }
 
  @PostMapping("/leituras")
+ @CacheEvict(value = "dashboardCache", allEntries = true)
  public ResponseEntity<Map<String, Object>> registarLeituras(@Valid @RequestBody RegistarLeituraDTO dto) {
  try {
  List<Alerta> alertas = sistemaService.registarLeituras(dto.getId(), dto.getEntradas(), dto.getSaidas());
@@ -132,6 +135,7 @@ public class ApiController {
 
  /** Soft delete — autocarro marcado como eliminado, dados preservados */
  @DeleteMapping("/autocarros/{id}")
+ @CacheEvict(value = "dashboardCache", allEntries = true)
  public ResponseEntity<Map<String, String>> eliminarAutocarro(@PathVariable String id) {
  try {
  sistemaService.eliminarAutocarro(id);
@@ -147,6 +151,7 @@ public class ApiController {
 
  /** Restaura um autocarro previamente eliminado */
  @PostMapping("/autocarros/{id}/restaurar")
+ @CacheEvict(value = "dashboardCache", allEntries = true)
  public ResponseEntity<Map<String, String>> restaurarAutocarro(@PathVariable String id) {
  try {
  sistemaService.restaurarAutocarro(id);
@@ -217,6 +222,7 @@ public class ApiController {
  }
 
  @PostMapping("/linhas/{id}/autocarros")
+ @CacheEvict(value = "dashboardCache", allEntries = true)
  public ResponseEntity<Map<String, String>> associarAuto(@PathVariable String id,
  @Valid @RequestBody AssociarAutocarroDTO dto) {
  try {
