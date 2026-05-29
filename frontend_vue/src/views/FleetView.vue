@@ -191,6 +191,10 @@ async function handleConsulta() {
 }
 
 async function handleRegLeitura() {
+  if (!leitPerfil.value) {
+    alert("O tipo de passageiro é obrigatório. Por favor, selecione uma opção.")
+    return
+  }
   try {
     const req = await fetch(`${apiUrl}/leituras`, {
       method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -198,7 +202,7 @@ async function handleRegLeitura() {
         id: leitId.value, 
         entradas: leitIn.value, 
         saidas: leitOut.value,
-        tipoPassageiro: leitPerfil.value || null
+        tipoPassageiro: leitPerfil.value
       })
     })
     const res = await req.json()
@@ -330,9 +334,9 @@ async function loadEliminados() {
  </div>
  
  <div class="input-group">
- <label>Tipo de Passageiro</label>
- <select v-model="leitPerfil" class="input-field">
-   <option value="">Selecione o tipo de passageiro (Opcional)</option>
+ <label>Tipo de Passageiro <span class="required">*</span></label>
+ <select v-model="leitPerfil" class="input-field" required>
+   <option value="" disabled selected>Selecione o tipo de passageiro</option>
    <option value="Estudante">Estudante</option>
    <option value="Sénior">Sénior</option>
    <option value="Passe Normal">Passe Normal</option>
