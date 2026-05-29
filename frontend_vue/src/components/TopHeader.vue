@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { Bell, ShieldCheck, LogOut, Sun, Moon, Monitor, ToggleLeft, ToggleRight, Menu } from 'lucide-vue-next'
+import { ShieldCheck, LogOut, Sun, Moon, Monitor, ToggleLeft, ToggleRight, Menu } from 'lucide-vue-next'
 import { useTheme } from '../composables/useTheme'
 import { authService } from '../services/auth'
 import { demoModeRef, toggleDemoMode } from '../services/api'
@@ -89,11 +89,6 @@ function handleLogout() {
  <span class="fira-code">{{ isDemo ? 'SIMULAÇÃO ATIVA' : 'SISTEMA ONLINE' }}</span>
  </div>
  
- <button class="icon-btn" aria-label="Notificações">
- <Bell :size="20" />
- <span class="notification-dot"></span>
- </button>
-
  <button class="icon-btn logout-btn" @click="handleLogout" title="Sair do Sistema" aria-label="Sair do Sistema">
  <LogOut :size="20" />
  </button>
