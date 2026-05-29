@@ -36,28 +36,15 @@ const menuItems = [
  <component :is="item.icon" :size="20" class="icon" />
  <span>{{ item.label }}</span>
  </router-link>
- </nav>
+  </nav>
 
- <div class="user-profile">
- <div class="avatar">AD</div>
- <div class="user-info">
- <span class="user-name">Administrador</span>
- <span class="user-role fira-code">Nível 1 - Acesso Total</span>
- </div>
- </div>
- 
- <!-- DEV MODE SHORTCUT -->
- <div style="padding: 1rem; border-top: 1px solid var(--border-light);">
- <router-link to="/app" class="btn btn-primary" style="width: 100%; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
- <Smartphone :size="16" /> Testar App Mobile
- </router-link>
- </div>
- <!-- Institucional -->
- <div class="sidebar-footer">
- <span class="group-tag">G1.1 · PL1</span>
- <span class="uni-tag">Universidade do Minho</span>
- </div>
- </aside>
+  <!-- DEV MODE SHORTCUT -->
+  <div style="padding: 1.5rem; border-top: 1px solid var(--border-light); margin-top: auto;">
+  <router-link to="/app" class="btn btn-primary" style="width: 100%; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+  <Smartphone :size="16" /> Testar App Móvel
+  </router-link>
+  </div>
+  </aside>
 </template>
 
 <style scoped>
