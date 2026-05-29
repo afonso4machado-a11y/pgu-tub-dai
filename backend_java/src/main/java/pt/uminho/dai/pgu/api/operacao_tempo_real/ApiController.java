@@ -19,6 +19,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.cache.annotation.Cacheable;
+import java.util.concurrent.ConcurrentHashMap;
+
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -157,14 +160,31 @@ public class ApiController {
  }
  }
 
- @GetMapping("/dashboard")
- public ResponseEntity<Map<String, Object>> dashboard() {
- try {
- return ResponseEntity.ok(Map.of("status", "sucesso", "dashboard", sistemaService.obterDadosDashboard()));
- } catch (Exception e) {
- return ResponseEntity.status(500).body(Map.of("status", (Object)"erro", "mensagem", (Object)e.getMessage()));
- }
- }
+  @GetMapping("/dashboard")
+  @Cacheable(value = "dashboardCache", key = "'globalStats'")
+  public ResponseEntity<Map<String, Object>> dashboard() {
+    try {
+      System.out.println("[DB Guard] Cache MISS. Executando leitura pesada no PostgreSQL/PostGIS...");
+      
+      // Garantia de Thread-Safety na memória partilhada do Spring
+      Map<String, Object> response = new ConcurrentHashMap<>();
+      Map<String, Object> stats = sistemaService.obterDadosDashboard();
+      
+      // Converter dados obtidos para uma estrutura thread-safe se necessário
+      Map<String, Object> threadSafeStats = new ConcurrentHashMap<>(stats);
+      
+      response.put("status", "sucesso");
+      response.put("dashboard", threadSafeStats);
+      
+      return ResponseEntity.ok(response);
+    } catch (Exception e) {
+      // Retorno de erro sanitizado sem expor detalhes internos do Postgres ou Tomcat
+      Map<String, Object> errorMap = new ConcurrentHashMap<>();
+      errorMap.put("status", "erro");
+      errorMap.put("mensagem", "Falha temporária ao consolidar dados operacionais de frota.");
+      return ResponseEntity.status(500).body(errorMap);
+    }
+  }
 
  @GetMapping("/historico")
  public ResponseEntity<Map<String, Object>> historico() {

@@ -207,26 +207,34 @@ export function toggleDemoMode() {
  * 
  * @param {string} endpoint — caminho relativo (ex: '/dashboard')
  * @param {object} options — opções para o fetch (method, headers, body, etc.)
+ * @param {AbortSignal} customSignal — sinal opcional para cancelamento (AbortController)
  * @returns {{ live: boolean, data: object }}
  */
-export async function apiFetch(endpoint, options = {}) {
- const baseUrl = '/api'
+export async function apiFetch(endpoint, options = {}, customSignal = null) {
+  const baseUrl = '/api'
 
- // Se o modo demo está forçado pelo utilizador, nem tenta a API
- if (demoModeRef.value) {
- return { live: false, data: getDemoData(endpoint) }
- }
+  // Se o modo demo está forçado pelo utilizador, nem tenta a API
+  if (demoModeRef.value) {
+    return { live: false, data: getDemoData(endpoint) }
+  }
 
- try {
- const res = await fetch(`${baseUrl}${endpoint}`, { ...options, signal: AbortSignal.timeout(4000) })
- const data = await res.json()
- if (data.status === 'sucesso') {
- return { live: true, data }
- }
- throw new Error('API error')
- } catch (e) {
- return { live: false, data: getDemoData(endpoint) }
- }
+  try {
+    const fetchOptions = {
+      ...options,
+      signal: customSignal || options.signal || AbortSignal.timeout(4000)
+    }
+    const res = await fetch(`${baseUrl}${endpoint}`, fetchOptions)
+    const data = await res.json()
+    if (data.status === 'sucesso') {
+      return { live: true, data }
+    }
+    throw new Error('API error')
+  } catch (e) {
+    if (e.name === 'AbortError') {
+      throw e; // Repassa para o useSafeLoading abortar o fluxo visual
+    }
+    return { live: false, data: getDemoData(endpoint) }
+  }
 }
 
 // ────────────────────── DADOS DEMO POR ENDPOINT ──────────────────────

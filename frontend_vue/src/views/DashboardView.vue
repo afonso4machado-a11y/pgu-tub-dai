@@ -3,6 +3,8 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { RefreshCw, Users, Bus, Percent, AlertTriangle, Info, Bell, Activity, TrendingUp } from 'lucide-vue-next'
 import { apiFetch, demoModeRef } from '../services/api.js'
 import { authService } from '../services/auth'
+import BaseSkeleton from '../components/BaseSkeleton.vue'
+import { useSafeLoading } from '../composables/useSafeLoading'
 
 // vue-chartjs + chart.js
 import { Line } from 'vue-chartjs'
@@ -21,9 +23,9 @@ import {
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
 
 const dashboardStats = ref(null)
-const loading = ref(true)
-const err = ref('')
 const adminUser = ref(null)
+
+const { isLoading: loading, errorMsg: err, execute } = useSafeLoading({ timeoutMs: 5000 })
 
 onMounted(() => {
  adminUser.value = authService.getAdminUser()
@@ -33,19 +35,18 @@ onMounted(() => {
 watch(demoModeRef, () => carregarDashboard())
 
 async function carregarDashboard() {
- loading.value = true
- err.value = ''
  try {
- const { data } = await apiFetch('/dashboard')
- if (data.status === 'sucesso') {
- dashboardStats.value = data.dashboard || {}
- } else {
- err.value = data.mensagem || 'Erro desconhecido ao obter dados.'
- }
+   const result = await execute(async (signal) => {
+     return await apiFetch('/dashboard', {}, signal)
+   })
+   if (result && result.data && result.data.status === 'sucesso') {
+     dashboardStats.value = result.data.dashboard || {}
+   } else {
+     throw new Error(result?.data?.mensagem || 'Erro desconhecido ao obter dados.')
+   }
  } catch(e) {
- err.value = 'Falha Crítica na ligação ao servidor principal.'
- } finally {
- setTimeout(() => { loading.value = false }, 300)
+   // O erro sanitizado já está guardado no `err` reativo do useSafeLoading
+   console.warn('[Dashboard] Sincronização cancelada ou falhada de forma segura:', e.message)
  }
 }
 
@@ -121,163 +122,224 @@ const chartOptions = {
 </script>
 
 <template>
- <div class="dashboard-view fade-in">
- <div v-if="adminUser" class="welcome-banner">
- <div class="banner-content">
- <h2>Bem-vindo de volta, {{ adminUser.nome }}</h2>
- <p>Gestor de Frota • {{ adminUser.email }}</p>
- </div>
- </div>
+  <div class="dashboard-view fade-in">
+    <!-- Welcome Banner / Splash Skeleton -->
+    <div v-if="loading" class="welcome-banner glass-panel">
+      <div class="banner-content">
+        <BaseSkeleton width="240px" height="1.75rem" style="margin-bottom: 0.5rem;" />
+        <BaseSkeleton width="180px" height="0.9rem" />
+      </div>
+    </div>
+    <div v-else-if="adminUser" class="welcome-banner">
+      <div class="banner-content">
+        <h2>Bem-vindo de volta, {{ adminUser.nome }}</h2>
+        <p>Gestor de Frota • {{ adminUser.email }}</p>
+      </div>
+    </div>
 
- <div class="action-bar">
- <h3 class="section-title">Painel de Operações</h3>
- <button @click="carregarDashboard" class="btn btn-secondary" :disabled="loading">
- <RefreshCw :class="{'spin': loading}" :size="16"/> Sincronizar
- </button>
- </div>
+    <div class="action-bar">
+      <h3 class="section-title">Painel de Operações</h3>
+      <button @click="carregarDashboard" class="btn btn-secondary" :disabled="loading">
+        <RefreshCw :class="{'spin': loading}" :size="16"/> Sincronizar
+      </button>
+    </div>
 
- <div v-if="err" class="error-banner">
- <AlertTriangle /> {{ err }}
- </div>
+    <div v-if="err" class="error-banner">
+      <AlertTriangle /> {{ err }}
+    </div>
 
- <!-- Quick stats -->
- <div v-if="dashboardStats" class="quick-stats">
- <div class="stat-card glass-panel">
- <div class="stat-content">
- <div class="stat-icon"><Percent /></div>
- <div class="stat-info">
- <span class="stat-value">{{ Number(dashboardStats.taxaOcupacaoMedia || 0).toFixed(1) }}%</span>
- <span class="stat-label">Taxa Ocupação Média</span>
- </div>
- </div>
- <div class="stat-chart">
- <svg viewBox="0 0 80 30" preserveAspectRatio="none" class="sparkline">
- <path d="M0,25 C15,20 25,28 40,15 C55,2 65,12 80,5" fill="none" stroke="var(--accent-blue)" stroke-width="2" stroke-linecap="round"/>
- <path d="M0,25 C15,20 25,28 40,15 C55,2 65,12 80,5 L80,30 L0,30 Z" fill="url(#grad1)"/>
- <defs>
- <linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1">
- <stop offset="0%" stop-color="var(--accent-blue)" stop-opacity="0.3" />
- <stop offset="100%" stop-color="var(--accent-blue)" stop-opacity="0" />
- </linearGradient>
- </defs>
- </svg>
- </div>
- </div>
+    <!-- Quick stats -->
+    <div class="quick-stats">
+      <template v-if="loading">
+        <div v-for="i in 4" :key="'stat-sk-' + i" class="stat-card glass-panel">
+          <div class="stat-content" style="display: flex; align-items: center; width: 100%; gap: 1rem;">
+            <BaseSkeleton width="48px" height="48px" shape="circle" />
+            <div style="display: flex; flex-direction: column; flex: 1; gap: 0.35rem;">
+              <BaseSkeleton width="60px" height="1.5rem" />
+              <BaseSkeleton width="100px" height="0.8rem" />
+            </div>
+          </div>
+        </div>
+      </template>
+      <template v-else-if="dashboardStats">
+        <div class="stat-card glass-panel">
+          <div class="stat-content">
+            <div class="stat-icon"><Percent /></div>
+            <div class="stat-info">
+              <span class="stat-value">{{ Number(dashboardStats.taxaOcupacaoMedia || 0).toFixed(1) }}%</span>
+              <span class="stat-label">Taxa Ocupação Média</span>
+            </div>
+          </div>
+          <div class="stat-chart">
+            <svg viewBox="0 0 80 30" preserveAspectRatio="none" class="sparkline">
+              <path d="M0,25 C15,20 25,28 40,15 C55,2 65,12 80,5" fill="none" stroke="var(--accent-blue)" stroke-width="2" stroke-linecap="round"/>
+              <path d="M0,25 C15,20 25,28 40,15 C55,2 65,12 80,5 L80,30 L0,30 Z" fill="url(#grad1)"/>
+              <defs>
+                <linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="var(--accent-blue)" stop-opacity="0.3" />
+                  <stop offset="100%" stop-color="var(--accent-blue)" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        </div>
 
- <div class="stat-card glass-panel">
- <div class="stat-content">
- <div class="stat-icon"><Users /></div>
- <div class="stat-info">
- <span class="stat-value">{{ dashboardStats.volumeTotalPassageiros }}</span>
- <span class="stat-label">Volume Passageiros</span>
- </div>
- </div>
- <div class="stat-chart bars">
- <div class="bar" style="height: 40%"></div>
- <div class="bar" style="height: 60%"></div>
- <div class="bar" style="height: 45%"></div>
- <div class="bar" style="height: 80%"></div>
- <div class="bar" style="height: 55%"></div>
- <div class="bar" style="height: 90%"></div>
- </div>
- </div>
+        <div class="stat-card glass-panel">
+          <div class="stat-content">
+            <div class="stat-icon"><Users /></div>
+            <div class="stat-info">
+              <span class="stat-value">{{ dashboardStats.volumeTotalPassageiros }}</span>
+              <span class="stat-label">Volume Passageiros</span>
+            </div>
+          </div>
+          <div class="stat-chart bars">
+            <div class="bar" style="height: 40%"></div>
+            <div class="bar" style="height: 60%"></div>
+            <div class="bar" style="height: 45%"></div>
+            <div class="bar" style="height: 80%"></div>
+            <div class="bar" style="height: 55%"></div>
+            <div class="bar" style="height: 90%"></div>
+          </div>
+        </div>
 
- <div class="stat-card glass-panel">
- <div class="stat-content">
- <div class="stat-icon"><Bus /></div>
- <div class="stat-info">
- <span class="stat-value">{{ dashboardStats.totalAutocarros }}</span>
- <span class="stat-label">Autocarros Ativos</span>
- </div>
- </div>
- <div class="stat-chart">
- <svg viewBox="0 0 80 30" preserveAspectRatio="none" class="sparkline">
- <path d="M0,15 L15,15 L30,15 L45,15 L60,15 L80,15" fill="none" stroke="var(--accent-blue)" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 4"/>
- </svg>
- </div>
- </div>
+        <div class="stat-card glass-panel">
+          <div class="stat-content">
+            <div class="stat-icon"><Bus /></div>
+            <div class="stat-info">
+              <span class="stat-value">{{ dashboardStats.totalAutocarros }}</span>
+              <span class="stat-label">Autocarros Ativos</span>
+            </div>
+          </div>
+          <div class="stat-chart">
+            <svg viewBox="0 0 80 30" preserveAspectRatio="none" class="sparkline">
+              <path d="M0,15 L15,15 L30,15 L45,15 L60,15 L80,15" fill="none" stroke="var(--accent-blue)" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 4"/>
+            </svg>
+          </div>
+        </div>
 
- <div class="stat-card glass-panel">
- <div class="stat-content">
- <div class="stat-icon icon-success"><Activity /></div>
- <div class="stat-info">
- <span class="stat-value text-success">OK</span>
- <span class="stat-label">Estado PGU</span>
- </div>
- </div>
- <div class="stat-chart">
- <svg viewBox="0 0 80 30" preserveAspectRatio="none" class="sparkline">
- <path d="M0,15 L20,15 L25,5 L35,25 L40,15 L80,15" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
- </svg>
- </div>
- </div>
- </div>
+        <div class="stat-card glass-panel">
+          <div class="stat-content">
+            <div class="stat-icon icon-success"><Activity /></div>
+            <div class="stat-info">
+              <span class="stat-value text-success">OK</span>
+              <span class="stat-label">Estado PGU</span>
+            </div>
+          </div>
+          <div class="stat-chart">
+            <svg viewBox="0 0 80 30" preserveAspectRatio="none" class="sparkline">
+              <path d="M0,15 L20,15 L25,5 L35,25 L40,15 L80,15" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </template>
+    </div>
 
- <!-- ── Gráfico de Evolução Temporal ─────────────────────────────── -->
- <div v-if="dashboardStats" class="chart-section glass-panel">
- <div class="chart-header">
- <div class="chart-title-group">
- <TrendingUp class="chart-icon" :size="20" />
- <div>
- <h4 class="chart-title">Evolução de Passageiros — Hoje</h4>
- <p class="chart-subtitle">Volume de entradas por hora do dia atual</p>
- </div>
- </div>
- <span class="chart-badge">
- {{ demoModeRef ? 'Simulação' : 'Dados Reais' }}
- </span>
- </div>
+    <!-- ── Gráfico de Evolução Temporal ─────────────────────────────── -->
+    <div class="chart-section glass-panel">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <TrendingUp class="chart-icon" :size="20" />
+          <div style="width: 100%;">
+            <template v-if="loading">
+              <BaseSkeleton width="220px" height="1.25rem" style="margin-bottom: 0.35rem;" />
+              <BaseSkeleton width="300px" height="0.8rem" />
+            </template>
+            <template v-else>
+              <h4 class="chart-title">Evolução de Passageiros — Hoje</h4>
+              <p class="chart-subtitle">Volume de entradas por hora do dia atual</p>
+            </template>
+          </div>
+        </div>
+        <span v-if="!loading" class="chart-badge">
+          {{ demoModeRef ? 'Simulação' : 'Dados Reais' }}
+        </span>
+      </div>
 
- <div class="chart-canvas-wrapper">
- <div v-if="(dashboardStats.volumePorHora ?? []).length === 0" class="chart-empty">
- <TrendingUp :size="40" class="text-muted" />
- <p>Sem leituras registadas hoje.</p>
- <span>Assim que chegarem dados do sensor, o gráfico será preenchido automaticamente.</span>
- </div>
- <Line
- v-else
- :data="chartData"
- :options="chartOptions"
- style="width:100%; height:100%;"
- />
- </div>
- </div>
+      <div class="chart-canvas-wrapper">
+        <template v-if="loading">
+          <div style="display: flex; flex-direction: column; width: 100%; height: 100%; justify-content: flex-end; gap: 0.5rem; padding: 1rem;">
+            <div style="display: flex; align-items: flex-end; justify-content: space-between; width: 100%; height: 180px; padding: 0 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <BaseSkeleton v-for="h in 16" :key="'ch-sk-'+h" width="4%" :height="Math.floor(Math.random() * 70 + 20) + '%'" animation="pulse" style="opacity: 0.5;" />
+            </div>
+            <div style="display: flex; justify-content: space-between; width: 100%; padding: 0 0.25rem;">
+              <BaseSkeleton v-for="h in 6" :key="'lbl-sk-'+h" width="40px" height="0.8rem" />
+            </div>
+          </div>
+        </template>
+        <template v-else-if="dashboardStats">
+          <div v-if="(dashboardStats.volumePorHora ?? []).length === 0" class="chart-empty">
+            <TrendingUp :size="40" class="text-muted" />
+            <p>Sem leituras registadas hoje.</p>
+            <span>Assim que chegarem dados do sensor, o gráfico será preenchido automaticamente.</span>
+          </div>
+          <Line
+            v-else
+            :data="chartData"
+            :options="chartOptions"
+            style="width:100%; height:100%;"
+          />
+        </template>
+      </div>
+    </div>
 
- <!-- ── Painéis Inferiores ───────────────────────────────────────── -->
- <div v-if="dashboardStats" class="dashboard-content">
- <div class="content-section autocarros-criticos">
- <h4><AlertTriangle class="text-warning"/> Veículos em Lotação Crítica</h4>
- <div class="list-container glass-panel">
- <div v-if="(dashboardStats.autocarrosCriticos || []).length === 0" class="empty-state">
- Nenhum veículo em estado crítico no momento.
- </div>
- <div v-for="c in (dashboardStats.autocarrosCriticos || [])" :key="c.id" class="list-item">
- <span class="item-id">Autocarro {{ c.id }}</span>
- <span class="item-value text-danger">{{ Number(c.taxaOcupacao || 0).toFixed(1) }}% de Ocupação</span>
- </div>
- </div>
- </div>
+    <!-- ── Painéis Inferiores ───────────────────────────────────────── -->
+    <div class="dashboard-content">
+      <div class="content-section autocarros-criticos">
+        <h4><AlertTriangle class="text-warning"/> Veículos em Lotação Crítica</h4>
+        <div class="list-container glass-panel">
+          <template v-if="loading">
+            <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%; padding: 0.5rem 0;">
+              <div v-for="i in 3" :key="'crit-sk-'+i" style="display: flex; justify-content: space-between; width: 100%;">
+                <BaseSkeleton width="120px" height="1.1rem" />
+                <BaseSkeleton width="80px" height="1.1rem" />
+              </div>
+            </div>
+          </template>
+          <template v-else-if="dashboardStats">
+            <div v-if="(dashboardStats.autocarrosCriticos || []).length === 0" class="empty-state">
+              Nenhum veículo em estado crítico no momento.
+            </div>
+            <div v-for="c in (dashboardStats.autocarrosCriticos || [])" :key="c.id" class="list-item">
+              <span class="item-id">Autocarro {{ c.id }}</span>
+              <span class="item-value text-danger">{{ Number(c.taxaOcupacao || 0).toFixed(1) }}% de Ocupação</span>
+            </div>
+          </template>
+        </div>
+      </div>
 
- <div class="content-section avisos-recentes">
- <h4><Bell class="text-accent"/> Avisos do Sistema</h4>
- <div class="list-container glass-panel">
- <div v-if="(dashboardStats.avisosRecentes || []).length === 0" class="empty-state">
- Nenhum aviso recente.
- </div>
- <div v-for="(a, i) in (dashboardStats.avisosRecentes || [])" :key="i" class="list-item aviso-item">
- <div class="aviso-icon">
- <AlertTriangle v-if="a.tipo === 'LOTACAO_CRITICA'" class="text-danger" size="18"/>
- <Info v-else class="text-warning" size="18" />
- </div>
- <div class="aviso-detalhes">
- <span class="aviso-msg">{{ a.mensagem }}</span>
- <span class="aviso-meta">Veículo {{ a.autocarroId }} • {{ formatDate(a.timestamp) }}</span>
- </div>
- </div>
- </div>
- </div>
- </div>
- </div>
+      <div class="content-section avisos-recentes">
+        <h4><Bell class="text-accent"/> Avisos do Sistema</h4>
+        <div class="list-container glass-panel">
+          <template v-if="loading">
+            <div style="display: flex; flex-direction: column; gap: 1.25rem; width: 100%; padding: 0.5rem 0;">
+              <div v-for="i in 3" :key="'aviso-sk-'+i" style="display: flex; align-items: flex-start; gap: 1rem; width: 100%;">
+                <BaseSkeleton width="32px" height="32px" shape="circle" />
+                <div style="display: flex; flex-direction: column; gap: 0.35rem; flex: 1;">
+                  <BaseSkeleton width="85%" height="1.1rem" />
+                  <BaseSkeleton width="50%" height="0.8rem" />
+                </div>
+              </div>
+            </div>
+          </template>
+          <template v-else-if="dashboardStats">
+            <div v-if="(dashboardStats.avisosRecentes || []).length === 0" class="empty-state">
+              Nenhum aviso recente.
+            </div>
+            <div v-for="(a, i) in (dashboardStats.avisosRecentes || [])" :key="i" class="list-item aviso-item">
+              <div class="aviso-icon">
+                <AlertTriangle v-if="a.tipo === 'LOTACAO_CRITICA'" class="text-danger" size="18"/>
+                <Info v-else class="text-warning" size="18" />
+              </div>
+              <div class="aviso-detalhes">
+                <span class="aviso-msg">{{ a.mensagem }}</span>
+                <span class="aviso-meta">Veículo {{ a.autocarroId }} • {{ formatDate(a.timestamp) }}</span>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>

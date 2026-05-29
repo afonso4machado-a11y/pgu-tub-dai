@@ -192,7 +192,83 @@ button, input, select, textarea {
  transition: all 0.2s ease;
 }
 .input-field:focus {
- border-color: var(--accent-blue);
- box-shadow: 0 0 0 3px var(--border-focus);
- outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px var(--border-focus);
+  outline: none;
+}
+
+/* ===================================================================
+   SKELETON SCREENS PREMIUM DESIGN SYSTEM (SHIMMER & PULSE)
+   =================================================================== */
+:root {
+  --skeleton-bg: rgba(255, 255, 255, 0.03);
+  --skeleton-pulse-opacity: 0.4;
+}
+
+:root[data-theme='light'] {
+  --skeleton-bg: rgba(0, 0, 0, 0.06);
+  --skeleton-pulse-opacity: 0.6;
+}
+
+/* Estrutura Base do Esqueleto */
+.skeleton-base {
+  display: inline-block;
+  background-color: var(--skeleton-bg);
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  vertical-align: middle;
+}
+
+/* Efeito Shimmer Premium (Hardware Accelerated) */
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.04) 20%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.04) 80%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer-anim 1.6s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+/* Ajuste de cor do Shimmer em Light Mode */
+:root[data-theme='light'] .skeleton-shimmer::after {
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(0, 0, 0, 0.02) 20%,
+    rgba(0, 0, 0, 0.05) 50%,
+    rgba(0, 0, 0, 0.02) 80%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+@keyframes shimmer-anim {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Efeito Pulse (Indicado para poupança de bateria ou hardware limitado) */
+.skeleton-pulse {
+  animation: pulse-anim 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-anim {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: var(--skeleton-pulse-opacity);
+  }
 }
