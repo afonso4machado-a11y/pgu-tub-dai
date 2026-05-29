@@ -17,6 +17,7 @@ const consRes = ref(null)
 const leitId = ref('')
 const leitIn = ref('')
 const leitOut = ref('')
+const leitPerfil = ref('')
 const autoAlerts = ref([])
 
 // Eliminação
@@ -190,20 +191,31 @@ async function handleConsulta() {
 }
 
 async function handleRegLeitura() {
- try {
- const req = await fetch(`${apiUrl}/leituras`, {
- method: 'POST', headers: {'Content-Type': 'application/json'},
- body: JSON.stringify({id: leitId.value, entradas: leitIn.value, saidas: leitOut.value})
- })
- const res = await req.json()
- if(res.status === 'sucesso') {
- alert("Leitura simulada/gravada com sucesso!")
- autoAlerts.value = res.alertas || []
- leitIn.value = ''; leitOut.value = '';
- } else alert(res.mensagem)
- } catch(e) {
- alert("Erro ao reportar leitura ao servidor.")
- }
+  if (!leitPerfil.value) {
+    alert("O tipo de passageiro é obrigatório. Por favor, selecione uma opção.")
+    return
+  }
+  try {
+    const req = await fetch(`${apiUrl}/leituras`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        id: leitId.value, 
+        entradas: leitIn.value, 
+        saidas: leitOut.value,
+        tipoPassageiro: leitPerfil.value
+      })
+    })
+    const res = await req.json()
+    if(res.status === 'sucesso') {
+      alert("Leitura manual gravada com sucesso!")
+      autoAlerts.value = res.alertas || []
+      leitIn.value = '';
+      leitOut.value = '';
+      leitPerfil.value = '';
+    } else alert(res.mensagem)
+  } catch(e) {
+    alert("Erro ao reportar leitura ao servidor.")
+  }
 }
 
 function confirmDelete(id) {
@@ -317,17 +329,28 @@ async function loadEliminados() {
  
  <form @submit.prevent="handleRegLeitura" class="form-stack">
  <div class="input-group">
- <label>ID da Viatura</label>
+ <label>ID da Viatura <span class="required">*</span></label>
  <input v-model="leitId" class="input-field fira-code" placeholder="A qual viatura aplicar" required />
+ </div>
+ 
+ <div class="input-group">
+ <label>Tipo de Passageiro <span class="required">*</span></label>
+ <select v-model="leitPerfil" class="input-field" required>
+   <option value="" disabled selected>Selecione o tipo de passageiro (Obrigatório)</option>
+   <option value="Estudante">Estudante</option>
+   <option value="Sénior">Sénior</option>
+   <option value="Passe Normal">Passe Normal</option>
+   <option value="Zapping">Zapping</option>
+ </select>
  </div>
  
  <div style="display: flex; gap: 1rem;">
  <div class="input-group" style="flex: 1;">
- <label>Entradas</label>
+ <label>Entradas <span class="required">*</span></label>
  <input type="number" v-model="leitIn" class="input-field" required />
  </div>
  <div class="input-group" style="flex: 1;">
- <label>Saídas</label>
+ <label>Saídas <span class="required">*</span></label>
  <input type="number" v-model="leitOut" class="input-field" required />
  </div>
  </div>

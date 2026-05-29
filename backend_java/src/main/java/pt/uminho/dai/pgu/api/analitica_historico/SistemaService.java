@@ -33,8 +33,8 @@ public class SistemaService {
  sistema.registarAutocarro(id, capacidade, matricula, marca, modelo);
  }
 
- public List<Alerta> registarLeituras(String id, int entradas, int saidas) throws Exception {
- return sistema.receberLeitura(id, entradas, saidas);
+ public List<Alerta> registarLeituras(String id, int entradas, int saidas, String tipoPassageiro) throws Exception {
+ return sistema.receberLeitura(id, entradas, saidas, tipoPassageiro);
  }
 
  public Map<String, Object> consultarAutocarro(String id) throws Exception {

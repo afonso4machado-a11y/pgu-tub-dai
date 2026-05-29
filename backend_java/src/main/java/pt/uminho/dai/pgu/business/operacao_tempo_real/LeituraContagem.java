@@ -12,28 +12,38 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 public final class LeituraContagem {
- private final int entradas;
- private final int saidas;
- private final LocalDateTime timestamp;
+  private final int entradas;
+  private final int saidas;
+  private final LocalDateTime timestamp;
+  private final String tipoPassageiro;
 
- public LeituraContagem(int entradas, int saidas, LocalDateTime timestamp) {
- if (entradas < 0 || saidas < 0) {
- throw new IllegalArgumentException("As leituras nao podem ser negativas.");
- }
- this.entradas = entradas;
- this.saidas = saidas;
- this.timestamp = Objects.requireNonNull(timestamp);
- }
+  public LeituraContagem(int entradas, int saidas, LocalDateTime timestamp) {
+    this(entradas, saidas, timestamp, null);
+  }
 
- public int getEntradas() {
- return entradas;
- }
+  public LeituraContagem(int entradas, int saidas, LocalDateTime timestamp, String tipoPassageiro) {
+    if (entradas < 0 || saidas < 0) {
+      throw new IllegalArgumentException("As leituras nao podem ser negativas.");
+    }
+    this.entradas = entradas;
+    this.saidas = saidas;
+    this.timestamp = Objects.requireNonNull(timestamp);
+    this.tipoPassageiro = tipoPassageiro;
+  }
 
- public int getSaidas() {
- return saidas;
- }
+  public int getEntradas() {
+    return entradas;
+  }
 
- public LocalDateTime getTimestamp() {
- return timestamp;
- }
+  public int getSaidas() {
+    return saidas;
+  }
+
+  public LocalDateTime getTimestamp() {
+    return timestamp;
+  }
+
+  public String getTipoPassageiro() {
+    return tipoPassageiro;
+  }
 }

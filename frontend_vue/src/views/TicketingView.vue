@@ -95,15 +95,15 @@ const barOptions = {
 }
 
 const donutOptions = {
- responsive: true,
- maintainAspectRatio: false,
- cutout: '65%',
- plugins: {
- legend: {
- position: 'bottom',
- labels: { color: '#1e293b', padding: 16, usePointStyle: true, font: { size: 12 } }
- }
- }
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: '65%',
+  plugins: {
+    legend: {
+      position: 'bottom',
+      labels: { color: '#94a3b8', padding: 16, usePointStyle: true, font: { size: 12 } }
+    }
+  }
 }
 
 function exportCSV() {

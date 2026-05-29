@@ -127,31 +127,39 @@ public class Sistema {
  repositorioAutocarros.atualizarEstado(autocarro);
  }
 
- public List<Alerta> receberLeitura(String autocarroId, int entradas, int saidas) {
- return receberLeitura(autocarroId, entradas, saidas, LocalDateTime.now());
- }
+  public List<Alerta> receberLeitura(String autocarroId, int entradas, int saidas) {
+    return receberLeitura(autocarroId, entradas, saidas, LocalDateTime.now(), null);
+  }
 
- public List<Alerta> receberLeitura(String autocarroId, int entradas, int saidas, LocalDateTime timestamp) {
- Autocarro autocarro = repositorioAutocarros.procurarPorId(autocarroId)
- .orElseThrow(() -> new NoSuchElementException("Autocarro nao encontrado: " + autocarroId));
+  public List<Alerta> receberLeitura(String autocarroId, int entradas, int saidas, String tipoPassageiro) {
+    return receberLeitura(autocarroId, entradas, saidas, LocalDateTime.now(), tipoPassageiro);
+  }
 
- LeituraContagem leitura = new LeituraContagem(entradas, saidas, timestamp);
- List<Alerta> alertas = autocarro.processarLeitura(leitura, thresholdsAlerta);
+  public List<Alerta> receberLeitura(String autocarroId, int entradas, int saidas, LocalDateTime timestamp) {
+    return receberLeitura(autocarroId, entradas, saidas, timestamp, null);
+  }
 
- repositorioLeituras.guardar(autocarroId, leitura);
- List<Long> alertaIds = repositorioAlertas.guardarTodos(alertas);
+  public List<Alerta> receberLeitura(String autocarroId, int entradas, int saidas, LocalDateTime timestamp, String tipoPassageiro) {
+    Autocarro autocarro = repositorioAutocarros.procurarPorId(autocarroId)
+        .orElseThrow(() -> new NoSuchElementException("Autocarro nao encontrado: " + autocarroId));
 
- List<String> clienteIds = new ArrayList<>();
- for (Cliente cliente : repositorioClientes.listarTodos()) {
-     clienteIds.add(cliente.getId());
- }
- repositorioClientesAlertas.guardarEmLote(clienteIds, alertaIds);
+    LeituraContagem leitura = new LeituraContagem(entradas, saidas, timestamp, tipoPassageiro);
+    List<Alerta> alertas = autocarro.processarLeitura(leitura, thresholdsAlerta);
 
- repositorioAutocarros.atualizarEstado(autocarro);
- notificarClientes(alertas);
- dashboardCache = null; // Invalida cache de dashboard
- return alertas;
- }
+    repositorioLeituras.guardar(autocarroId, leitura);
+    List<Long> alertaIds = repositorioAlertas.guardarTodos(alertas);
+
+    List<String> clienteIds = new ArrayList<>();
+    for (Cliente cliente : repositorioClientes.listarTodos()) {
+        clienteIds.add(cliente.getId());
+    }
+    repositorioClientesAlertas.guardarEmLote(clienteIds, alertaIds);
+
+    repositorioAutocarros.atualizarEstado(autocarro);
+    notificarClientes(alertas);
+    dashboardCache = null; // Invalida cache de dashboard
+    return alertas;
+  }
 
  public Autocarro obterAutocarro(String autocarroId) {
  return repositorioAutocarros.procurarPorId(autocarroId)
@@ -345,9 +353,12 @@ public class Sistema {
  public Map<String, Object> obterDadosCorrelacao(String dataInicio, String dataFim) {
  Map<String, Object> resultado = new LinkedHashMap<>();
 
- // 1. Contagem Real (Procura) 
- List<Map<String, Object>> procuraPorLinha = 
- repositorioCorrelacao.obterProcuraPorLinha(dataInicio, dataFim);
+  // 1. Contagem Real (Procura) 
+  List<Map<String, Object>> procuraPorLinha = 
+  repositorioCorrelacao.obterProcuraPorLinha(dataInicio, dataFim);
+
+  int totalEntradasGeral = procuraPorLinha.stream()
+      .mapToInt(m -> (int) m.get("totalEntradas")).sum();
 
  // 2. Oferta Planeada 
  List<Map<String, Object>> ofertaPorLinha = 
@@ -357,21 +368,14 @@ public class Sistema {
  List<Map<String, Object>> procuraPorHora = 
  repositorioCorrelacao.obterProcuraPorHora(dataInicio, dataFim);
 
- // 4. Bilhética Simulada 
- Map<String, Integer> bilheticaSimulada = new LinkedHashMap<>();
- int totalEntradasGeral = procuraPorLinha.stream()
- .mapToInt(m -> (int) m.get("totalEntradas")).sum();
-
- if (totalEntradasGeral > 0) {
-   int estudante = (int) Math.round(totalEntradasGeral * 0.35);
-   int senior = (int) Math.round(totalEntradasGeral * 0.20);
-   int passeNormal = (int) Math.round(totalEntradasGeral * 0.30);
-   int zapping = totalEntradasGeral - estudante - senior - passeNormal; // resto garante soma exacta
-   bilheticaSimulada.put("Estudante", estudante);
-   bilheticaSimulada.put("Sénior", senior);
-   bilheticaSimulada.put("Passe Normal", passeNormal);
-   bilheticaSimulada.put("Zapping", zapping);
- }
+  // 4. Bilhética Real (da Base de Dados) 
+  Map<String, Integer> bilheticaSimulada = repositorioCorrelacao.obterBilheticaReal(dataInicio, dataFim);
+  if (bilheticaSimulada.isEmpty()) {
+    bilheticaSimulada.put("Estudante", 0);
+    bilheticaSimulada.put("Sénior", 0);
+    bilheticaSimulada.put("Passe Normal", 0);
+    bilheticaSimulada.put("Zapping", 0);
+  }
 
  // 5. Métricas de Correlação Calculadas 
  double ratioProcuraOferta = 0.0;

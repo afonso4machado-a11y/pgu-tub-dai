@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS leituras (
     entradas INT NOT NULL,
     saidas INT NOT NULL,
     timestamp DATETIME NOT NULL,
+    tipo_passageiro VARCHAR(50) NULL, -- 'Estudante', 'Sénior', 'Passe Normal', 'Zapping'
     FOREIGN KEY (autocarro_id) REFERENCES autocarros(id)
 );
 
@@ -108,6 +109,7 @@ CREATE INDEX idx_linha_paragens_linha ON linha_paragens(linha_id);
 CREATE INDEX idx_viagens_linha ON viagens(linha_id);
 CREATE INDEX idx_horarios_viagem ON horarios(viagem_id);
 CREATE INDEX idx_leituras_timestamp ON leituras(timestamp);
+CREATE INDEX idx_leituras_tipo_passageiro ON leituras(tipo_passageiro);
 CREATE INDEX idx_alertas_timestamp ON alertas(timestamp);
 
 -- Seed de linhas TUB adicionais (inserção idempotente)

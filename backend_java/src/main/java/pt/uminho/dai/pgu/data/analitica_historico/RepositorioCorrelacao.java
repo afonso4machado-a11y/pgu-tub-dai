@@ -113,4 +113,28 @@ public class RepositorioCorrelacao {
  }
  return res;
  }
+
+  public Map<String, Integer> obterBilheticaReal(String dataInicio, String dataFim) {
+    Map<String, Integer> res = new LinkedHashMap<>();
+    String sql =
+        "SELECT tipo_passageiro, SUM(entradas) as total " +
+        "FROM leituras " +
+        "WHERE DATE(timestamp) BETWEEN ? AND ? " +
+        "AND tipo_passageiro IS NOT NULL AND tipo_passageiro != '' " +
+        "GROUP BY tipo_passageiro";
+
+    try (Connection conn = DatabaseConnection.obterConexao();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setString(1, dataInicio);
+      ps.setString(2, dataFim);
+      try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          res.put(rs.getString("tipo_passageiro"), rs.getInt("total"));
+        }
+      }
+    } catch (SQLException e) {
+      System.err.println("Erro ao obter bilhética real: " + e.getMessage());
+    }
+    return res;
+  }
 }

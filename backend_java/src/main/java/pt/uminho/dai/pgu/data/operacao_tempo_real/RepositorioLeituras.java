@@ -14,26 +14,47 @@ import java.util.*;
 public class RepositorioLeituras {
   private boolean semBD = false;
 
-  public RepositorioLeituras() {}
+  public RepositorioLeituras() {
+    this(false);
+  }
 
   public RepositorioLeituras(boolean semBD) {
     this.semBD = semBD;
+    if (!semBD) {
+      criarColunaSeNaoExistir();
+    }
+  }
+
+  private void criarColunaSeNaoExistir() {
+    String sql = "ALTER TABLE leituras ADD COLUMN IF NOT EXISTS tipo_passageiro VARCHAR(50) DEFAULT NULL";
+    try (Connection conn = DatabaseConnection.obterConexao();
+         Statement stmt = conn.createStatement()) {
+      stmt.executeUpdate(sql);
+    } catch (SQLException e) {
+      try (Connection conn = DatabaseConnection.obterConexao();
+           Statement stmt = conn.createStatement()) {
+        stmt.executeUpdate("ALTER TABLE leituras ADD COLUMN tipo_passageiro VARCHAR(50) DEFAULT NULL");
+      } catch (SQLException ex) {
+        // Ignorar se a coluna já existir (código de erro 1060 ou similar)
+      }
+    }
   }
 
   public void guardar(String autocarroId, LeituraContagem leitura) {
     if (semBD) return;
     try (Connection conn = DatabaseConnection.obterConexao();
- PreparedStatement ps = conn.prepareStatement(
- "INSERT INTO leituras (autocarro_id, entradas, saidas, timestamp) VALUES (?, ?, ?, ?)")) {
- ps.setString(1, autocarroId);
- ps.setInt(2, leitura.getEntradas());
- ps.setInt(3, leitura.getSaidas());
- ps.setTimestamp(4, Timestamp.valueOf(leitura.getTimestamp()));
- ps.executeUpdate();
- } catch (SQLException e) {
- System.err.println("Erro ao guardar leitura: " + e.getMessage());
- }
- }
+         PreparedStatement ps = conn.prepareStatement(
+             "INSERT INTO leituras (autocarro_id, entradas, saidas, timestamp, tipo_passageiro) VALUES (?, ?, ?, ?, ?)")) {
+      ps.setString(1, autocarroId);
+      ps.setInt(2, leitura.getEntradas());
+      ps.setInt(3, leitura.getSaidas());
+      ps.setTimestamp(4, Timestamp.valueOf(leitura.getTimestamp()));
+      ps.setString(5, leitura.getTipoPassageiro());
+      ps.executeUpdate();
+    } catch (SQLException e) {
+      System.err.println("Erro ao guardar leitura: " + e.getMessage());
+    }
+  }
 
  /**
  * Retorna o total de entradas e saidas por autocarro por dia.

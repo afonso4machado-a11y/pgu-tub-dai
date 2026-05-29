@@ -85,11 +85,11 @@ public class ApiController {
  return ResponseEntity.badRequest().body(response);
  }
 
- @PostMapping("/leituras")
- @CacheEvict(value = "dashboardCache", allEntries = true)
- public ResponseEntity<Map<String, Object>> registarLeituras(@Valid @RequestBody RegistarLeituraDTO dto) {
- try {
- List<Alerta> alertas = sistemaService.registarLeituras(dto.getId(), dto.getEntradas(), dto.getSaidas());
+  @PostMapping("/leituras")
+  @CacheEvict(value = "dashboardCache", allEntries = true)
+  public ResponseEntity<Map<String, Object>> registarLeituras(@Valid @RequestBody RegistarLeituraDTO dto) {
+  try {
+  List<Alerta> alertas = sistemaService.registarLeituras(dto.getId(), dto.getEntradas(), dto.getSaidas(), dto.getTipoPassageiro());
 
  Map<String, Object> response = new HashMap<>();
  response.put("status", "sucesso");
