@@ -1,12 +1,14 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { Bell, ShieldCheck, LogOut, Sun, Moon, Monitor, ToggleLeft, ToggleRight } from 'lucide-vue-next'
+import { Bell, ShieldCheck, LogOut, Sun, Moon, Monitor, ToggleLeft, ToggleRight, Menu } from 'lucide-vue-next'
 import { useTheme } from '../composables/useTheme'
 import { authService } from '../services/auth'
 import { demoModeRef, toggleDemoMode } from '../services/api'
+import { useSidebar } from '../composables/useSidebar'
 
 const adminUser = ref(null)
 const { currentTheme, setTheme } = useTheme()
+const { isSidebarCollapsed, toggleSidebar } = useSidebar()
 
 // Usa diretamente o ref reativo — sem interval, sem polling
 const isDemo = demoModeRef
@@ -26,7 +28,17 @@ function handleLogout() {
 
 <template>
  <header class="top-header glass-panel">
- <div class="header-left"></div>
+ <div class="header-left">
+ <button 
+ class="sidebar-toggle-btn" 
+ @click="toggleSidebar" 
+ :title="isSidebarCollapsed ? 'Mostrar Sidebar (Ctrl + \\)' : 'Minimizar Sidebar (Ctrl + \\)'"
+ :class="{ 'sidebar-collapsed': isSidebarCollapsed }"
+ aria-label="Alternar Sidebar"
+ >
+ <Menu :size="20" class="toggle-icon" />
+ </button>
+ </div>
  
  <div class="header-actions">
 
@@ -90,6 +102,36 @@ function handleLogout() {
 </template>
 
 <style scoped>
+/* Sidebar Toggle Button */
+.sidebar-toggle-btn {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-toggle-btn:hover {
+  color: var(--text-main);
+  background: var(--bg-hover);
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.15);
+}
+
+.toggle-icon {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-toggle-btn.sidebar-collapsed .toggle-icon {
+  transform: rotate(180deg);
+  color: var(--accent-blue);
+}
+
 .top-header {
  border-radius: 0;
  border-top: none;

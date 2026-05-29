@@ -73,18 +73,27 @@ const menuItems = [
  letter-spacing: 0.05em;
 }
 .sidebar {
- width: 280px;
- height: 100vh;
- display: flex;
- flex-direction: column;
- border-radius: 0;
- border-right: 1px solid var(--border-light);
- border-top: none;
- border-bottom: none;
- border-left: none;
- background: var(--bg-surface);
- z-index: 10;
- padding: 0;
+  width: 280px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0;
+  border-right: 1px solid var(--border-light);
+  border-top: none;
+  border-bottom: none;
+  border-left: none;
+  background: var(--bg-surface);
+  z-index: 10;
+  padding: 0;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease;
+  overflow: hidden;
+}
+
+.sidebar.collapsed {
+  width: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  border-right: none !important;
 }
 
 .brand {
