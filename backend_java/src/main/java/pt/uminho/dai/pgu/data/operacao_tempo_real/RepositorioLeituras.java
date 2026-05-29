@@ -72,20 +72,41 @@ public class RepositorioLeituras {
  public List<Map<String, Object>> obterVolumePorHoraHoje() {
  List<Map<String, Object>> resultado = new ArrayList<>();
  if (semBD) return resultado;
- String sql = "SELECT HOUR(timestamp) as hora, SUM(entradas) as passageiros " +
- "FROM leituras WHERE timestamp >= CURDATE() AND timestamp < CURDATE() + INTERVAL 1 DAY " +
- "GROUP BY HOUR(timestamp) ORDER BY hora ASC";
+
+ // Obter timezone e offset atual de Portugal (Europe/Lisbon)
+ java.time.ZoneId zone = java.time.ZoneId.of("Europe/Lisbon");
+ java.time.ZonedDateTime now = java.time.ZonedDateTime.now(zone);
+ java.time.ZoneOffset offset = zone.getRules().getOffset(now.toInstant());
+ String offsetString = offset.getId();
+ if (offsetString.equals("Z")) offsetString = "+00:00";
+
+ java.time.LocalDate today = java.time.LocalDate.now(zone);
+ String todayStr = today.toString();
+ String tomorrowStr = today.plusDays(1).toString();
+
+ String sql = "SELECT HOUR(CONVERT_TZ(timestamp, '+00:00', ?)) as hora, SUM(entradas) as passageiros " +
+ "FROM leituras " +
+ "WHERE CONVERT_TZ(timestamp, '+00:00', ?) >= ? AND CONVERT_TZ(timestamp, '+00:00', ?) < ? " +
+ "GROUP BY HOUR(CONVERT_TZ(timestamp, '+00:00', ?)) ORDER BY hora ASC";
+
  try (Connection conn = DatabaseConnection.obterConexao();
- PreparedStatement ps = conn.prepareStatement(sql);
- ResultSet rs = ps.executeQuery()) {
- while (rs.next()) {
- Map<String, Object> row = new LinkedHashMap<>();
- row.put("hora", rs.getInt("hora"));
- row.put("passageiros", rs.getInt("passageiros"));
- resultado.add(row);
- }
+ PreparedStatement ps = conn.prepareStatement(sql)) {
+     ps.setString(1, offsetString);
+     ps.setString(2, offsetString);
+     ps.setString(3, todayStr);
+     ps.setString(4, offsetString);
+     ps.setString(5, tomorrowStr);
+     ps.setString(6, offsetString);
+     try (ResultSet rs = ps.executeQuery()) {
+         while (rs.next()) {
+             Map<String, Object> row = new LinkedHashMap<>();
+             row.put("hora", rs.getInt("hora"));
+             row.put("passageiros", rs.getInt("passageiros"));
+             resultado.add(row);
+         }
+     }
  } catch (SQLException e) {
- System.err.println("Erro ao obter volume por hora: " + e.getMessage());
+     System.err.println("Erro ao obter volume por hora: " + e.getMessage());
  }
  return resultado;
  }

@@ -26,9 +26,6 @@ function handleLogout() {
 
 <template>
  <header class="top-header glass-panel">
- <div class="header-left">
- <h2 class="page-title title-glow">{{ $route.name ? $route.name.charAt(0).toUpperCase() + $route.name.slice(1) : '' }}</h2>
- </div>
  
  <div class="header-actions">
 
