@@ -146,7 +146,10 @@ async function handleRegistarAutocarro() {
  try {
  const reqLinha = await fetch(`${apiUrl}/linhas/${autoLinha.value.trim()}/autocarros`, {
  method: 'POST', headers: {'Content-Type': 'application/json'},
- body: JSON.stringify({ autocarroId: autoId.value.trim() })
+ body: JSON.stringify({ 
+ autocarroId: autoId.value.trim(),
+ linhaId: autoLinha.value.trim()
+ })
  })
  const resLinha = await reqLinha.json()
  if (resLinha.status === 'sucesso') {

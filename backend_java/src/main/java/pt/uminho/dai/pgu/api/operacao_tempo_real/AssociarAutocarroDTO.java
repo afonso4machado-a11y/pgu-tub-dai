@@ -19,7 +19,6 @@ public class AssociarAutocarroDTO {
  @Pattern(regexp = "^[A-Za-z0-9\\-]+$", message = "ID do autocarro contém caracteres inválidos.")
  private String autocarroId;
 
- @NotBlank(message = "ID da linha é obrigatório.")
  @Pattern(regexp = "^[A-Za-z0-9\\-]+$", message = "ID da linha contém caracteres inválidos.")
  private String linhaId;
 
