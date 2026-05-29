@@ -2,7 +2,6 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { authService } from '../../services/auth'
-import { ShieldCheck, Lock, Mail, ArrowRight } from 'lucide-vue-next'
 
 const router = useRouter()
 const email = ref('')
@@ -95,16 +94,13 @@ async function handleLogin() {
  <div class="login-page">
  <div class="login-card glass-panel fade-in">
  <div class="login-header">
- <div class="logo-circle">
- <ShieldCheck :size="32" color="#10b981" />
- </div>
  <h1 class="title-glow">TUB Backoffice</h1>
  <p class="subtitle">Acesso restrito a administradores</p>
  </div>
 
  <form @submit.prevent="handleLogin" class="login-form">
  <div class="input-group">
- <label><Mail :size="16" /> Email Institucional</label>
+ <label>Email Institucional</label>
  <input 
  type="email" 
  v-model="email" 
@@ -118,7 +114,7 @@ async function handleLogin() {
  </div>
 
  <div class="input-group">
- <label><Lock :size="16" /> Palavra-passe</label>
+ <label>Palavra-passe</label>
  <input 
  type="password" 
  v-model="password" 
@@ -133,7 +129,6 @@ async function handleLogin() {
 
  <button type="submit" class="btn-login" :disabled="loading || lockoutRemaining > 0">
     <span>{{ lockoutRemaining > 0 ? `Bloqueado (${formatTime(lockoutRemaining)})` : (loading ? 'A verificar...' : 'Entrar no Sistema') }}</span>
-    <ArrowRight v-if="!loading && lockoutRemaining === 0" :size="18" />
   </button>
  </form>
 

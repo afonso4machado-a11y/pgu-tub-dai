@@ -2,7 +2,6 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { authService } from '../../services/auth'
-import { User, Mail, Lock, ArrowRight, Bus, Clock } from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
@@ -97,9 +96,6 @@ async function handleSubmit() {
 <template>
  <div class="mobile-login">
  <div class="header">
- <div class="logo-icon">
- <Bus :size="40" color="#3b82f6" />
- </div>
  <h1>Bem-vindo à PGU</h1>
  <p>{{ isSignup ? 'Cria o teu perfil para uma viagem personalizada' : 'Inicia sessão para continuar' }}</p>
  </div>
@@ -107,7 +103,6 @@ async function handleSubmit() {
  <div class="form-container">
  <!-- Sessão expirada banner -->
  <div v-if="sessionExpired" class="expired-banner">
- <Clock :size="16" />
  <span>A tua sessão expirou (7 dias). Entra novamente para continuar.</span>
  </div>
 
@@ -119,17 +114,14 @@ async function handleSubmit() {
 
  <form @submit.prevent="handleSubmit">
  <div v-if="isSignup" class="input-field">
- <User :size="20" />
  <input type="text" v-model="nome" placeholder="Seu Nome" required />
  </div>
 
  <div class="input-field">
- <Mail :size="20" />
  <input type="email" v-model="email" placeholder="Email" required />
  </div>
 
  <div class="input-field">
- <Lock :size="20" />
  <input type="password" v-model="password" placeholder="Palavra-passe" required />
  </div>
 
@@ -137,7 +129,6 @@ async function handleSubmit() {
 
  <button type="submit" class="submit-btn" :disabled="loading || lockoutRemaining > 0">
  {{ lockoutRemaining > 0 ? `Bloqueado (${formatTime(lockoutRemaining)})` : (loading ? 'A processar...' : (isSignup ? 'Criar Perfil' : 'Entrar')) }}
- <ArrowRight :size="20" />
  </button>
 
  <div class="switch-mode">

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { MapPin, Navigation, Clock, Bus, ChevronRight, Zap, Star, TrendingUp } from 'lucide-vue-next'
+import { Star } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { authService } from '../../services/auth'
 
@@ -277,18 +277,16 @@ function lotLabel(pct) {
  <!-- Quick Actions -->
  <div class="quick-actions">
  <router-link to="/app/map" class="qa-card qa-map">
- <MapPin :size="28" />
  <span>Ver Mapa</span>
  </router-link>
  <router-link to="/app/ticket" class="qa-card qa-ticket">
- <Zap :size="28" />
  <span>Meu Bilhete</span>
  </router-link>
  </div>
 
  <!-- Search / Trip Planner -->
  <div class="trip-planner">
- <h3 class="section-title"><Navigation :size="18" /> Para onde vais?</h3>
+ <h3 class="section-title">Para onde vais?</h3>
  <div class="planner-inputs">
  <div class="planner-input-wrapper">
  <div class="planner-input">
@@ -350,10 +348,10 @@ function lotLabel(pct) {
  </div>
  <div class="result-body">
  <div class="res-item">
- <Clock :size="14" /> <span>Chegada em <strong>{{ planResult.tempo }}</strong></span>
+ <span>Chegada em <strong>{{ planResult.tempo }}</strong></span>
  </div>
  <div class="res-item">
- <Bus :size="14" /> <span>Partida em <strong>{{ planResult.partida }}</strong></span>
+ <span>Partida em <strong>{{ planResult.partida }}</strong></span>
  </div>
  </div>
  </div>
@@ -361,7 +359,7 @@ function lotLabel(pct) {
 
  <!-- Próximos Autocarros -->
  <div class="section">
- <h3 class="section-title"><Clock :size="18" /> Próximas Partidas</h3>
+ <h3 class="section-title">Próximas Partidas</h3>
  <div class="bus-list">
  <div v-for="bus in proximosAutocarros" :key="bus.linha + bus.destino" class="bus-card">
  <div class="bus-left">
@@ -387,7 +385,7 @@ function lotLabel(pct) {
 
   <!-- Linhas Favoritas -->
   <div class="section">
-  <h3 class="section-title"><Star :size="18" /> As Tuas Linhas</h3>
+  <h3 class="section-title">As Tuas Linhas</h3>
   <div class="fav-list">
   <div v-for="l in availableLines" :key="l.id" class="fav-card" @click="toggleFavorite(l.id)">
   <div class="fav-left">
@@ -402,14 +400,12 @@ function lotLabel(pct) {
  <!-- Stats -->
  <div class="section stats-section">
  <div class="mini-stat">
- <Bus :size="20" class="stat-icon" />
  <div>
  <span class="stat-val">{{ busCount }}</span>
  <span class="stat-lbl">Em circulação</span>
  </div>
  </div>
  <div class="mini-stat">
- <TrendingUp :size="20" class="stat-icon" />
  <div>
  <span class="stat-val">{{ avgOcc }}%</span>
  <span class="stat-lbl">Lotação média</span>

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { Bell, AlertTriangle, Info, Clock, Star, Settings, ChevronRight } from 'lucide-vue-next'
+import { ChevronRight } from 'lucide-vue-next'
 
 import { authService } from '../../services/auth'
 
@@ -65,12 +65,6 @@ onMounted(() => {
 })
 onUnmounted(() => { if (_alertsInterval) clearInterval(_alertsInterval) })
 
-function tipoIcon(tipo) {
- if (tipo === 'PERTURBAÇÃO' || tipo === 'ATRASO') return AlertTriangle
- if (tipo === 'LOTAÇÃO') return Bell
- return Info
-}
-
 function tipoColor(tipo) {
  if (tipo === 'PERTURBAÇÃO') return '#ef4444'
  if (tipo === 'ATRASO') return '#eab308'
@@ -97,10 +91,10 @@ const unreadCount = computed(() => alerts.value.filter(a => !a.lido).length)
  <!-- Favorites filter -->
  <div class="fav-filter">
  <button class="filter-chip active">
- <Bell :size="14" /> Todos
+ Todos
  </button>
  <button class="filter-chip">
- <Star :size="14" /> Linha {{ linhaFavorita }}
+ Linha {{ linhaFavorita }}
  </button>
  </div>
 
@@ -113,22 +107,18 @@ const unreadCount = computed(() => alerts.value.filter(a => !a.lido).length)
  :class="{ 'alert-unread': !alert.lido }"
  @click="markRead(alert)"
  >
- <div class="ac-icon" :style="{color: tipoColor(alert.tipo)}">
- <component :is="tipoIcon(alert.tipo)" :size="20" />
- </div>
  <div class="ac-content">
  <div class="ac-top">
  <span class="ac-tipo" :style="{color: tipoColor(alert.tipo)}">{{ alert.tipo }}</span>
  <span v-if="alert.linha" class="ac-linha">{{ alert.linha }}</span>
  </div>
  <p class="ac-msg">{{ alert.msg }}</p>
- <span class="ac-time"><Clock :size="12" /> {{ alert.tempo }} atrás</span>
+ <span class="ac-time">{{ alert.tempo }} atrás</span>
  </div>
  <div v-if="!alert.lido" class="ac-dot"></div>
  </div>
 
  <div v-if="alerts.length === 0" class="empty">
- <Bell :size="40" class="empty-icon" />
  <p>Sem alertas de momento</p>
  <p class="empty-sub">Receberá notificações sobre as suas linhas favoritas</p>
  </div>
@@ -136,7 +126,6 @@ const unreadCount = computed(() => alerts.value.filter(a => !a.lido).length)
 
  <!-- Settings hint -->
  <div class="settings-hint">
- <Settings :size="16" />
  <span>Gerir notificações da linha favorita</span>
  <ChevronRight :size="16" />
  </div>

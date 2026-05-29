@@ -1,9 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import {
- User, CreditCard, Clock, MapPin, Star, Settings, ChevronRight,
- LogOut, Shield, Bell, Bus, Sun, Moon, Monitor, Database, Wifi
-} from 'lucide-vue-next'
+import { ChevronRight } from 'lucide-vue-next'
 
 import { authService } from '../../services/auth'
 import { usePassengerTheme } from '../../composables/usePassengerTheme'
@@ -56,11 +53,11 @@ const formatDate = (dateStr) => {
 }
 
 const menuItems = [
- { icon: CreditCard, label: 'Métodos de Pagamento', sub: 'Gerir cartões' },
- { icon: Star, label: 'Linhas Favoritas', sub: 'Configurar atalhos' },
- { icon: Bell, label: 'Notificações', sub: 'Ativas' },
- { icon: Shield, label: 'Privacidade e Dados', sub: 'RGPD' },
- { icon: Settings, label: 'Definições', sub: '' },
+ { label: 'Métodos de Pagamento', sub: 'Gerir cartões' },
+ { label: 'Linhas Favoritas', sub: 'Configurar atalhos' },
+ { label: 'Notificações', sub: 'Ativas' },
+ { label: 'Privacidade e Dados', sub: 'RGPD' },
+ { label: 'Definições', sub: '' },
 ]
 </script>
 
@@ -80,7 +77,6 @@ const menuItems = [
  <span class="profile-nif">NIF: {{ user.nif }}</span>
  </div>
  <div class="pass-badge" v-if="user.passeMensal">
- <Bus :size="14" />
  Passe Ativo
  </div>
  </div>
@@ -103,7 +99,7 @@ const menuItems = [
 
  <!-- Trip History -->
  <div class="section">
- <h3 class="section-title"><Clock :size="18" /> Histórico de Viagens</h3>
+ <h3 class="section-title">Histórico de Viagens</h3>
  <div class="trip-list">
  <div v-for="trip in tripHistory" :key="trip.data + trip.hora" class="trip-card">
  <div class="trip-left">
@@ -122,7 +118,7 @@ const menuItems = [
 
   <!-- Histórico de Pagamentos -->
   <div class="section">
-  <h3 class="section-title"><CreditCard :size="18" /> Histórico de Pagamentos</h3>
+  <h3 class="section-title">Histórico de Pagamentos</h3>
   <div class="trip-list" v-if="comprasHistory.length > 0">
   <div v-for="compra in comprasHistory" :key="compra.id" class="trip-card">
   <div class="trip-left">
@@ -144,7 +140,7 @@ const menuItems = [
 
  <!-- Data Source Toggle -->
  <div class="section">
- <h3 class="section-title"><Database :size="18" /> Fonte de Dados</h3>
+ <h3 class="section-title">Fonte de Dados</h3>
  <div class="data-source-card" role="group" aria-label="Seleção da fonte de dados">
  <button
  class="ds-option"
@@ -153,7 +149,6 @@ const menuItems = [
  aria-label="Usar dados simulados"
  :aria-pressed="String(demoModeRef)"
  >
- <Database :size="20" class="ds-icon" />
  <div class="ds-text">
  <span class="ds-label">Simulados</span>
  <span class="ds-sub">Dados de demonstração</span>
@@ -166,7 +161,6 @@ const menuItems = [
  aria-label="Usar dados reais"
  :aria-pressed="String(!demoModeRef)"
  >
- <Wifi :size="20" class="ds-icon" />
  <div class="ds-text">
  <span class="ds-label">Reais</span>
  <span class="ds-sub">API em tempo real</span>
@@ -174,20 +168,19 @@ const menuItems = [
  </button>
  </div>
  <p class="ds-note" v-if="!demoModeRef">
- <Wifi :size="12" /> A sincronizar com o servidor a cada 5 segundos
+ A sincronizar com o servidor a cada 5 segundos
  </p>
  </div>
 
  <!-- Theme Switcher -->
  <div class="section">
- <h3 class="section-title"><Moon :size="18" /> Aparência</h3>
+ <h3 class="section-title">Aparência</h3>
  <div class="theme-card">
  <button
  class="theme-option"
  :class="{ active: currentPassengerTheme === 'light' }"
  @click="setTheme('light')"
  >
- <Sun :size="20" class="theme-icon" />
  <span>Claro</span>
  </button>
  <button
@@ -195,7 +188,6 @@ const menuItems = [
  :class="{ active: currentPassengerTheme === 'dark' }"
  @click="setTheme('dark')"
  >
- <Moon :size="20" class="theme-icon" />
  <span>Escuro</span>
  </button>
  <button
@@ -203,7 +195,6 @@ const menuItems = [
  :class="{ active: currentPassengerTheme === 'auto' }"
  @click="setTheme('auto')"
  >
- <Monitor :size="20" class="theme-icon" />
  <span>Automático</span>
  </button>
  </div>
@@ -211,10 +202,9 @@ const menuItems = [
 
  <!-- Menu Items -->
  <div class="section">
- <h3 class="section-title"><Settings :size="18" /> Configurações</h3>
+ <h3 class="section-title">Configurações</h3>
  <div class="menu-list">
  <div v-for="item in menuItems" :key="item.label" class="menu-item">
- <component :is="item.icon" :size="20" class="menu-icon" />
  <div class="menu-text">
  <span class="menu-label">{{ item.label }}</span>
  <span v-if="item.sub" class="menu-sub">{{ item.sub }}</span>
@@ -226,7 +216,7 @@ const menuItems = [
 
  <!-- Logout -->
  <button class="logout-btn" @click="handleLogout">
- <LogOut :size="18" /> Terminar Sessão
+ Terminar Sessão
  </button>
  </div>
 </template>

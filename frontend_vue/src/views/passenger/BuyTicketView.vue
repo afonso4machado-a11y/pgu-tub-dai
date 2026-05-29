@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { loadStripe } from '@stripe/stripe-js'
-import { ArrowLeft, Shield, CheckCircle, Loader2, CreditCard, Ticket } from 'lucide-vue-next'
+import { ArrowLeft, CheckCircle, Loader2 } from 'lucide-vue-next'
 import { authService } from '../../services/auth'
 
 const router = useRouter()
@@ -229,7 +229,6 @@ const pay = async () => {
  @click="selectedId = t.id"
  >
  <div class="tc-badge" :class="{ popular: t.id === 'passe' }">{{ t.badge }}</div>
- <div class="tc-icon"><Ticket :size="28" /></div>
  <div class="tc-name">{{ t.name }}</div>
  <div class="tc-price">{{ t.price.toFixed(2).replace('.', ',') }}<span>EUR</span></div>
  <div class="tc-desc">{{ t.desc }}</div>
@@ -249,7 +248,6 @@ const pay = async () => {
  <!-- Order Summary Mini -->
  <div class="order-summary">
  <div class="os-left">
- <Ticket :size="20" class="os-icon" />
  <div>
  <div class="os-name">{{ selected?.name }}</div>
  <div class="os-desc">Rede TUB completa</div>
@@ -261,7 +259,6 @@ const pay = async () => {
  <!-- Stripe Payment Element -->
  <div class="payment-card">
  <div class="pc-title">
- <CreditCard :size="18" />
  <span>Dados de Pagamento</span>
  </div>
 
@@ -280,7 +277,6 @@ const pay = async () => {
 
  <!-- Trust Indicators -->
  <div class="trust-row">
- <Shield :size="14" />
  <span>Pagamento 100% seguro e encriptado. Compativel com PCI-DSS.</span>
  </div>
 
@@ -289,7 +285,6 @@ const pay = async () => {
  <button v-if="!errorMessage" class="cta-btn" :disabled="isProcessing" @click="pay">
  <Loader2 v-if="isProcessing" class="spin" :size="20" />
  <template v-else>
- <Shield :size="16" />
  {{ ctaLabel }}
  </template>
  </button>

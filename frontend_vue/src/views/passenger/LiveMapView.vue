@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { Users, Locate } from 'lucide-vue-next'
+import { Locate } from 'lucide-vue-next'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -296,10 +296,9 @@ onUnmounted(() => {
  <span class="bdc-id">{{ selectedBus.id }}</span>
  </div>
  <div class="bdc-body">
- <div class="bdc-metric">
- <Users :size="16" />
- <span>{{ selectedBus.passageirosAtuais }} / {{ selectedBus.capacidadeMaxima }}</span>
- </div>
+  <div class="bdc-metric">
+  <span>Passageiros: <strong>{{ selectedBus.passageirosAtuais }} / {{ selectedBus.capacidadeMaxima }}</strong></span>
+  </div>
  <div class="bdc-lot">
  <span class="bdc-lot-text" :style="{color: lotColor(selectedBus.ocupacao)}">
  {{ lotLabel(selectedBus.ocupacao) }} · {{ Math.round(selectedBus.ocupacao) }}%

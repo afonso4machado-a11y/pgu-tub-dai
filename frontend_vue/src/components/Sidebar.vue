@@ -1,17 +1,16 @@
 <script setup>
 import { useRoute } from 'vue-router'
-import { LayoutDashboard, Bus, Map, Ticket, Users, FileText, GitCompare, ShieldAlert, Smartphone } from 'lucide-vue-next'
 
 const route = useRoute()
 
 const menuItems = [
- { id: 'dashboard', path: '/', label: 'Visão Geral', icon: LayoutDashboard },
- { id: 'network', path: '/network', label: 'Mapa Operacional (3.1)', icon: Map },
- { id: 'ticketing', path: '/ticketing', label: 'Bilhética (3.3)', icon: Ticket },
- { id: 'occupancy', path: '/occupancy', label: 'Lotação (3.4)', icon: Users },
- { id: 'correlation', path: '/correlation', label: 'Correlação (4.3)', icon: GitCompare },
- { id: 'alerts', path: '/alerts', label: 'Central Alertas (4.5)', icon: ShieldAlert },
- { id: 'fleet', path: '/fleet', label: 'Gestão de Frota', icon: Bus },
+  { id: 'dashboard', path: '/', label: 'Visão Geral' },
+  { id: 'network', path: '/network', label: 'Mapa Operacional (3.1)' },
+  { id: 'ticketing', path: '/ticketing', label: 'Bilhética (3.3)' },
+  { id: 'occupancy', path: '/occupancy', label: 'Lotação (3.4)' },
+  { id: 'correlation', path: '/correlation', label: 'Correlação (4.3)' },
+  { id: 'alerts', path: '/alerts', label: 'Central Alertas (4.5)' },
+  { id: 'fleet', path: '/fleet', label: 'Gestão de Frota' },
 ]
 </script>
 
@@ -33,7 +32,6 @@ const menuItems = [
  class="menu-item"
  :class="{ active: route.path === item.path }"
  >
- <component :is="item.icon" :size="20" class="icon" />
  <span>{{ item.label }}</span>
  </router-link>
   </nav>
@@ -41,7 +39,7 @@ const menuItems = [
   <!-- DEV MODE SHORTCUT -->
   <div style="padding: 1.5rem; border-top: 1px solid var(--border-light); margin-top: auto;">
   <router-link to="/app" class="btn btn-primary" style="width: 100%; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-  <Smartphone :size="16" /> Testar App Móvel
+  Testar App Móvel
   </router-link>
   </div>
   </aside>

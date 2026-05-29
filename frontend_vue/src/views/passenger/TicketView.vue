@@ -1,7 +1,5 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { Ticket, Shield, Clock, RefreshCw, CheckCircle, QrCode } from 'lucide-vue-next'
-
 import { authService } from '../../services/auth'
 
 // Reactive ref so ticket updates when profile syncs from BD
@@ -136,11 +134,9 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
  <div class="ticket-card">
  <div class="tc-header">
  <div class="tc-brand">
- <Ticket :size="22" />
  <span>TUB Digital</span>
  </div>
  <div class="tc-status">
- <CheckCircle :size="14" />
  <span>{{ activeTicket.estado }}</span>
  </div>
  </div>
@@ -193,16 +189,14 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
 
  <div class="qr-meta">
  <div class="qr-timer">
- <Clock :size="14" />
  <span>Renova em <strong>{{ qrCountdown }}s</strong></span>
  </div>
  <button class="qr-refresh-btn" @click="refreshQR">
- <RefreshCw :size="14" /> Renovar
+ Renovar
  </button>
  </div>
 
  <div class="qr-security">
- <Shield :size="12" />
  <span>Token anti-fraude · Renovação automática a cada 30s</span>
  </div>
  </div>
@@ -211,10 +205,10 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
  <!-- Actions -->
  <div class="ticket-actions">
  <button class="action-btn primary" @click="$router.push('/app/buy-ticket')">
- <Ticket :size="18" /> Comprar Novo Bilhete
+ Comprar Novo Bilhete
  </button>
  <button class="action-btn secondary">
- <QrCode :size="18" /> Histórico de Viagens
+ Histórico de Viagens
  </button>
  </div>
  </div>
