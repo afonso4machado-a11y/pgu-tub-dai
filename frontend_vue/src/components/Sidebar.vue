@@ -54,7 +54,7 @@ const menuItems = [
  </div>
  <!-- Institucional -->
  <div class="sidebar-footer">
- <span class="group-tag">G11 · PL1</span>
+ <span class="group-tag">G1.1 · PL1</span>
  <span class="uni-tag">Universidade do Minho</span>
  </div>
  </aside>
