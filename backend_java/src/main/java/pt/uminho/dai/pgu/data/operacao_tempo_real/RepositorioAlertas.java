@@ -13,16 +13,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RepositorioAlertas {
+ private boolean semBD = false;
 
  public RepositorioAlertas() {}
 
  public RepositorioAlertas(boolean semBD) {
- // Construtor para uso em testes
+ this.semBD = semBD;
  }
 
  public List<Long> guardarTodos(List<Alerta> alertas) {
  List<Long> ids = new ArrayList<>();
  if (alertas.isEmpty()) return ids;
+ if (semBD) {
+ for (int i = 0; i < alertas.size(); i++) {
+ ids.add((long) (i + 1));
+ }
+ return ids;
+ }
  try (Connection conn = DatabaseConnection.obterConexao();
  PreparedStatement ps = conn.prepareStatement(
  "INSERT INTO alertas (autocarro_id, tipo, mensagem, timestamp) VALUES (?, ?, ?, ?)",
@@ -46,6 +53,7 @@ public class RepositorioAlertas {
 
  public List<Alerta> listarAlertasRecentes(int limit) {
  List<Alerta> recentes = new ArrayList<>();
+ if (semBD) return recentes;
  try (Connection conn = DatabaseConnection.obterConexao();
  PreparedStatement ps = conn.prepareStatement(
  "SELECT autocarro_id, tipo, mensagem, timestamp FROM alertas ORDER BY timestamp DESC LIMIT ?")) {

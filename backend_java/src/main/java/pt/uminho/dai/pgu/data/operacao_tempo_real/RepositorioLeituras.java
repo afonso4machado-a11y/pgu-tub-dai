@@ -12,15 +12,17 @@ import java.sql.*;
 import java.util.*;
 
 public class RepositorioLeituras {
+  private boolean semBD = false;
 
- public RepositorioLeituras() {}
+  public RepositorioLeituras() {}
 
- public RepositorioLeituras(boolean semBD) {
- // Construtor para uso em testes
- }
+  public RepositorioLeituras(boolean semBD) {
+    this.semBD = semBD;
+  }
 
- public void guardar(String autocarroId, LeituraContagem leitura) {
- try (Connection conn = DatabaseConnection.obterConexao();
+  public void guardar(String autocarroId, LeituraContagem leitura) {
+    if (semBD) return;
+    try (Connection conn = DatabaseConnection.obterConexao();
  PreparedStatement ps = conn.prepareStatement(
  "INSERT INTO leituras (autocarro_id, entradas, saidas, timestamp) VALUES (?, ?, ?, ?)")) {
  ps.setString(1, autocarroId);
@@ -39,6 +41,7 @@ public class RepositorioLeituras {
  */
  public Map<String, Map<String, Map<String, Integer>>> obterHistoricoPorDia() {
  Map<String, Map<String, Map<String, Integer>>> resultado = new LinkedHashMap<>();
+ if (semBD) return resultado;
  String sql = "SELECT DATE(timestamp) as dia, autocarro_id, " +
  "SUM(entradas) as total_entradas, SUM(saidas) as total_saidas " +
  "FROM leituras GROUP BY dia, autocarro_id ORDER BY dia DESC";
@@ -68,6 +71,7 @@ public class RepositorioLeituras {
  */
  public List<Map<String, Object>> obterVolumePorHoraHoje() {
  List<Map<String, Object>> resultado = new ArrayList<>();
+ if (semBD) return resultado;
  String sql = "SELECT HOUR(timestamp) as hora, SUM(entradas) as passageiros " +
  "FROM leituras WHERE timestamp >= CURDATE() AND timestamp < CURDATE() + INTERVAL 1 DAY " +
  "GROUP BY HOUR(timestamp) ORDER BY hora ASC";

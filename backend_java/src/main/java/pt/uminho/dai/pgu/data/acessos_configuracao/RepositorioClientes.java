@@ -16,13 +16,14 @@ public class RepositorioClientes {
  private final Map<String, Cliente> clientesById = new ConcurrentHashMap<>();
  private final Map<String, Cliente> clientesByEmail = new ConcurrentHashMap<>();
  private volatile boolean isLoaded = false;
+ private boolean semBD = false;
 
  public RepositorioClientes() {
  carregarDaBD();
  }
 
  public RepositorioClientes(boolean semBD) {
- // Construtor para uso em testes — não carrega da BD
+ this.semBD = semBD;
  }
 
  private void carregarDaBD() {
@@ -91,6 +92,7 @@ public class RepositorioClientes {
  clientesByEmail.put(cliente.getEmail().toLowerCase(), cliente);
  }
  
+ if (semBD) return;
  try (Connection conn = DatabaseConnection.obterConexao()) {
  // 1. Inserir ou atualizar dados básicos do cliente
  try (PreparedStatement ps = conn.prepareStatement(

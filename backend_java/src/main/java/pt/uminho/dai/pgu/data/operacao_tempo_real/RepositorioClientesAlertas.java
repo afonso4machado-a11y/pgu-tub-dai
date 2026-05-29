@@ -12,15 +12,17 @@ import java.sql.*;
 import java.util.List;
 
 public class RepositorioClientesAlertas {
+ private boolean semBD = false;
 
  public RepositorioClientesAlertas() {}
 
  public RepositorioClientesAlertas(boolean semBD) {
- // Construtor para uso em testes
+ this.semBD = semBD;
  }
 
  public void guardar(String clienteId, List<Long> alertaIds) {
  if (alertaIds.isEmpty()) return;
+ if (semBD) return;
  try (Connection conn = DatabaseConnection.obterConexao();
  PreparedStatement ps = conn.prepareStatement(
  "INSERT IGNORE INTO clientes_alertas (cliente_id, alerta_id) VALUES (?, ?)")) {
@@ -41,6 +43,7 @@ public class RepositorioClientesAlertas {
  */
  public void guardarEmLote(List<String> clienteIds, List<Long> alertaIds) {
  if (clienteIds.isEmpty() || alertaIds.isEmpty()) return;
+ if (semBD) return;
  try (Connection conn = DatabaseConnection.obterConexao();
  PreparedStatement ps = conn.prepareStatement(
  "INSERT IGNORE INTO clientes_alertas (cliente_id, alerta_id) VALUES (?, ?)")) {

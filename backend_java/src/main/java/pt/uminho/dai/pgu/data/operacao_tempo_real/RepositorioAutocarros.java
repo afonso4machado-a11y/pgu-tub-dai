@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 public class RepositorioAutocarros {
  private final Map<String, Autocarro> autocarros = new ConcurrentHashMap<>();
+ private boolean semBD = false;
 
  /**
   * true se a coluna `deleted` já existe na BD.
@@ -30,7 +31,7 @@ public class RepositorioAutocarros {
  }
 
  public RepositorioAutocarros(boolean semBD) {
-  // Construtor para uso em testes — não carrega da BD
+  this.semBD = semBD;
  }
 
  /**
@@ -112,6 +113,7 @@ public class RepositorioAutocarros {
 
  public void guardar(Autocarro autocarro) {
   autocarros.put(autocarro.getId(), autocarro);
+  if (semBD) return;
   try (Connection conn = DatabaseConnection.obterConexao()) {
    // SQL diferente consoante a coluna deleted existe ou não
    String sql = deletedColumnExists
@@ -152,6 +154,7 @@ public class RepositorioAutocarros {
 
  public void atualizarEstado(Autocarro autocarro) {
   autocarros.put(autocarro.getId(), autocarro);
+  if (semBD) return;
   try (Connection conn = DatabaseConnection.obterConexao();
    PreparedStatement ps = conn.prepareStatement(
    "UPDATE autocarros SET linha_id = ?, passageiros_atuais = ?, " +
@@ -172,6 +175,7 @@ public class RepositorioAutocarros {
  public void marcarComoEliminado(String id) {
   Autocarro a = autocarros.get(id);
   if (a != null) a.setDeleted(true);
+  if (semBD) return;
   if (!deletedColumnExists) {
    System.out.println("[DB] Eliminacao em memoria apenas (coluna 'deleted' nao existe na BD).");
    return;
@@ -190,6 +194,7 @@ public class RepositorioAutocarros {
  public void restaurar(String id) {
   Autocarro a = autocarros.get(id);
   if (a != null) a.setDeleted(false);
+  if (semBD) return;
   if (!deletedColumnExists) {
    System.out.println("[DB] Restauro em memoria apenas (coluna 'deleted' nao existe na BD).");
    return;
