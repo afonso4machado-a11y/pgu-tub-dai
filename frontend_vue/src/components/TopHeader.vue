@@ -26,6 +26,7 @@ function handleLogout() {
 
 <template>
  <header class="top-header glass-panel">
+ <div class="header-left"></div>
  
  <div class="header-actions">
 
