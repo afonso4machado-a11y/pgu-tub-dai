@@ -5,11 +5,11 @@ const route = useRoute()
 
 const menuItems = [
   { id: 'dashboard', path: '/', label: 'Visão Geral' },
-  { id: 'network', path: '/network', label: 'Mapa Operacional (3.1)' },
-  { id: 'ticketing', path: '/ticketing', label: 'Bilhética (3.3)' },
-  { id: 'occupancy', path: '/occupancy', label: 'Lotação (3.4)' },
-  { id: 'correlation', path: '/correlation', label: 'Correlação (4.3)' },
-  { id: 'alerts', path: '/alerts', label: 'Central Alertas (4.5)' },
+  { id: 'network', path: '/network', label: 'Mapa Operacional' },
+  { id: 'ticketing', path: '/ticketing', label: 'Bilhética' },
+  { id: 'occupancy', path: '/occupancy', label: 'Lotação' },
+  { id: 'correlation', path: '/correlation', label: 'Correlação' },
+  { id: 'alerts', path: '/alerts', label: 'Central Alertas' },
   { id: 'fleet', path: '/fleet', label: 'Gestão de Frota' },
 ]
 </script>
