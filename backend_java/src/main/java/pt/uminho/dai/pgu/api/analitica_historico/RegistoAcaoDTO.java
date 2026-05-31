@@ -14,7 +14,6 @@ public class RegistoAcaoDTO {
     private String sessionId;
 
     @NotBlank(message = "O email do utilizador é obrigatório.")
-    @Email(message = "O email deve ser um endereço de email válido.")
     @Size(max = 255, message = "O email do utilizador não pode exceder 255 caracteres.")
     private String utilizadorEmail;
 

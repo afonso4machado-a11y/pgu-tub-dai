@@ -22,7 +22,7 @@ public class RepositorioAuditLogs {
      *
      * @param logs the list of logs to persist.
      */
-    public void guardarEmLote(List<RegistoAcao> logs) {
+    public void guardarEmLote(List<RegistoAcao> logs) throws SQLException {
         if (logs == null || logs.isEmpty()) return;
         
         String sql = "INSERT INTO registo_acoes_backoffice (session_id, utilizador_email, utilizador_nome, acao_tipo, detalhes, timestamp) VALUES (?, ?, ?, ?, ?, ?)";
@@ -45,8 +45,6 @@ public class RepositorioAuditLogs {
             
             ps.executeBatch();
             conn.commit();
-        } catch (SQLException e) {
-            System.err.println("Erro ao guardar registos de auditoria em lote: " + e.getMessage());
         }
     }
 
