@@ -19,7 +19,7 @@ import PaxTicket from '../views/passenger/TicketView.vue'
 import PaxAlerts from '../views/passenger/AlertsView.vue'
 import PaxProfile from '../views/passenger/ProfileView.vue'
 import BuyTicketView from '../views/passenger/BuyTicketView.vue'
-import HorariosView from '../views/passenger/HorariosView.vue'
+import HorariosView from '../views/HorariosView.vue'
 
 import AdminLogin from '../views/admin/LoginView.vue'
 import PaxLogin from '../views/passenger/LoginView.vue'
