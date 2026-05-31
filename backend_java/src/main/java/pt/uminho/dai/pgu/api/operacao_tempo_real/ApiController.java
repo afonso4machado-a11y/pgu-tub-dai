@@ -248,6 +248,27 @@ public class ApiController {
  }
  }
 
+ @GetMapping("/planeamento")
+ public ResponseEntity<Map<String, Object>> planearViagem(
+     @RequestParam String origem,
+     @RequestParam String destino) {
+     try {
+         Map<String, Object> rota = sistemaService.planearViagem(origem, destino);
+         if (rota == null) {
+             return ResponseEntity.status(404).body(Map.of(
+                 "status", "erro",
+                 "mensagem", "Nenhuma rota encontrada para esta ligação a partir desta hora."
+             ));
+         }
+         Map<String, Object> response = new HashMap<>();
+         response.put("status", "sucesso");
+         response.put("rota", rota);
+         return ResponseEntity.ok(response);
+     } catch (Exception e) {
+         return ResponseEntity.status(500).body(Map.of("status", "erro", "mensagem", e.getMessage()));
+     }
+ }
+
   @PostMapping("/auth/signup")
   public ResponseEntity<Map<String, Object>> signup(@Valid @RequestBody SignupPassengerDTO dto) {
   try {
@@ -298,7 +319,7 @@ public class ApiController {
  @GetMapping("/paragens")
  public ResponseEntity<Map<String, Object>> listarParagens() {
  try {
- List<String> paragens = sistemaService.listarParagens();
+ List<Map<String, Object>> paragens = sistemaService.listarParagensComCoordenadas();
  return ResponseEntity.ok(Map.of("status", "sucesso", "paragens", paragens));
  } catch (Exception e) {
  return ResponseEntity.status(500).body(Map.of("status", "erro", "mensagem", e.getMessage()));

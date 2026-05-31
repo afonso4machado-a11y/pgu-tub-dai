@@ -249,8 +249,46 @@ async function fetchBuses() {
  } catch(e) { /* offline */ }
 }
 
-function centerMap() {
- if (map) map.setView([41.5503, -8.4227], 14)
+let userMarker = null
+let geoWatchId = null
+
+function drawUserMarker(lat, lng, shouldCenter) {
+  if (!map) return
+  if (shouldCenter) map.setView([lat, lng], 16)
+  if (userMarker) {
+    userMarker.setLatLng([lat, lng])
+  } else {
+    const userIcon = L.divIcon({
+      className: 'user-gps-marker',
+      html: '<div class="pulse-ring"></div><div class="pulse-dot"></div>',
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
+    })
+    userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(map)
+  }
+}
+
+function locateUser() {
+ if (!map) return
+ if (navigator.geolocation) {
+   if (geoWatchId === null) {
+     geoWatchId = navigator.geolocation.watchPosition(
+       (pos) => drawUserMarker(pos.coords.latitude, pos.coords.longitude, true),
+       (err) => {
+         alert("O browser não conseguiu o GPS (" + err.message + "). Vamos simular a localização para a apresentação.")
+         drawUserMarker(41.5503, -8.4227, true) // Fallback ativado de emergência se o PC falhar
+       },
+       { timeout: 10000, maximumAge: 0 } // Sem enableHighAccuracy para não bloquear PCs
+     )
+   } else {
+     navigator.geolocation.getCurrentPosition(
+       (pos) => drawUserMarker(pos.coords.latitude, pos.coords.longitude, true),
+       (err) => alert("Erro ao centrar GPS: " + err.message)
+     )
+   }
+ } else {
+   alert("O seu browser não suporta geolocalização.")
+ }
 }
 
 function dismissCard() { selectedBus.value = null }
@@ -261,6 +299,9 @@ onMounted(() => {
   initMap()
   fetchBuses()
   timer = setInterval(fetchBuses, 5000)
+
+  // Iniciar geolocalização automaticamente ao abrir a página
+  locateUser()
 
   // Fix for map rendering incorrectly or showing blank areas when container resizes
   const mapEl = document.getElementById('passenger-map')
@@ -283,6 +324,9 @@ onUnmounted(() => {
     resizeObserver.disconnect()
     resizeObserver = null
   }
+  if (geoWatchId !== null && navigator.geolocation) {
+    navigator.geolocation.clearWatch(geoWatchId)
+  }
   markersCache.clear()
   positionsCache.clear()
   lastColorCache.clear()
@@ -296,7 +340,7 @@ onUnmounted(() => {
 
  <!-- Map Controls -->
  <div class="map-controls">
- <button class="map-btn" @click="centerMap"><Locate :size="20" /></button>
+ <button class="map-btn" @click="locateUser"><Locate :size="20" /></button>
  </div>
 
  <!-- Legend -->
@@ -385,11 +429,15 @@ onUnmounted(() => {
 
 <style>
 .pwa-bus-icon, .pwa-stop-icon { background: none !important; border: none !important; }
-.pwa-tooltip {
- background: #fff !important; color: #0f172a !important;
- border: 1px solid #e2e8f0 !important; font-size: 11px !important;
- font-family: -apple-system, sans-serif !important; font-weight: 600 !important;
- border-radius: 0.5rem !important; padding: 4px 8px !important;
- box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
-}
-</style>
+ .pwa-tooltip {
+  background: #fff !important; color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important; font-size: 11px !important;
+  font-family: -apple-system, sans-serif !important; font-weight: 600 !important;
+  border-radius: 0.5rem !important; padding: 4px 8px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+ }
+ .user-gps-marker { position: relative; }
+ .pulse-dot { width: 16px; height: 16px; background: #10b981; border: 2.5px solid white; border-radius: 50%; position: absolute; top: 4px; left: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index: 1000; }
+ .pulse-ring { width: 48px; height: 48px; background: rgba(16, 185, 129, 0.4); border-radius: 50%; position: absolute; top: -12px; left: -12px; animation: pulsate 2s ease-out infinite; }
+ @keyframes pulsate { 0% { transform: scale(0.1); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+ </style>

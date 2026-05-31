@@ -68,6 +68,10 @@ public class SistemaService {
  }).toList();
  }
 
+ public Map<String, Object> planearViagem(String origem, String destino) {
+     return sistema.planearViagem(origem, destino);
+ }
+
  public Map<String, Object> obterDadosDashboard() throws Exception {
  Map<String, Object> dashboard = new java.util.LinkedHashMap<>(sistema.obterDadosDashboard());
 
@@ -202,6 +206,10 @@ public class SistemaService {
 
  public List<String> listarParagens() {
  return sistema.obterTodasParagens();
+ }
+
+ public List<Map<String, Object>> listarParagensComCoordenadas() {
+ return sistema.obterTodasParagensComCoordenadas();
  }
 
  public List<Map<String, Object>> listarAlertasRecentes(int limite) {

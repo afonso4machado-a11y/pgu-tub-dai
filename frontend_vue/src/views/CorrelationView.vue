@@ -216,9 +216,7 @@ function exportCSV() {
  <span class="perfil-count fira-code" :class="{'text-cyan': count > 0}">{{ count }}</span>
  </div>
  </div>
- <p class="simulated-note">
- Dados simulados proporcionalmente às entradas reais. A integração com a API de bilhética (vertical 3.3) substituirá estes valores.
- </p>
+
  </div>
  </div>
  </div>

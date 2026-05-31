@@ -152,10 +152,10 @@ const DEMO_HISTORICO = (() => {
  // Gerar entradas primeiro; saidas e sempre <= entradas
  // (num dia completo, um autocarro que comeca vazio nao pode
  // ter mais saidas do que entradas — conservacao de passageiros)
- const entradas = Math.floor(Math.random() * 200) + 50
- const saidas = Math.floor(Math.random() * (entradas - 10)) + 10
- h[key][a.id] = { entradas, saidas }
- })
+  const entradas = Math.floor(Math.random() * 200) + 50
+  const saidas = entradas // Tens toda a razão, ninguém fica a morar no autocarro!
+  h[key][a.id] = { entradas, saidas }
+  })
  }
  return h
 })()

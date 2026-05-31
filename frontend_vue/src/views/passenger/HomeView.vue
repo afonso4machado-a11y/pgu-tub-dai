@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { Star } from 'lucide-vue-next'
+import { Star, LocateFixed } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { authService } from '../../services/auth'
 
@@ -17,7 +17,28 @@ const destination = ref('')
 const showSuggestions = ref({ origin: false, destination: false })
 const planResult = ref(null)
 
+// Coordenadas Reais guardadas quando clica no GPS
+const userLocation = ref(null)
+
+// Matemática Geoespacial (Haversine)
+function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371e3; // Raio da terra em metros
+  const p1 = lat1 * Math.PI/180; // radianos
+  const p2 = lat2 * Math.PI/180;
+  const dp = (lat2-lat1) * Math.PI/180;
+  const dl = (lon2-lon1) * Math.PI/180;
+  const a = Math.sin(dp/2) * Math.sin(dp/2) +
+            Math.cos(p1) * Math.cos(p2) *
+            Math.sin(dl/2) * Math.sin(dl/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c; 
+}
+
+const paragensGeo = ref([])
 const paragensBraga = ref([])
+const loadingParagens = ref(true)
+
+
 
 const normalize = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
@@ -81,14 +102,125 @@ function selectSuggestion(type, value) {
  showSuggestions.value[type] = false
 }
 
-function handlePlan() {
+async function handlePlan() {
  if (!origin.value || !destination.value) return
- planResult.value = {
- linha: 'L43',
- tempo: '12 min',
- partida: '5 min',
- ocu: 65
- }
+ planResult.value = null // reset
+   let searchOrigin = origin.value
+   let searchDest = destination.value
+   let gpsMsg = ''
+   
+   if (searchDest === 'Localização Atual (GPS)') searchDest = 'Estação C.P.'
+
+   if (searchOrigin === 'Localização Atual (GPS)') {
+      if (userLocation.value) {
+         // Ordenar todas as paragens por distância ao utilizador
+         const paragensOrdenadas = [...paragensGeo.value].map(p => {
+            return {
+               ...p,
+               dist: getDistanceFromLatLonInMeters(
+                  userLocation.value.lat, 
+                  userLocation.value.lng, 
+                  p.lat, 
+                  p.lng
+               )
+            }
+         }).sort((a, b) => a.dist - b.dist)
+
+         // Procurar a paragem MAIS PRÓXIMA que TENHA UMA ROTA DIRETA para o destino
+         let foundValidRoute = null
+         let chosenStop = null
+
+         for (const p of paragensOrdenadas) {
+            try {
+               const { data } = await apiFetch(`/planeamento?origem=${encodeURIComponent(p.nome)}&destino=${encodeURIComponent(searchDest)}`)
+               if (data && data.status === 'sucesso' && data.rota) {
+                  // Encontrou! Esta é a paragem mais próxima que serve para este destino
+                  foundValidRoute = data.rota
+                  chosenStop = p
+                  break
+               }
+            } catch (e) { /* continua a tentar a próxima paragem */ }
+         }
+
+         if (foundValidRoute && chosenStop) {
+            searchOrigin = chosenStop.nome
+            gpsMsg = `A caminhar ${Math.round(chosenStop.dist)}m até à paragem ${chosenStop.nome}.`
+            
+            // Construir resultado imediatamente com a rota encontrada
+            buildPlanResult(foundValidRoute, gpsMsg)
+            return // Terminamos aqui
+         } else {
+            // Nenhuma paragem num raio viável tem ligação direta
+            planResult.value = {
+               linha: '-', tempo: 'Sem rota direta', partida: 'N/A', ocu: 0, error: true,
+               gps: `Estás a ${Math.round(paragensOrdenadas[0]?.dist || 0)}m de uma paragem, mas não há rotas diretas.`
+            }
+            return
+         }
+      } else {
+         searchOrigin = 'Estação C.P.'
+         gpsMsg = "A caminhar até à Estação C.P."
+      }
+   }
+
+   // Lógica Normal (quando o utilizador escreve o nome da Origem à mão)
+   try {
+      const { data } = await apiFetch(`/planeamento?origem=${encodeURIComponent(searchOrigin)}&destino=${encodeURIComponent(searchDest)}`)
+      if (data && data.status === 'sucesso' && data.rota) {
+         buildPlanResult(data.rota, gpsMsg)
+      } else {
+         planResult.value = { linha: '-', tempo: 'Sem rota direta', partida: 'N/A', ocu: 0, error: true, gps: gpsMsg }
+      }
+   } catch (e) {
+      planResult.value = { linha: '-', tempo: 'Sem rota direta', partida: 'N/A', ocu: 0, error: true }
+   }
+}
+
+// Função auxiliar para evitar código duplicado
+function buildPlanResult(rota, gpsMsg) {
+   const agora = new Date()
+   const [h, m, s] = rota.partida.split(':').map(Number)
+   const dataPartida = new Date()
+   dataPartida.setHours(h, m, s || 0)
+   
+   let diffMinutos = Math.floor((dataPartida - agora) / 60000)
+   if (diffMinutos < 0) diffMinutos = 0 
+   
+   planResult.value = {
+      linha: rota.linha_id,
+      tempo: `${rota.tempo_minutos} min`,
+      partida: diffMinutos === 0 ? 'A chegar' : `${diffMinutos} min`,
+      ocu: Math.floor(Math.random() * 40) + 20, 
+      gps: gpsMsg
+   }
+}
+
+const isLocating = ref(false)
+function useMyLocation() {
+ isLocating.value = true
+ origin.value = "A ler GPS do dispositivo..."
+ setTimeout(() => {
+   if (navigator.geolocation) {
+     navigator.geolocation.getCurrentPosition(
+       (pos) => { 
+         // Guardar a localização REAL
+         userLocation.value = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+         origin.value = "Localização Atual (GPS)"
+         isLocating.value = false 
+       },
+       (err) => { 
+         // Em caso de falha/bloqueio, assume coordenadas de simulação no centro de Braga
+         userLocation.value = { lat: 41.5505, lng: -8.4230 }
+         origin.value = "Localização Atual (GPS)" 
+         isLocating.value = false 
+       },
+       { timeout: 10000 } // Sem enableHighAccuracy
+     )
+   } else {
+     alert("Sem suporte a GPS.")
+     isLocating.value = false
+   }
+ }, 600)
 }
 
 const availableLines = [
@@ -216,10 +348,11 @@ onMounted(async () => {
       avgOcc.value = Math.round(data.dashboard?.taxaOcupacaoMedia || 0)
     }
 
-    // Fetch Paragens
+    // Fetch Paragens e Coordenadas
     const { data: pData } = await apiFetch('/paragens')
     if (pData.status === 'sucesso' && pData.paragens?.length > 0) {
-      paragensBraga.value = pData.paragens
+      paragensGeo.value = pData.paragens.filter(p => p.lat !== null && p.lng !== null)
+      paragensBraga.value = pData.paragens.map(p => p.nome)
     } else {
       paragensBraga.value = [
         "S. Mamede d' Este", "Avenida da Liberdade", "Igreja S Lázaro", "Celeirós",
@@ -231,6 +364,9 @@ onMounted(async () => {
       ]
     }
   } catch(e) { /* offline mode */ }
+  finally {
+    loadingParagens.value = false
+  }
   
   await updateProximos()
 })
@@ -299,6 +435,9 @@ function lotLabel(pct) {
  @focus="showSuggestions.origin = true"
  @blur="setTimeout(() => showSuggestions.origin = false, 200)"
  />
+ <button class="locate-btn" @click="useMyLocation" title="Usar Localização Atual">
+   <LocateFixed :size="18" :class="{ 'spin-pulse': isLocating }" />
+ </button>
  </div>
  <div v-if="showSuggestions.origin && suggestions.origin.length" class="suggestions-dropdown">
  <div 
@@ -342,6 +481,10 @@ function lotLabel(pct) {
 
  <!-- Resultado do Planeamento -->
  <div v-if="planResult" class="holiday-plan-result fade-in">
+ <div v-if="planResult.gps" class="gps-instruction">
+   <LocateFixed :size="16" />
+   <span>{{ planResult.gps }}</span>
+ </div>
  <div class="result-header">
  <span class="res-linha">{{ planResult.linha }}</span>
  <span class="res-msg">Melhor opção encontrada</span>
@@ -452,6 +595,10 @@ function lotLabel(pct) {
  font-size: 0.95rem; color: var(--text-main); background: transparent; outline: none;
 }
 .planner-field::placeholder { color: var(--text-muted); }
+.locate-btn { background: none; border: none; padding: 0 8px; color: #0284c7; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.locate-btn:active { transform: scale(0.9); }
+.spin-pulse { animation: spinPulse 1s ease-in-out infinite; }
+@keyframes spinPulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.8); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
 .planner-divider { width: 1px; height: 16px; background: #e2e8f0; margin-left: 5px; }
 .btn-plan {
  width: 100%; padding: 0.85rem; border: none; border-radius: 0.75rem;
@@ -488,8 +635,21 @@ function lotLabel(pct) {
 .res-msg { font-size: 0.85rem; font-weight: 700; color: #0369a1; }
 .result-body { display: flex; gap: 1rem; }
 .res-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: #0c4a6e; }
-.res-item strong { color: #0c4a6e; font-weight: 800; }
+.res-item strong { color: #0f172a; font-weight: 700; font-size: 1.1rem; }
 
+.gps-instruction {
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  border: 1px solid #bae6fd;
+}
 
 /* Section */
 .section { margin-bottom: 1.75rem; }

@@ -36,4 +36,22 @@ public class RepositorioParagens {
  }
  return new ArrayList<>(paragens);
  }
+
+ public List<Map<String, Object>> listarTodasComCoordenadas() {
+     List<Map<String, Object>> lista = new ArrayList<>();
+     try (Connection conn = DatabaseConnection.obterConexao();
+          PreparedStatement ps = conn.prepareStatement("SELECT nome, latitude, longitude FROM paragens ORDER BY nome");
+          ResultSet rs = ps.executeQuery()) {
+         while (rs.next()) {
+             Map<String, Object> map = new HashMap<>();
+             map.put("nome", rs.getString("nome"));
+             map.put("lat", rs.getObject("latitude"));
+             map.put("lng", rs.getObject("longitude"));
+             lista.add(map);
+         }
+     } catch (SQLException e) {
+         System.err.println("Erro ao carregar paragens com coordenadas: " + e.getMessage());
+     }
+     return lista;
+ }
 }

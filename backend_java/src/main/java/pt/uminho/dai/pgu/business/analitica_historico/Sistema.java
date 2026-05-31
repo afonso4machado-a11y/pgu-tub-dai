@@ -26,6 +26,7 @@ public class Sistema {
  private final RepositorioLinhas repositorioLinhas;
  private final RepositorioParagens repositorioParagens;
  private final RepositorioCorrelacao repositorioCorrelacao;
+ private final RepositorioPlaneamento repositorioPlaneamento;
  private final ThresholdsAlerta thresholdsAlerta;
 
  private Map<String, Object> dashboardCache = null;
@@ -45,6 +46,7 @@ public class Sistema {
  this.repositorioLinhas = new RepositorioLinhas();
  this.repositorioParagens = new RepositorioParagens();
  this.repositorioCorrelacao = new RepositorioCorrelacao();
+ this.repositorioPlaneamento = new RepositorioPlaneamento();
  this.thresholdsAlerta = thresholdsAlerta;
  }
 
@@ -60,6 +62,7 @@ public class Sistema {
  this.repositorioLinhas = new RepositorioLinhas();
  this.repositorioParagens = new RepositorioParagens();
  this.repositorioCorrelacao = new RepositorioCorrelacao();
+ this.repositorioPlaneamento = new RepositorioPlaneamento();
  this.thresholdsAlerta = thresholdsAlerta;
  }
 
@@ -80,6 +83,12 @@ public class Sistema {
 
  public void registarLinha(String id, String nome) {
  repositorioLinhas.guardar(new Linha(id, nome));
+ }
+
+ public Map<String, Object> planearViagem(String origem, String destino) {
+     // A hora atual pode ser convertida para formato TIME do MySQL (HH:mm:ss)
+     String horaAtual = LocalDateTime.now().toLocalTime().withNano(0).toString();
+     return repositorioPlaneamento.encontrarProximaViagem(origem, destino, horaAtual);
  }
 
  public Optional<Cliente> loginCliente(String email, String password) {
@@ -339,6 +348,10 @@ public class Sistema {
 
  public List<String> obterTodasParagens() {
  return repositorioParagens.listarTodas();
+ }
+
+ public List<Map<String, Object>> obterTodasParagensComCoordenadas() {
+ return repositorioParagens.listarTodasComCoordenadas();
  }
 
  public Map<String, Map<String, Map<String, Integer>>> obterHistoricoPorDia() {
