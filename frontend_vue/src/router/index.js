@@ -8,6 +8,7 @@ import TicketingView from '../views/TicketingView.vue'
 import OccupancyView from '../views/OccupancyView.vue'
 import CorrelationView from '../views/CorrelationView.vue'
 import AlertsCenterView from '../views/AlertsCenterView.vue'
+import HistoricoView from '../views/admin/HistoricoView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import ValidadorView from '../views/ValidadorView.vue'
 
@@ -87,6 +88,12 @@ const router = createRouter({
       path: '/validador',
       name: 'validador',
       component: ValidadorView,
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/historico',
+      name: 'historico',
+      component: HistoricoView,
       meta: { requiresAdmin: true }
     },
 

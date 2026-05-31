@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { Search, Bus, Info, AlertTriangle, Activity, ShieldCheck, Trash2, RotateCcw } from 'lucide-vue-next'
 
 import { apiFetch } from '../services/api.js'
+import { auditLogger } from '../services/auditLogger.js'
 const apiUrl = '/api'
 const autoId = ref('')
 const autoCap = ref('')
@@ -142,27 +143,29 @@ async function handleRegistarAutocarro() {
  const res = await req.json()
  
  if (res.status === 'sucesso') {
- let finalMsg = res.mensagem
- if (autoLinha.value.trim()) {
- try {
- const reqLinha = await fetch(`${apiUrl}/linhas/${autoLinha.value.trim()}/autocarros`, {
- method: 'POST', headers: {'Content-Type': 'application/json'},
- body: JSON.stringify({ 
- autocarroId: autoId.value.trim(),
- linhaId: autoLinha.value.trim()
- })
- })
- const resLinha = await reqLinha.json()
- if (resLinha.status === 'sucesso') {
- finalMsg += ` E associado à linha ${autoLinha.value} com sucesso!`
- } else {
- finalMsg += ` Porém, falhou a associar à linha: ${resLinha.mensagem}`
- }
- } catch(e) {
- finalMsg += ` Porém, falhou a comunicação para associar à linha.`
- }
- }
- alert(finalMsg)
+  auditLogger.logAction('ADICIONAR_AUTOCARRO', `Adicionado autocarro ID: ${autoId.value.trim()} (Matrícula: ${autoMatricula.value.trim().toUpperCase()}, Lotação: ${autoCap.value})`);
+  let finalMsg = res.mensagem
+  if (autoLinha.value.trim()) {
+  try {
+  const reqLinha = await fetch(`${apiUrl}/linhas/${autoLinha.value.trim()}/autocarros`, {
+  method: 'POST', headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({ 
+  autocarroId: autoId.value.trim(),
+  linhaId: autoLinha.value.trim()
+  })
+  })
+  const resLinha = await reqLinha.json()
+  if (resLinha.status === 'sucesso') {
+  auditLogger.logAction('ASSOCIAR_AUTOCARRO_LINHA', `Associado autocarro ID: ${autoId.value.trim()} à linha ${autoLinha.value.trim()}`);
+  finalMsg += ` E associado à linha ${autoLinha.value} com sucesso!`
+  } else {
+  finalMsg += ` Porém, falhou a associar à linha: ${resLinha.mensagem}`
+  }
+  } catch(e) {
+  finalMsg += ` Porém, falhou a comunicação para associar à linha.`
+  }
+  }
+  alert(finalMsg)
  } else {
  alert(res.mensagem)
  }
@@ -232,6 +235,7 @@ async function handleEliminarAutocarro() {
  const res = await req.json()
  deleteFeedback.value = { ok: res.status === 'sucesso', msg: res.mensagem }
  if (res.status === 'sucesso') {
+ auditLogger.logAction('ELIMINAR_AUTOCARRO', `Eliminado autocarro ID: ${id}`);
  deleteId.value = ''
  await loadEliminados()
  }
@@ -245,6 +249,7 @@ async function handleRestaurarAutocarro(id) {
  const req = await fetch(`${apiUrl}/autocarros/${encodeURIComponent(id)}/restaurar`, { method: 'POST' })
  const res = await req.json()
  if (res.status === 'sucesso') {
+ auditLogger.logAction('RESTAURAR_AUTOCARRO', `Restaurado autocarro ID: ${id}`);
  await loadEliminados()
  deleteFeedback.value = { ok: true, msg: `Autocarro ${id} restaurado com sucesso.` }
  } else {
@@ -340,7 +345,7 @@ async function loadEliminados() {
    <option value="Estudante">Estudante</option>
    <option value="Sénior">Sénior</option>
    <option value="Passe Normal">Passe Normal</option>
-   <option value="Zapping">Zapping</option>
+   <option value="Avulso">Avulso</option>
  </select>
  </div>
  

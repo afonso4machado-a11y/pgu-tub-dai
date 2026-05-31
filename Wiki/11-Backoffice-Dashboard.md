@@ -78,8 +78,8 @@ A `CorrelationView` cruza dados de lotação IoT com dados de horários GTFS.
 
 ### Análise de Bilhética
 O `TicketingView.vue` foca-se nos aspetos financeiros e baseados em perfis da rede.
-* **Distribuição de Perfis**: Usa `Chart.js` (Bar e Doughnut) para visualizar o peso dos diferentes tipos de bilhete (Zapping, 4_18, Senior, etc.) [frontend_vue/src/views/TicketingView.vue:51-77]().
-* **Estimativa de Receita**: Calcula a receita estimada com base num valor médio simulado de €1,30 por validação Zapping [frontend_vue/src/views/TicketingView.vue:39-43]().
+* **Distribuição de Perfis**: Usa `Chart.js` (Bar e Doughnut) para visualizar o peso dos diferentes tipos de bilhete (Avulso, 4_18, Senior, etc.) [frontend_vue/src/views/TicketingView.vue:51-77]().
+* **Estimativa de Receita**: Calcula a receita estimada com base num valor médio simulado de €1,30 por validação Avulso [frontend_vue/src/views/TicketingView.vue:39-43]().
 
 ### Mapa de Associação de Componentes
 Title: Backoffice View to Backend Endpoint Mapping

@@ -30,7 +30,7 @@ public class RegistarLeituraDTO {
   private int saidas;
 
   @NotBlank(message = "Tipo de passageiro é obrigatório.")
-  @Pattern(regexp = "^(Estudante|Sénior|Passe Normal|Zapping)$", message = "Tipo de passageiro inválido. Escolha entre Estudante, Sénior, Passe Normal ou Zapping.")
+  @Pattern(regexp = "^(Estudante|Sénior|Passe Normal|Avulso)$", message = "Tipo de passageiro inválido. Escolha entre Estudante, Sénior, Passe Normal ou Avulso.")
   private String tipoPassageiro;
 
   public String getId() { return id; }

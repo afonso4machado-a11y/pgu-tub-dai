@@ -5,6 +5,7 @@ import { useTheme } from '../composables/useTheme'
 import { authService } from '../services/auth'
 import { demoModeRef, toggleDemoMode } from '../services/api'
 import { useSidebar } from '../composables/useSidebar'
+import { auditLogger } from '../services/auditLogger.js'
 
 const adminUser = ref(null)
 const { currentTheme, setTheme } = useTheme()
@@ -21,8 +22,9 @@ function handleToggleDemo() {
  toggleDemoMode()
 }
 
-function handleLogout() {
- authService.logoutAdmin()
+async function handleLogout() {
+  await auditLogger.sendBatch()
+  authService.logoutAdmin()
 }
 </script>
 

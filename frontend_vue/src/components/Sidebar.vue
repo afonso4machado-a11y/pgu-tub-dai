@@ -11,6 +11,7 @@ const menuItems = [
   { id: 'correlation', path: '/correlation', label: 'Correlação' },
   { id: 'alerts', path: '/alerts', label: 'Central Alertas' },
   { id: 'fleet', path: '/fleet', label: 'Gestão de Frota' },
+  { id: 'historico', path: '/historico', label: 'Histórico' },
 ]
 </script>
 

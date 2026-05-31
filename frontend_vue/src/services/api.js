@@ -132,11 +132,11 @@ const DEMO_CORRELACAO = {
  // Total entradas: 3995 | Total saidas: 3255
  ],
  bilheticaSimulada: {
- // Base: 3995 passageiros | Estudante=35% Sénior=20% Passe Normal=30% Zapping=resto
+ // Base: 3995 passageiros | Estudante=35% Sénior=20% Passe Normal=30% Avulso=resto
  'Estudante': 1398,   // Math.round(3995 * 0.35)
  'Sénior': 799,       // Math.round(3995 * 0.20)
  'Passe Normal': 1199, // Math.round(3995 * 0.30)
- 'Zapping': 599,      // 3995 - 1398 - 799 - 1199 (resto: garante soma exacta = 3995)
+ 'Avulso': 599,      // 3995 - 1398 - 799 - 1199 (resto: garante soma exacta = 3995)
  },
 }
 

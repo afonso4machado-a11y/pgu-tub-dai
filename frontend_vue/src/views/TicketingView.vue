@@ -35,11 +35,11 @@ const totalValidacoes = computed(() => {
  return Object.values(bilhetica.value).reduce((s, v) => s + v, 0)
 })
 
-// Receita estimada (simulada: média €1.30 por zapping/digital)
+// Receita estimada (simulada: média €1.30 por avulso/digital)
 const receitaEstimada = computed(() => {
  if (!bilhetica.value) return '0.00'
- const zapping = bilhetica.value['Zapping'] || 0
- return (zapping * 1.30).toFixed(2)
+ const avulso = bilhetica.value['Avulso'] || 0
+ return (avulso * 1.30).toFixed(2)
 })
 
 // Anomalias (proporção simulada)
@@ -115,7 +115,7 @@ function exportCSV() {
  })
  lines.push('')
  lines.push(`Total;${total};100%`)
- lines.push(`Receita Estimada (Zapping);€${receitaEstimada.value};`)
+ lines.push(`Receita Estimada (Avulso);€${receitaEstimada.value};`)
  const csv = lines.join('\n')
  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
  const url = URL.createObjectURL(blob)
@@ -158,7 +158,7 @@ function exportCSV() {
  <div class="metric-icon teal"><CreditCard :size="24" /></div>
  <div class="metric-data">
  <span class="m-val fira-code text-teal">€ {{ receitaEstimada }}</span>
- <span class="m-label">Receita Estimada (Zapping)</span>
+ <span class="m-label">Receita Estimada (Avulso)</span>
  </div>
  </div>
  <div class="glass-panel metric-box">

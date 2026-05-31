@@ -387,7 +387,7 @@ public class Sistema {
     bilheticaSimulada.put("Estudante", 0);
     bilheticaSimulada.put("Sénior", 0);
     bilheticaSimulada.put("Passe Normal", 0);
-    bilheticaSimulada.put("Zapping", 0);
+    bilheticaSimulada.put("Avulso", 0);
   }
 
  // 5. Métricas de Correlação Calculadas 

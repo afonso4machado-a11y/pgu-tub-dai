@@ -52,6 +52,18 @@ import java.util.UUID;
 public class PaymentController {
 
  private final RepositorioBilhetes repositorioBilhetes = new RepositorioBilhetes();
+ private final Map<String, List<Long>> rateLimits = new java.util.concurrent.ConcurrentHashMap<>();
+
+ private boolean isRateLimited(String identifier) {
+  long now = System.currentTimeMillis();
+  List<Long> timestamps = rateLimits.computeIfAbsent(identifier, k -> new java.util.concurrent.CopyOnWriteArrayList<>());
+  timestamps.removeIf(t -> now - t > 60000);
+  if (timestamps.size() >= 5) {
+   return true;
+  }
+  timestamps.add(now);
+  return false;
+ }
 
  /** Preços canónicos (fonte única de verdade — nunca confiar no frontend) */
  private static final Map<String, TicketConfig> TICKET_CATALOG = Map.of(
@@ -76,50 +88,127 @@ public class PaymentController {
  // 
 
  @PostMapping("/create-intent")
- public ResponseEntity<?> createPaymentIntent(@Valid @RequestBody CreateIntentRequest req) {
- TicketConfig config = TICKET_CATALOG.get(req.tipoId());
- if (config == null) {
- return ResponseEntity.badRequest()
- .body(Map.of("status", "erro", "mensagem", "Tipo de bilhete invalido."));
- }
+ public ResponseEntity<?> createPaymentIntent(
+      HttpServletRequest request,
+      @Valid @RequestBody CreateIntentRequest req) {
+  
+  // Rate-limiting check
+  String ip = request.getRemoteAddr();
+  if (isRateLimited(req.clienteId()) || isRateLimited(ip)) {
+   return ResponseEntity.status(429)
+     .body(Map.of("status", "erro", "mensagem", "Muitas tentativas de pagamento. Aguarde um minuto."));
+  }
 
- try {
- PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
- .setAmount(config.preco().multiply(new BigDecimal("100")).longValue()) // centavos
- .setCurrency("eur")
- .putMetadata("tipo_id", req.tipoId())
- .putMetadata("nome_tipo", config.nomeTipo())
- .putMetadata("cliente_id", req.clienteId())
- .setAutomaticPaymentMethods(
- PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
- .setEnabled(true)
- .build()
- )
- .build();
+  // Validate client
+  RepositorioClientes repoClientes = new RepositorioClientes();
+  if (repoClientes.procurarPorId(req.clienteId()).isEmpty()) {
+   return ResponseEntity.status(401)
+     .body(Map.of("status", "erro", "mensagem", "Cliente inválido ou não encontrado."));
+  }
 
- PaymentIntent intent = PaymentIntent.create(params);
+  TicketConfig config = TICKET_CATALOG.get(req.tipoId());
+  if (config == null) {
+  return ResponseEntity.badRequest()
+  .body(Map.of("status", "erro", "mensagem", "Tipo de bilhete invalido."));
+  }
 
- return ResponseEntity.ok(Map.of(
- "clientSecret", intent.getClientSecret(),
- "paymentIntentId", intent.getId(),
- "amount", config.preco(),
- "nomeTipo", config.nomeTipo()
- ));
- } catch (StripeException e) {
- System.err.println("[Stripe] Erro ao criar PaymentIntent: " + e.getMessage());
- String msg = "Erro ao inicializar pagamento. Tente novamente.";
- if (e.getMessage() != null) {
- if (e.getMessage().contains("Invalid API Key")) {
- msg = "Erro: A Chave Secreta do Stripe nao e valida.";
- } else {
- // Retorna a mensagem original para facilitar debug
- msg = "Erro Stripe: " + e.getMessage().split(";")[0]; 
- }
- }
- return ResponseEntity.internalServerError()
- .body(Map.of("status", "erro", "mensagem", msg));
- }
- }
+  try {
+  PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
+  .setAmount(config.preco().multiply(new BigDecimal("100")).longValue()) // centavos
+  .setCurrency("eur")
+  .putMetadata("tipo_id", req.tipoId())
+  .putMetadata("nome_tipo", config.nomeTipo())
+  .putMetadata("cliente_id", req.clienteId())
+  .setAutomaticPaymentMethods(
+  PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
+  .setEnabled(true)
+  .build()
+  )
+  .build();
+
+  PaymentIntent intent = PaymentIntent.create(params);
+
+  return ResponseEntity.ok(Map.of(
+  "clientSecret", intent.getClientSecret(),
+  "paymentIntentId", intent.getId(),
+  "amount", config.preco(),
+  "nomeTipo", config.nomeTipo()
+  ));
+  } catch (StripeException e) {
+  System.err.println("[Stripe] Erro ao criar PaymentIntent: " + e.getMessage());
+  String msg = "Erro ao inicializar pagamento. Tente novamente.";
+  if (e.getMessage() != null) {
+  if (e.getMessage().contains("Invalid API Key")) {
+  msg = "Erro: A Chave Secreta do Stripe nao e valida.";
+  } else {
+  // Retorna a mensagem original para facilitar debug
+  msg = "Erro Stripe: " + e.getMessage().split(";")[0]; 
+  }
+  }
+  return ResponseEntity.internalServerError()
+  .body(Map.of("status", "erro", "mensagem", msg));
+  }
+  }
+
+  //
+  // 1.5. Simular Pagamento Fallback (Mock)
+  //
+  @PostMapping("/simulate")
+  public ResponseEntity<?> simulatePayment(
+      HttpServletRequest request,
+      @Valid @RequestBody CreateIntentRequest req) {
+  
+  // Rate-limiting check
+  String ip = request.getRemoteAddr();
+  if (isRateLimited(req.clienteId()) || isRateLimited(ip)) {
+   return ResponseEntity.status(429)
+     .body(Map.of("status", "erro", "mensagem", "Muitas tentativas de pagamento. Aguarde um minuto."));
+  }
+
+  // Validate client
+  RepositorioClientes repoClientes = new RepositorioClientes();
+  if (repoClientes.procurarPorId(req.clienteId()).isEmpty()) {
+   return ResponseEntity.status(401)
+     .body(Map.of("status", "erro", "mensagem", "Cliente inválido ou não encontrado."));
+  }
+
+  // Validate ticket type
+  TicketConfig config = TICKET_CATALOG.get(req.tipoId());
+  if (config == null) {
+   return ResponseEntity.badRequest()
+     .body(Map.of("status", "erro", "mensagem", "Tipo de bilhete inválido."));
+  }
+
+  String mockIntentId = "mock_intent_" + UUID.randomUUID().toString().substring(0, 18);
+  
+  LocalDateTime now = LocalDateTime.now();
+  LocalDateTime validade = config.diasValidade() > 0
+      ? now.plusDays(config.diasValidade())
+      : now.plusHours(2);
+      
+  Bilhete bilhete = new Bilhete(
+      UUID.randomUUID().toString(),
+      req.clienteId(),
+      req.tipoId(),
+      config.nomeTipo(),
+      now,
+      validade,
+      "Ativo",
+      config.preco(),
+      mockIntentId
+  );
+
+  repositorioBilhetes.guardar(bilhete);
+  System.out.println("[Simulado] Bilhete emitido: " + bilhete.getId() + " para cliente " + req.clienteId());
+
+  return ResponseEntity.ok(Map.of(
+      "status", "sucesso",
+      "ticketId", bilhete.getId(),
+      "paymentIntentId", mockIntentId,
+      "amount", config.preco(),
+      "nomeTipo", config.nomeTipo()
+  ));
+  }
 
  // 
  // 2. Webhook Stripe — payment_intent.succeeded → emite bilhete
@@ -130,7 +219,11 @@ public class PaymentController {
  HttpServletRequest request,
  @RequestBody String payload) throws IOException {
 
- String sigHeader = request.getHeader("Stripe-Signature");
+  String sigHeader = request.getHeader("Stripe-Signature");
+  if (sigHeader == null || sigHeader.isBlank()) {
+   System.err.println("[Stripe] Cabecalho Stripe-Signature em falta no webhook.");
+   return ResponseEntity.status(400).body("Cabecalho de assinatura ausente.");
+  }
  String webhookSecret = pt.uminho.dai.pgu.data.DatabaseConnection.getEnv("STRIPE_WEBHOOK_SECRET", "");
 
  if (webhookSecret == null || webhookSecret.isBlank() || webhookSecret.startsWith("insira_aqui") || webhookSecret.startsWith("whsec_example")) {
@@ -164,6 +257,13 @@ public class PaymentController {
 
  @GetMapping("/bilhetes/{clienteId}")
  public ResponseEntity<?> listarBilhetes(@PathVariable String clienteId) {
+  // Validate client
+  RepositorioClientes repoClientes = new RepositorioClientes();
+  if (repoClientes.procurarPorId(clienteId).isEmpty()) {
+   return ResponseEntity.status(401)
+     .body(Map.of("status", "erro", "mensagem", "Cliente inválido ou não encontrado."));
+  }
+  
  List<Bilhete> bilhetes = repositorioBilhetes.listarPorCliente(clienteId);
  return ResponseEntity.ok(Map.of("status", "sucesso", "bilhetes", bilhetes));
  }
@@ -189,6 +289,15 @@ public class PaymentController {
  "dataCompra", b.getDataCompra().toString()
  ));
  }
+
+  // Se for intenção simulada e não estiver na BD, não consultar Stripe
+  if (paymentIntentId != null && paymentIntentId.startsWith("mock_intent_")) {
+   return ResponseEntity.ok(Map.of(
+       "status", "sucesso",
+       "pago", false,
+       "stripeStatus", "canceled"
+   ));
+  }
 
  // 2. Consultar Stripe diretamente (fonte de verdade)
  try {

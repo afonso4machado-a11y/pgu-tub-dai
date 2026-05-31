@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS leituras (
     entradas INT NOT NULL,
     saidas INT NOT NULL,
     timestamp DATETIME NOT NULL,
-    tipo_passageiro VARCHAR(50) NULL, -- 'Estudante', 'Sénior', 'Passe Normal', 'Zapping'
+    tipo_passageiro VARCHAR(50) NULL, -- 'Estudante', 'Sénior', 'Passe Normal', 'Avulso'
     FOREIGN KEY (autocarro_id) REFERENCES autocarros(id)
 );
 
@@ -165,3 +165,21 @@ CREATE TABLE IF NOT EXISTS linhas_favoritas (
     PRIMARY KEY (cliente_id, linha_id),
     FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
 );
+
+-- ==============================================
+-- AUDIT TRAIL: REGISTO DE AÇÕES DO BACKOFFICE
+-- ==============================================
+CREATE TABLE IF NOT EXISTS registo_acoes_backoffice (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    session_id VARCHAR(255) NOT NULL,
+    utilizador_email VARCHAR(255) NOT NULL,
+    utilizador_nome VARCHAR(255) NOT NULL,
+    acao_tipo VARCHAR(100) NOT NULL,
+    detalhes TEXT NOT NULL,
+    timestamp DATETIME NOT NULL
+);
+
+CREATE INDEX idx_registo_email ON registo_acoes_backoffice(utilizador_email);
+CREATE INDEX idx_registo_acao_tipo ON registo_acoes_backoffice(acao_tipo);
+CREATE INDEX idx_registo_timestamp ON registo_acoes_backoffice(timestamp);
+

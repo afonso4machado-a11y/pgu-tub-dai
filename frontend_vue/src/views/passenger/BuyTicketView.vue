@@ -13,6 +13,7 @@ const step = ref('select')
 const selectedId = ref('simples')
 const isProcessing = ref(false)
 const errorMessage = ref('')
+const isSimulatedMode = ref(false)
 
 let stripe = null
 let elements = null
@@ -28,6 +29,9 @@ const formattedPrice = computed(() => selected.value?.price.toFixed(2).replace('
 const ctaLabel = computed(() => {
  if (isProcessing.value) return ''
  const price = selected.value?.price.toFixed(2).replace('.', ',')
+ if (isSimulatedMode.value) {
+   return `Demonstrar Pagamento Simulado`
+ }
  return `Pagar ${price} EUR`
 })
 
@@ -38,16 +42,23 @@ const PENDING_KEY = `pgu_pending_intent_${user?.id || 'anon'}`
 
 onMounted(async () => {
   const key = import.meta.env.VITE_STRIPE_PUBLIC_KEY
-  if (!key) {
+  const isPlaceholder = !key || key.includes('placeholder') || key.includes('example') || key.startsWith('insira_aqui')
+  
+  if (isPlaceholder) {
     stripe = null
-    errorMessage.value = 'O servico de pagamentos esta indisponivel de momento (chave publica nao configurada).'
+    isSimulatedMode.value = true
+    console.log('[Stripe] Chave publica em falta ou placeholder. Ativando modo de simulacao de pagamento.')
   } else {
     try {
       stripe = await loadStripe(key)
+      if (!stripe) {
+        isSimulatedMode.value = true
+        console.warn('[Stripe] Falha ao carregar Stripe.js. Ativando modo de simulacao de pagamento.')
+      }
     } catch (e) {
       console.error('Erro ao carregar Stripe: ' + e.message)
       stripe = null
-      errorMessage.value = 'Erro ao inicializar o processador de pagamentos.'
+      isSimulatedMode.value = true
     }
   }
 
@@ -85,10 +96,13 @@ const goBack = () => {
 const goToCheckout = async () => {
  step.value = 'checkout'
  errorMessage.value = ''
- await mountStripeElements()
+ if (!isSimulatedMode.value) {
+   await mountStripeElements()
+ }
 }
 
 const mountStripeElements = async () => {
+ if (isSimulatedMode.value) return
  if (!stripe) {
  errorMessage.value = 'O sistema de pagamento ainda nao carregou. Aguarde uns segundos e tente novamente.'
  return
@@ -149,6 +163,61 @@ const mountStripeElements = async () => {
  errorMessage.value = msg || 'Nao foi possivel inicializar o pagamento. Tente novamente.'
  }
  // Manter o utilizador no checkout (nao volta para select)
+ } finally {
+ isProcessing.value = false
+ }
+}
+
+const retryPaymentInit = async () => {
+ errorMessage.value = ''
+ if (!isSimulatedMode.value) {
+   await mountStripeElements()
+ }
+}
+
+const handlePay = async () => {
+ if (isSimulatedMode.value) {
+   await paySimulated()
+ } else {
+   await pay()
+ }
+}
+
+const paySimulated = async () => {
+ isProcessing.value = true
+ errorMessage.value = ''
+ step.value = 'processing'
+
+ try {
+ const res = await fetch('/api/payments/simulate', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ tipoId: selectedId.value, clienteId: user?.id || 'anonimo' })
+ })
+ if (!res.ok) {
+ let errMsg = 'Erro ao processar simulacao de pagamento.'
+ try { const e = await res.json(); errMsg = e.mensagem || errMsg } catch (_) {}
+ throw new Error(errMsg)
+ }
+ const payload = await res.json()
+ const { paymentIntentId } = payload
+
+ // Guardar o paymentIntentId para uso na confirmacao e verificacao posterior
+ sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+ paymentIntentId: paymentIntentId,
+ tipoId: selectedId.value,
+ nomeTipo: selected.value?.name,
+ preco: selected.value?.price,
+ ts: Date.now(),
+ simulated: true
+ }))
+
+ // Simular atraso de rede breve para maior realismo e feedback premium
+ await new Promise(resolve => setTimeout(resolve, 1200))
+ step.value = 'success'
+ } catch (e) {
+ errorMessage.value = e.message || 'Erro inesperado na simulacao.'
+ step.value = 'checkout'
  } finally {
  isProcessing.value = false
  }
@@ -256,22 +325,58 @@ const pay = async () => {
  <div class="os-price">{{ selected?.price.toFixed(2).replace('.', ',') }} EUR</div>
  </div>
 
- <!-- Stripe Payment Element -->
+ <!-- Stripe Payment Element / Fallback Simulation Form -->
  <div class="payment-card">
  <div class="pc-title">
- <span>Dados de Pagamento</span>
+ <span>{{ isSimulatedMode ? 'Simulação de Pagamento' : 'Dados de Pagamento' }}</span>
  </div>
 
- <div v-if="isProcessing && !errorMessage" class="stripe-loading">
+ <div v-if="isProcessing && !errorMessage && !isSimulatedMode" class="stripe-loading">
  <Loader2 class="spin" :size="28" />
  <span>A preparar pagamento seguro...</span>
  </div>
 
- <div v-show="!isProcessing && !errorMessage" ref="stripeContainer" class="stripe-mount"></div>
+ <!-- Real Stripe form -->
+ <div v-show="!isProcessing && !errorMessage && !isSimulatedMode" ref="stripeContainer" class="stripe-mount"></div>
+
+ <!-- Simulated Fallback Form -->
+ <div v-if="isSimulatedMode && !errorMessage" class="simulated-payment-form">
+   <div class="sim-badge">
+     <span class="sim-dot"></span>
+     <span>MODO DE DEMONSTRAÇÃO ATIVO</span>
+   </div>
+   <p class="sim-info-text">
+     O processador Stripe está inativo ou offline. Pode testar o fluxo completo de compra simulando um pagamento seguro de teste.
+   </p>
+   
+   <div class="sim-form-group">
+     <label class="sim-label">Nome do Titular (Simulado)</label>
+     <input type="text" class="sim-input" :value="user?.nome || 'Passageiro TUB'" disabled />
+   </div>
+   
+   <div class="sim-form-group">
+     <label class="sim-label">Número do Cartão de Simulação</label>
+     <div class="sim-card-input-wrapper">
+       <input type="text" class="sim-input card-number" value="4242 4242 4242 4242" disabled />
+       <span class="sim-card-brand">VISA (TESTE)</span>
+     </div>
+   </div>
+   
+   <div class="sim-form-row">
+     <div class="sim-form-group">
+       <label class="sim-label">Validade</label>
+       <input type="text" class="sim-input" value="12 / 29" disabled />
+     </div>
+     <div class="sim-form-group">
+       <label class="sim-label">CVC / CVV</label>
+       <input type="text" class="sim-input" value="123" disabled />
+     </div>
+   </div>
+ </div>
 
  <div v-if="errorMessage" class="pay-error">
  {{ errorMessage }}
- <button class="retry-btn" @click="mountStripeElements">Tentar novamente</button>
+ <button class="retry-btn" @click="retryPaymentInit">Tentar novamente</button>
  </div>
  </div>
 
@@ -282,7 +387,7 @@ const pay = async () => {
 
  <!-- CTA -->
  <div class="checkout-footer">
- <button v-if="!errorMessage" class="cta-btn" :disabled="isProcessing" @click="pay">
+ <button v-if="!errorMessage" class="cta-btn" :disabled="isProcessing" @click="handlePay">
  <Loader2 v-if="isProcessing" class="spin" :size="20" />
  <template v-else>
  {{ ctaLabel }}
@@ -605,4 +710,89 @@ const pay = async () => {
 .sr-row:last-child { border-bottom: none; }
 .sr-row strong { color: var(--text-main); }
 .sr-active { color: var(--success) !important; }
+
+/* -- Simulated Form Styles --------------------------------------------- */
+.simulated-payment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 0 0;
+}
+.sim-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(6, 182, 212, 0.08);
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  color: var(--accent-blue);
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  width: fit-content;
+}
+.sim-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--accent-blue);
+  box-shadow: 0 0 8px var(--accent-blue);
+  animation: pulse-glow 1.5s infinite ease-in-out;
+}
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.sim-info-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0 0 4px;
+}
+.sim-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sim-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.sim-input {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  color: var(--text-main);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  opacity: 0.85;
+}
+.sim-card-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.sim-card-brand {
+  position: absolute;
+  right: 14px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent-blue);
+  background: rgba(6, 182, 212, 0.08);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(6, 182, 212, 0.2);
+}
+.sim-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
 </style>
