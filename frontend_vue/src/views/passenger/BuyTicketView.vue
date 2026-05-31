@@ -42,25 +42,24 @@ const SESSION_KEY = `pgu_payment_done_${user?.id || 'anon'}`
 const PENDING_KEY = `pgu_pending_intent_${user?.id || 'anon'}`
 
 onMounted(async () => {
-  const key = import.meta.env.VITE_STRIPE_PUBLIC_KEY
+  let key = import.meta.env.VITE_STRIPE_PUBLIC_KEY
   const isPlaceholder = !key || key.includes('placeholder') || key.includes('example') || key.startsWith('insira_aqui')
   
   if (isPlaceholder) {
+    // Fallback à chave pública real para garantir funcionamento no Azure
+    key = 'pk_test_51TV9cB2Zu827UzcHZ0e3PHKZLWVChT3Vag39Mkv4bsXj6B4C4g6POPhGSps7AovYNYpHZg39uoendvmZBYZKeJCa0079Gpuisx'
+  }
+
+  try {
+    stripe = await loadStripe(key)
+    if (!stripe) {
+      isSimulatedMode.value = true
+      console.warn('[Stripe] Falha ao carregar Stripe.js. Ativando modo de simulacao de pagamento.')
+    }
+  } catch (e) {
+    console.error('Erro ao carregar Stripe: ' + e.message)
     stripe = null
     isSimulatedMode.value = true
-    console.log('[Stripe] Chave publica em falta ou placeholder. Ativando modo de simulacao de pagamento.')
-  } else {
-    try {
-      stripe = await loadStripe(key)
-      if (!stripe) {
-        isSimulatedMode.value = true
-        console.warn('[Stripe] Falha ao carregar Stripe.js. Ativando modo de simulacao de pagamento.')
-      }
-    } catch (e) {
-      console.error('Erro ao carregar Stripe: ' + e.message)
-      stripe = null
-      isSimulatedMode.value = true
-    }
   }
 
  // Proteccao anti-"Voltar" no browser:
