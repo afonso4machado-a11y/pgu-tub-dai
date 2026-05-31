@@ -14,6 +14,7 @@ const selectedId = ref('simples')
 const isProcessing = ref(false)
 const errorMessage = ref('')
 const isSimulatedMode = ref(false)
+const simulatedTab = ref('card')
 
 let stripe = null
 let elements = null
@@ -341,38 +342,85 @@ const pay = async () => {
 
  <!-- Simulated Fallback Form -->
  <div v-if="isSimulatedMode && !errorMessage" class="simulated-payment-form">
-   <div class="sim-badge">
-     <span class="sim-dot"></span>
-     <span>MODO DE DEMONSTRAÇÃO ATIVO</span>
-   </div>
-   <p class="sim-info-text">
-     O processador Stripe está inativo ou offline. Pode testar o fluxo completo de compra simulando um pagamento seguro de teste.
-   </p>
-   
-   <div class="sim-form-group">
-     <label class="sim-label">Nome do Titular (Simulado)</label>
-     <input type="text" class="sim-input" :value="user?.nome || 'Passageiro TUB'" disabled />
-   </div>
-   
-   <div class="sim-form-group">
-     <label class="sim-label">Número do Cartão de Simulação</label>
-     <div class="sim-card-input-wrapper">
-       <input type="text" class="sim-input card-number" value="4242 4242 4242 4242" disabled />
-       <span class="sim-card-brand">VISA (TESTE)</span>
-     </div>
-   </div>
-   
-   <div class="sim-form-row">
-     <div class="sim-form-group">
-       <label class="sim-label">Validade</label>
-       <input type="text" class="sim-input" value="12 / 29" disabled />
-     </div>
-     <div class="sim-form-group">
-       <label class="sim-label">CVC / CVV</label>
-       <input type="text" class="sim-input" value="123" disabled />
-     </div>
-   </div>
- </div>
+    <div class="sim-badge">
+      <span class="sim-dot"></span>
+      <span>MODO DE DEMONSTRAÇÃO ATIVO</span>
+    </div>
+    
+    <!-- Tab Selector -->
+    <div class="payment-tabs-selector">
+      <button 
+        class="pay-tab-btn" 
+        :class="{ active: simulatedTab === 'card' }"
+        @click="simulatedTab = 'card'"
+        type="button"
+      >
+        <span class="tab-icon">💳</span>
+        <span>Cartão</span>
+      </button>
+      <button 
+        class="pay-tab-btn" 
+        :class="{ active: simulatedTab === 'apple' }"
+        @click="simulatedTab = 'apple'"
+        type="button"
+      >
+        <span class="tab-icon"></span>
+        <span>Pay</span>
+      </button>
+      <button 
+        class="pay-tab-btn" 
+        :class="{ active: simulatedTab === 'paypal' }"
+        @click="simulatedTab = 'paypal'"
+        type="button"
+      >
+        <span class="tab-icon">🅿️</span>
+        <span>PayPal</span>
+      </button>
+    </div>
+
+    <!-- Tab Content: Card -->
+    <div v-if="simulatedTab === 'card'" class="tab-content fade-in-quick">
+      <div class="sim-form-group" style="margin-top: 10px;">
+        <label class="sim-label">Nome do Titular (Simulado)</label>
+        <input type="text" class="sim-input" :value="user?.nome || 'Passageiro TUB'" disabled />
+      </div>
+      
+      <div class="sim-form-group">
+        <label class="sim-label">Número do Cartão de Simulação</label>
+        <div class="sim-card-input-wrapper">
+          <input type="text" class="sim-input card-number" value="4242 4242 4242 4242" disabled />
+          <span class="sim-card-brand">VISA (TESTE)</span>
+        </div>
+      </div>
+      
+      <div class="sim-form-row">
+        <div class="sim-form-group">
+          <label class="sim-label">Validade</label>
+          <input type="text" class="sim-input" value="12 / 29" disabled />
+        </div>
+        <div class="sim-form-group">
+          <label class="sim-label">CVC / CVV</label>
+          <input type="text" class="sim-input" value="123" disabled />
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Content: Apple Pay -->
+    <div v-else-if="simulatedTab === 'apple'" class="tab-content simulated-express-checkout fade-in-quick">
+      <p class="express-info-text">Pague de forma rápida e segura utilizando o Apple Pay de teste.</p>
+      <button class="apple-pay-button" @click="handlePay" :disabled="isProcessing" type="button">
+        <span class="ap-logo"></span> Pay
+      </button>
+    </div>
+
+    <!-- Tab Content: PayPal -->
+    <div v-else-if="simulatedTab === 'paypal'" class="tab-content simulated-express-checkout fade-in-quick">
+      <p class="express-info-text">Pague de forma rápida e segura utilizando a sua conta PayPal de teste.</p>
+      <button class="paypal-button" @click="handlePay" :disabled="isProcessing" type="button">
+        <span class="pp-logo">PayPal</span>
+      </button>
+    </div>
+  </div>
 
  <div v-if="errorMessage" class="pay-error">
  {{ errorMessage }}
@@ -387,7 +435,7 @@ const pay = async () => {
 
  <!-- CTA -->
  <div class="checkout-footer">
- <button v-if="!errorMessage" class="cta-btn" :disabled="isProcessing" @click="handlePay">
+ <button v-if="!errorMessage && (!isSimulatedMode || simulatedTab === 'card')" class="cta-btn" :disabled="isProcessing" @click="handlePay">
  <Loader2 v-if="isProcessing" class="spin" :size="20" />
  <template v-else>
  {{ ctaLabel }}
@@ -794,5 +842,126 @@ const pay = async () => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
+}
+
+/* -- Payment Tabs Selector -------------------------------------------- */
+.payment-tabs-selector {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: var(--bg-primary);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  margin-bottom: 8px;
+}
+.pay-tab-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 4px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.pay-tab-btn:hover {
+  color: var(--text-main);
+}
+.pay-tab-btn.active {
+  background: var(--bg-surface);
+  color: var(--text-main);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.tab-icon {
+  font-size: 1rem;
+}
+
+/* -- Express Checkout -------------------------------------------------- */
+.simulated-express-checkout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  text-align: center;
+}
+.express-info-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+.apple-pay-button {
+  width: 100%;
+  max-width: 280px;
+  background: #000000;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 14px 20px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.apple-pay-button:active {
+  transform: scale(0.97);
+}
+.apple-pay-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.ap-logo {
+  font-size: 1.3rem;
+  line-height: 1;
+  margin-top: -2px;
+}
+
+.paypal-button {
+  width: 100%;
+  max-width: 280px;
+  background: #ffc439;
+  color: #003087;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 20px;
+  font-size: 1rem;
+  font-weight: 800;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.paypal-button:hover {
+  background: #f2ba36;
+}
+.paypal-button:active {
+  transform: scale(0.97);
+}
+.paypal-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.fade-in-quick {
+  animation: fadeInQuick 0.2s ease-out forwards;
+}
+@keyframes fadeInQuick {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>

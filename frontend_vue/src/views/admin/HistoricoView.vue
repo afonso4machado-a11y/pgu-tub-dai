@@ -189,20 +189,6 @@ onMounted(() => {
         </button>
       </div>
     </div>
-
-    <!-- Security Information Panel -->
-    <div class="glass-panel security-banner mb-6">
-      <div class="banner-icon-container">
-        <Shield :size="24" class="text-teal" />
-      </div>
-      <div class="banner-body">
-        <h4 class="banner-title">Sistema de Auditoria Imutável</h4>
-        <p class="banner-desc">
-          Este registo cumpre as diretrizes de segurança organizacional. Todas as inserções são imutáveis e definitivas (apenas são permitidos comandos <code class="fira-code">INSERT</code> e <code class="fira-code">SELECT</code>). Modificações ou deleções são proibidas a nível de base de dados para garantir a conformidade e integridade legal.
-        </p>
-      </div>
-    </div>
-
     <!-- Filters Control Bar -->
     <div class="glass-panel filter-bar mb-6">
       <div class="filter-header">

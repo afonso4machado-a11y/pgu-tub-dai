@@ -11,7 +11,6 @@ const menuItems = [
   { id: 'correlation', path: '/correlation', label: 'Correlação' },
   { id: 'alerts', path: '/alerts', label: 'Central Alertas' },
   { id: 'fleet', path: '/fleet', label: 'Gestão de Frota' },
-  { id: 'historico', path: '/historico', label: 'Histórico' },
 ]
 </script>
 
@@ -37,11 +36,19 @@ const menuItems = [
  </router-link>
   </nav>
 
-  <!-- DEV MODE SHORTCUT -->
-  <div style="padding: 1.5rem; border-top: 1px solid var(--border-light); margin-top: auto;">
-  <router-link to="/app" class="btn btn-primary" style="width: 100%; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-  Testar App Móvel
-  </router-link>
+  <!-- DEV & AUDIT SHORCUTS -->
+  <div style="padding: 1.5rem; border-top: 1px solid var(--border-light); margin-top: auto; display: flex; flex-direction: column; gap: 0.75rem;">
+    <router-link 
+      to="/historico" 
+      class="menu-item"
+      :class="{ active: route.path === '/historico' }"
+      style="border: 1px solid var(--border-light); border-radius: 8px; justify-content: center; font-weight: 600; padding: 0.75rem; text-decoration: none;"
+    >
+      Histórico
+    </router-link>
+    <router-link to="/app" class="btn btn-primary" style="width: 100%; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+      Testar App Móvel
+    </router-link>
   </div>
   </aside>
 </template>
