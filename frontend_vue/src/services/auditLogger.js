@@ -39,10 +39,36 @@ export const auditLogger = {
       timestamp: new Date().toISOString()
     };
 
+    console.log(`[Audit Logger] Attempting to send action immediately: ${acaoTipo}`);
+
+    // Enviar imediatamente para o servidor
+    fetch('/api/audit-logs/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify([logEntry])
+    }).then(res => {
+      if (res.ok) {
+        console.log(`[Audit Logger] Action sent immediately and saved to database: ${acaoTipo}`);
+      } else {
+        console.warn(`[Audit Logger] Server rejected immediate save, buffering locally...`);
+        this.bufferLog(logEntry);
+      }
+    }).catch(err => {
+      console.warn(`[Audit Logger] Network error while sending immediately, buffering locally...`, err);
+      this.bufferLog(logEntry);
+    });
+  },
+
+  /**
+   * Buffers a log entry in sessionStorage to be sent in batch during session close/logout.
+   * @param {Object} logEntry 
+   */
+  bufferLog(logEntry) {
+    if (typeof sessionStorage === 'undefined') return;
     const pendingLogs = this.getPendingLogs();
     pendingLogs.push(logEntry);
     sessionStorage.setItem('pgu_pending_audit_logs', JSON.stringify(pendingLogs));
-    console.log(`[Audit Logger] Buffered action: ${acaoTipo}`);
+    console.log(`[Audit Logger] Buffered action locally: ${logEntry.acaoTipo}`);
   },
 
   /**

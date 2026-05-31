@@ -74,11 +74,10 @@ public class AuditLogController {
     public ResponseEntity<Map<String, Object>> listLogs(
             @RequestHeader(value = "X-Admin-Email", required = false) String adminEmail) {
         
-        if (adminEmail == null || adminEmail.isBlank() || 
-            (!adminEmail.trim().toLowerCase().endsWith("@uminho.pt") && !adminEmail.trim().toLowerCase().endsWith("@um"))) {
+        if (adminEmail == null || adminEmail.isBlank()) {
             return ResponseEntity.status(403).body(Map.of(
                 "status", "erro",
-                "mensagem", "Acesso restrito. Apenas administradores com email institucional (@uminho.pt) podem aceder a esta funcionalidade."
+                "mensagem", "Acesso restrito. Identificacao de administrador em falta."
             ));
         }
 
