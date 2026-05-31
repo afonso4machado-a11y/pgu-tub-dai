@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
-import { Activity, Radio, AlertOctagon, Calendar, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
 import { apiFetch, demoModeRef } from '../services/api.js'
 const telemetries = ref([])
@@ -8,234 +8,234 @@ const criticalBus = ref(null)
 let timer = null
 
 // Calendário
-const historico = ref({})      // { "2026-04-11": { "TUB-101": { entradas: 120, saidas: 115 } } }
-const calendarDate = ref(new Date())  // mês/ano atualmente visível
-const selectedDay = ref(null)         // dia selecionado: "2026-04-11"
-const selectedBus = ref(null)         // filtro por autocarro
+const historico = ref({}) // { "2026-04-11": { "TUB-101": { entradas: 120, saidas: 115 } } }
+const calendarDate = ref(new Date()) // mês/ano atualmente visível
+const selectedDay = ref(null) // dia selecionado: "2026-04-11"
+const selectedBus = ref(null) // filtro por autocarro
 
 // Computar dias do mês
 const calendarDays = computed(() => {
-  const year = calendarDate.value.getFullYear()
-  const month = calendarDate.value.getMonth()
-  const firstDay = new Date(year, month, 1).getDay() // 0=Dom
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const days = []
-  // Preencher dias vazios antes
-  for (let i = 0; i < (firstDay === 0 ? 6 : firstDay - 1); i++) days.push(null)
-  for (let d = 1; d <= daysInMonth; d++) {
-    const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-    days.push({ day: d, key, data: historico.value[key] || null })
-  }
-  return days
+ const year = calendarDate.value.getFullYear()
+ const month = calendarDate.value.getMonth()
+ const firstDay = new Date(year, month, 1).getDay() // 0=Dom
+ const daysInMonth = new Date(year, month + 1, 0).getDate()
+ const days = []
+ // Preencher dias vazios antes
+ for (let i = 0; i < (firstDay === 0 ? 6 : firstDay - 1); i++) days.push(null)
+ for (let d = 1; d <= daysInMonth; d++) {
+ const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+ days.push({ day: d, key, data: historico.value[key] || null })
+ }
+ return days
 })
 
 const calendarTitle = computed(() => {
-  return calendarDate.value.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' })
+ return calendarDate.value.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' })
 })
 
 // Dados do dia selecionado (com filtro de autocarro)
 const selectedDayData = computed(() => {
-  if (!selectedDay.value) return null
-  const dayData = historico.value[selectedDay.value]
-  if (!dayData) return null
-  return selectedBus.value
-    ? { [selectedBus.value]: dayData[selectedBus.value] }
-    : dayData
+ if (!selectedDay.value) return null
+ const dayData = historico.value[selectedDay.value]
+ if (!dayData) return null
+ return selectedBus.value
+ ? { [selectedBus.value]: dayData[selectedBus.value] }
+ : dayData
 })
 
 // Lista de todos os autocarros com dados históricos
 const busesWithHistory = computed(() => {
-  const ids = new Set()
-  Object.values(historico.value).forEach(day => Object.keys(day).forEach(id => ids.add(id)))
-  return [...ids].sort()
+ const ids = new Set()
+ Object.values(historico.value).forEach(day => Object.keys(day).forEach(id => ids.add(id)))
+ return [...ids].sort()
 })
 
 // Intensidade da cor do dia no calendário baseada no volume total
 function dayHeat(data) {
-  if (!data) return 0
-  const total = Object.values(data).reduce((s, v) => s + (v.entradas || 0), 0)
-  if (total === 0) return 0
-  if (total < 50) return 1
-  if (total < 200) return 2
-  if (total < 500) return 3
-  return 4
+ if (!data) return 0
+ const total = Object.values(data).reduce((s, v) => s + (v.entradas || 0), 0)
+ if (total === 0) return 0
+ if (total < 50) return 1
+ if (total < 200) return 2
+ if (total < 500) return 3
+ return 4
 }
 
 function prevMonth() {
-  const d = new Date(calendarDate.value)
-  d.setMonth(d.getMonth() - 1)
-  calendarDate.value = d
+ const d = new Date(calendarDate.value)
+ d.setMonth(d.getMonth() - 1)
+ calendarDate.value = d
 }
 
 function nextMonth() {
-  const d = new Date(calendarDate.value)
-  d.setMonth(d.getMonth() + 1)
-  calendarDate.value = d
+ const d = new Date(calendarDate.value)
+ d.setMonth(d.getMonth() + 1)
+ calendarDate.value = d
 }
 
 // ---- Telemetria em tempo real ----
 async function fetchData() {
-  try {
-    const { data: res } = await apiFetch('/autocarros')
-    if (res.status === 'sucesso') {
-      telemetries.value = res.autocarros.map(a => ({
-        id: a.id,
-        route: a.linhaId,
-        occ: Math.round(a.ocupacao),
-        trend: 'stable',
-        time: a.ultimaLeitura !== 'N/A' ? a.ultimaLeitura.split('T')[1].split('.')[0] : '--:--:--'
-      }))
-      const sorted = [...telemetries.value].sort((a, b) => b.occ - a.occ)
-      criticalBus.value = (sorted.length > 0 && sorted[0].occ > 80) ? sorted[0] : null
-    }
-  } catch (e) { console.error("Erro telemetria:", e) }
+ try {
+ const { data: res } = await apiFetch('/autocarros')
+ if (res.status === 'sucesso') {
+ telemetries.value = res.autocarros.map(a => ({
+ id: a.id,
+ route: a.linhaId,
+ occ: Math.round(a.ocupacao),
+ trend: 'stable',
+ time: a.ultimaLeitura !== 'N/A' ? a.ultimaLeitura.split('T')[1].split('.')[0] : '--:--:--'
+ }))
+ const sorted = [...telemetries.value].sort((a, b) => b.occ - a.occ)
+ criticalBus.value = (sorted.length > 0 && sorted[0].occ > 80) ? sorted[0] : null
+ }
+ } catch (e) { console.error("Erro telemetria:", e) }
 }
 
 // ---- Histórico ----
 async function fetchHistorico() {
-  try {
-    const { data: res } = await apiFetch('/historico')
-    if (res.status === 'sucesso') historico.value = res.historico
-  } catch (e) { console.error("Erro histórico:", e) }
+ try {
+ const { data: res } = await apiFetch('/historico')
+ if (res.status === 'sucesso') historico.value = res.historico
+ } catch (e) { console.error("Erro histórico:", e) }
 }
 
 onMounted(() => {
-  fetchData()
-  fetchHistorico()
-  timer = setInterval(fetchData, 5000)
+ fetchData()
+ fetchHistorico()
+ timer = setInterval(fetchData, 5000)
 })
 onUnmounted(() => { if (timer) clearInterval(timer) })
 
 watch(demoModeRef, () => {
-  fetchData()
-  fetchHistorico()
+ fetchData()
+ fetchHistorico()
 })
 </script>
 
 <template>
-  <div class="occupancy-view fade-in">
-    <!-- Header -->
-    <div class="glass-panel main-header">
-      <div class="head-left">
-        <h3 class="panel-title"><Radio class="icon-inline pulse"/> Telemetria de Lotação Em Tempo Real</h3>
-        <p class="panel-desc">Vertical 3.4: Stream direto dos sensores de portas e contadores stereoscópicos</p>
-      </div>
-      <button class="btn btn-secondary" @click="fetchHistorico">Atualizar Histórico</button>
-    </div>
+ <div class="occupancy-view fade-in">
+ <!-- Header -->
+ <div class="glass-panel main-header">
+ <div class="head-left">
+ <h3 class="panel-title">Telemetria de Lotação Em Tempo Real</h3>
+ <p class="panel-desc">Vertical 3.4: Stream direto dos sensores de portas e contadores stereoscópicos</p>
+ </div>
+ <button class="btn btn-secondary" @click="fetchHistorico">Atualizar Histórico</button>
+ </div>
 
-    <!-- Telemetria em grelha -->
-    <div class="feed-grid mt-4">
-      <div class="glass-panel feed-panel">
-        <h4 class="mb-4">Fluxo de Dados ao Vivo</h4>
-        <div v-if="telemetries.length === 0" class="empty-telemetry">Sem viaturas na frota. Registe autocarros no separador Frota.</div>
-        <div class="telemetry-list">
-          <div v-for="t in telemetries" :key="t.id" class="t-row scale-in">
-            <div class="t-time fira-code">{{ t.time }}</div>
-            <div class="t-id fira-code text-cyan">{{ t.id }}</div>
-            <div class="t-route">{{ t.route }}</div>
-            <div class="t-bar-container">
-              <div class="t-bar"
-                   :style="{width: t.occ + '%'}"
-                   :class="{'bar-critical': t.occ > 90, 'bar-warning': t.occ > 70 && t.occ <= 90}">
-              </div>
-            </div>
-            <div class="t-occ fira-code" :class="{'text-danger': t.occ > 90}">{{ t.occ }}%</div>
-          </div>
-        </div>
-      </div>
+ <!-- Telemetria em grelha -->
+ <div class="feed-grid mt-4">
+ <div class="glass-panel feed-panel">
+ <h4 class="mb-4">Fluxo de Dados ao Vivo</h4>
+ <div v-if="telemetries.length === 0" class="empty-telemetry">Sem viaturas na frota. Registe autocarros no separador Frota.</div>
+ <div class="telemetry-list">
+ <div v-for="t in telemetries" :key="t.id" class="t-row scale-in">
+ <div class="t-time fira-code">{{ t.time }}</div>
+ <div class="t-id fira-code text-cyan">{{ t.id }}</div>
+ <div class="t-route">{{ t.route }}</div>
+ <div class="t-bar-container">
+ <div class="t-bar"
+ :style="{width: t.occ + '%'}"
+ :class="{'bar-critical': t.occ > 90, 'bar-warning': t.occ > 70 && t.occ <= 90}">
+ </div>
+ </div>
+ <div class="t-occ fira-code" :class="{'text-danger': t.occ > 90}">{{ t.occ }}%</div>
+ </div>
+ </div>
+ </div>
 
-      <div class="alerts-panel">
-        <div v-if="criticalBus" class="glass-panel critical-bg fade-in">
-          <h4 class="alert-title"><AlertOctagon /> Atenção Requerida</h4>
-          <p class="alert-text">O veículo <strong>{{ criticalBus.id }}</strong> excedeu a lotação de segurança ({{ criticalBus.occ }}%). Recomenda-se reforço para a Linha {{ criticalBus.route }}.</p>
-          <button class="btn btn-secondary mt-2">Avisar Motorista</button>
-        </div>
-        <div v-else class="glass-panel safe-bg fade-in">
-          <h4 class="alert-title text-success"><Activity /> Operação Estável</h4>
-          <p class="alert-text">Nenhuma viatura em estado crítico. A frota opera dentro dos parâmetros de segurança.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Secção Calendário Histórico -->
-    <div class="glass-panel calendar-section mt-4">
-      <div class="cal-header">
-        <h4 class="cal-title"><Calendar class="icon-inline" /> Histórico de Ocupação por Dia</h4>
-        <div class="cal-nav">
-          <button class="nav-btn" @click="prevMonth"><ChevronLeft :size="18"/></button>
-          <span class="cal-month">{{ calendarTitle }}</span>
-          <button class="nav-btn" @click="nextMonth"><ChevronRight :size="18"/></button>
-        </div>
-        <select v-model="selectedBus" class="bus-select">
-          <option :value="null">Todos os Autocarros</option>
-          <option v-for="id in busesWithHistory" :key="id" :value="id">{{ id }}</option>
-        </select>
-      </div>
-
-      <!-- Dias da semana -->
-      <div class="cal-grid">
-        <div class="cal-weekday" v-for="d in ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom']" :key="d">{{ d }}</div>
-        <div
-          v-for="(d, i) in calendarDays"
-          :key="i"
-          class="cal-cell"
-          :class="{
-            'cal-empty': !d,
-            'cal-selected': d && d.key === selectedDay,
-            [`heat-${d ? dayHeat(d.data) : 0}`]: true
-          }"
-          @click="d && (selectedDay = d.key === selectedDay ? null : d.key)"
-        >
-          <span v-if="d" class="cal-day-num">{{ d.day }}</span>
-          <span v-if="d && d.data" class="cal-dot"></span>
-        </div>
-      </div>
-
-      <!-- Legenda de calor -->
-      <div class="heat-legend">
-        <span class="legend-label">Sem dados</span>
-        <div class="heat-0 heat-sample"></div>
-        <div class="heat-1 heat-sample"></div>
-        <div class="heat-2 heat-sample"></div>
-        <div class="heat-3 heat-sample"></div>
-        <div class="heat-4 heat-sample"></div>
-        <span class="legend-label">Alto Volume</span>
-      </div>
-
-      <!-- Detalhe do dia selecionado -->
-      <div v-if="selectedDay && selectedDayData" class="day-detail fade-in">
-        <h5 class="day-detail-title">
-          Dados de {{ new Date(selectedDay + 'T12:00:00').toLocaleDateString('pt-PT', {weekday: 'long', day: 'numeric', month: 'long'}) }}
-        </h5>
-        <div class="detail-grid">
-          <div v-for="(dados, busId) in selectedDayData" :key="busId" class="detail-card">
-            <div class="detail-bus-id fira-code">{{ busId }}</div>
-            <div class="detail-row">
-              <span class="detail-label">Entradas</span>
-              <span class="detail-val text-cyan">{{ dados.entradas }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Saídas</span>
-              <span class="detail-val">{{ dados.saidas }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Balanço</span>
-              <span class="detail-val" :class="{'text-success': dados.entradas >= dados.saidas, 'text-danger': dados.entradas < dados.saidas}">
-                {{ dados.entradas - dados.saidas >= 0 ? '+' : '' }}{{ dados.entradas - dados.saidas }}
-              </span>
-            </div>
-          </div>
-        </div>
-        <p class="paragens-note">
-          <AlertTriangle :size="14" class="icon-inline" /> A divisão por paragens estará disponível quando os horários com paragens forem configurados na base de dados.
-        </p>
-      </div>
-      <div v-else-if="selectedDay" class="no-data-day">
-        Sem dados de leituras para este dia.
-      </div>
-    </div>
-
+ <div class="alerts-panel">
+  <div v-if="criticalBus" class="glass-panel critical-bg fade-in">
+  <h4 class="alert-title">Atenção Requerida</h4>
+  <p class="alert-text">O veículo <strong>{{ criticalBus.id }}</strong> excedeu a lotação de segurança ({{ criticalBus.occ }}%). Recomenda-se reforço para a Linha {{ criticalBus.route }}.</p>
+  <button class="btn btn-secondary mt-2">Avisar Motorista</button>
   </div>
+  <div v-else class="glass-panel safe-bg fade-in">
+  <h4 class="alert-title text-success">Operação Estável</h4>
+ <p class="alert-text">Nenhuma viatura em estado crítico. A frota opera dentro dos parâmetros de segurança.</p>
+ </div>
+ </div>
+ </div>
+
+ <!-- Secção Calendário Histórico -->
+ <div class="glass-panel calendar-section mt-4">
+ <div class="cal-header">
+ <h4 class="cal-title">Histórico de Ocupação por Dia</h4>
+ <div class="cal-nav">
+ <button class="nav-btn" @click="prevMonth"><ChevronLeft :size="18"/></button>
+ <span class="cal-month">{{ calendarTitle }}</span>
+ <button class="nav-btn" @click="nextMonth"><ChevronRight :size="18"/></button>
+ </div>
+ <select v-model="selectedBus" class="bus-select">
+ <option :value="null">Todos os Autocarros</option>
+ <option v-for="id in busesWithHistory" :key="id" :value="id">{{ id }}</option>
+ </select>
+ </div>
+
+ <!-- Dias da semana -->
+ <div class="cal-grid">
+ <div class="cal-weekday" v-for="d in ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom']" :key="d">{{ d }}</div>
+ <div
+ v-for="(d, i) in calendarDays"
+ :key="i"
+ class="cal-cell"
+ :class="{
+ 'cal-empty': !d,
+ 'cal-selected': d && d.key === selectedDay,
+ [`heat-${d ? dayHeat(d.data) : 0}`]: true
+ }"
+ @click="d && (selectedDay = d.key === selectedDay ? null : d.key)"
+ >
+ <span v-if="d" class="cal-day-num">{{ d.day }}</span>
+ <span v-if="d && d.data" class="cal-dot"></span>
+ </div>
+ </div>
+
+ <!-- Legenda de calor -->
+ <div class="heat-legend">
+ <span class="legend-label">Sem dados</span>
+ <div class="heat-0 heat-sample"></div>
+ <div class="heat-1 heat-sample"></div>
+ <div class="heat-2 heat-sample"></div>
+ <div class="heat-3 heat-sample"></div>
+ <div class="heat-4 heat-sample"></div>
+ <span class="legend-label">Alto Volume</span>
+ </div>
+
+ <!-- Detalhe do dia selecionado -->
+ <div v-if="selectedDay && selectedDayData" class="day-detail fade-in">
+ <h5 class="day-detail-title">
+ Dados de {{ new Date(selectedDay + 'T12:00:00').toLocaleDateString('pt-PT', {weekday: 'long', day: 'numeric', month: 'long'}) }}
+ </h5>
+ <div class="detail-grid">
+ <div v-for="(dados, busId) in selectedDayData" :key="busId" class="detail-card">
+ <div class="detail-bus-id fira-code">{{ busId }}</div>
+ <div class="detail-row">
+ <span class="detail-label">Entradas</span>
+ <span class="detail-val text-cyan">{{ dados.entradas }}</span>
+ </div>
+ <div class="detail-row">
+ <span class="detail-label">Saídas</span>
+ <span class="detail-val">{{ dados.saidas }}</span>
+ </div>
+ <div class="detail-row">
+ <span class="detail-label">Balanço</span>
+ <span class="detail-val" :class="{'text-success': dados.entradas >= dados.saidas, 'text-danger': dados.entradas < dados.saidas}">
+ {{ dados.entradas - dados.saidas >= 0 ? '+' : '' }}{{ dados.entradas - dados.saidas }}
+ </span>
+ </div>
+ </div>
+ </div>
+ <p class="paragens-note">
+ A divisão por paragens estará disponível quando os horários com paragens forem configurados na base de dados.
+ </p>
+ </div>
+ <div v-else-if="selectedDay" class="no-data-day">
+ Sem dados de leituras para este dia.
+ </div>
+ </div>
+
+ </div>
 </template>
 
 <style scoped>
@@ -246,9 +246,9 @@ watch(demoModeRef, () => {
 
 .pulse { animation: pulse-glow 2s infinite; }
 @keyframes pulse-glow {
-  0% { filter: drop-shadow(0 0 4px rgba(6, 182, 212, 0.2)); }
-  50% { filter: drop-shadow(0 0 12px rgba(6, 182, 212, 0.8)); }
-  100% { filter: drop-shadow(0 0 4px rgba(6, 182, 212, 0.2)); }
+ 0% { filter: drop-shadow(0 0 4px rgba(6, 182, 212, 0.2)); }
+ 50% { filter: drop-shadow(0 0 12px rgba(6, 182, 212, 0.8)); }
+ 100% { filter: drop-shadow(0 0 4px rgba(6, 182, 212, 0.2)); }
 }
 
 .mt-4 { margin-top: 1.5rem; }

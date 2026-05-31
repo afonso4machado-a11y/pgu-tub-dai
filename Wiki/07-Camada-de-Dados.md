@@ -8,15 +8,15 @@ A classe `DatabaseConnection` gere as ligações JDBC à base de dados MySQL. Im
 
 ### Estratégia de Resolução da Ligação
 O sistema resolve as credenciais da base de dados pela seguinte ordem de prioridade:
-1.  **Variáveis de Ambiente do Sistema**: Primárias para configurações em Azure App Service [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/DatabaseConnection.java:61-61]().
-2.  **Ficheiro .env**: Cache de desenvolvimento local [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/DatabaseConnection.java:62-62]().
-3.  **Valores por Omissão Hardcoded**: Fallback para configurações Docker standard (por exemplo, `tub_user`/`tub_pass`) [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/DatabaseConnection.java:21-24]().
+1. **Variáveis de Ambiente do Sistema**: Primárias para configurações em Azure App Service [backend_java/src/main/java/pt/uminho/dai/pgu/data/DatabaseConnection.java:61-61]().
+2. **Ficheiro .env**: Cache de desenvolvimento local [backend_java/src/main/java/pt/uminho/dai/pgu/data/DatabaseConnection.java:62-62]().
+3. **Valores por Omissão Hardcoded**: Fallback para configurações Docker standard (por exemplo, `tub_user`/`tub_pass`) [backend_java/src/main/java/pt/uminho/dai/pgu/data/DatabaseConnection.java:21-24]().
 
 ### Segurança e Fiabilidade
-Quando o sistema deteta que está a operar fora de localhost, força automaticamente o uso de **SSL/TLS** para uma comunicação segura com o Azure MySQL Flexible Server [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/DatabaseConnection.java:91-97](). A connection string inclui parâmetros para evitar ligações pendentes, como `connectTimeout=5000` e `socketTimeout=30000` [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/DatabaseConnection.java:84-85]().
+Quando o sistema deteta que está a operar fora de localhost, força automaticamente o uso de **SSL/TLS** para uma comunicação segura com o Azure MySQL Flexible Server [backend_java/src/main/java/pt/uminho/dai/pgu/data/DatabaseConnection.java:91-97](). A connection string inclui parâmetros para evitar ligações pendentes, como `connectTimeout=5000` e `socketTimeout=30000` [backend_java/src/main/java/pt/uminho/dai/pgu/data/DatabaseConnection.java:84-85]().
 
 **Fontes:**
-- `pt.uminho.dai.pgu.repositories.DatabaseConnection` [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/DatabaseConnection.java:1-101]()
+- `pt.uminho.dai.pgu.data.DatabaseConnection` [backend_java/src/main/java/pt/uminho/dai/pgu/data/DatabaseConnection.java:1-101]()
 
 ---
 
@@ -28,52 +28,61 @@ O backend usa classes de repositório especializadas para tratar de operações 
 
 O diagrama seguinte ilustra como a camada de Repositório medeia entre a camada de Serviço e a base de dados MySQL.
 
-**Title: Data Flow from Service to Database**
+**Data Flow from Service to Database**
 ```mermaid
 graph TD
-    subgraph "Code Entity Space (Java)"
-        Service["SistemaService"]
-        RepoA["RepositorioAutocarros"]
-        RepoL["RepositorioLeituras"]
-        RepoAl["RepositorioAlertas"]
-    end
+ subgraph "Code Entity Space (Java in .business & .data)"
+ Service["SistemaService"]
+ RepoA["RepositorioAutocarros"]
+ RepoL["RegistoViagemRepository (RepositorioLeituras)"]
+ RepoAl["RepositorioAlertas"]
+ end
 
-    subgraph "Natural Language Space (Persistence)"
-        DB[("MySQL Database 'tub'")]
-        TableA["Table: autocarros"]
-        TableL["Table: leituras"]
-        TableAl["Table: alertas"]
-    end
+ subgraph "Natural Language Space (Persistence)"
+ DB[("MySQL Database 'tub'")]
+ TableA["Table: autocarros"]
+ TableL["Table: leituras"]
+ TableAl["Table: alertas"]
+ end
 
-    Service -->|"atualizarEstado()"| RepoA
-    Service -->|"guardar()"| RepoL
-    Service -->|"guardarTodos()"| RepoAl
+ Service -->|"atualizarEstado()"| RepoA
+ Service -->|"guardar()"| RepoL
+ Service -->|"guardarTodos()"| RepoAl
 
-    RepoA -->|"INSERT/UPDATE"| TableA
-    RepoL -->|"INSERT"| TableL
-    RepoAl -->|"INSERT/BATCH"| TableAl
+ RepoA -->|"INSERT/UPDATE"| TableA
+ RepoL -->|"INSERT"| TableL
+ RepoAl -->|"INSERT/BATCH"| TableAl
 
-    TableA -.-> DB
-    TableL -.-> DB
-    TableAl -.-> DB
+ TableA -.-> DB
+ TableL -.-> DB
+ TableAl -.-> DB
 ```
+
+#### 💡 Explicação do Fluxo de Dados dos Repositórios
+* **Explicação Simplória (Para Entender):**
+  Este diagrama mostra como as prateleiras de informação (tabelas SQL) se ligam às classes Java que escrevem e lêem delas. Quando o gestor `SistemaService` quer atualizar o estado de um veículo ou salvar um alerta, ele não fala diretamente com o MySQL. Ele chama os repositórios correspondentes (`RepositorioAutocarros`, `RegistoViagemRepository`, etc.), que funcionam como "tradutores" de objetos Java para comandos SQL (`INSERT`, `UPDATE`), guardando a informação na gaveta certa do armário gigante que é o banco de dados MySQL.
+* **Explicação Técnica e Específica:**
+  Representação do *Repository Pattern* em Java. A camada de serviços de aplicação (`SistemaService`) interage com as interfaces de dados (`pt.uminho.dai.pgu.data`) que abstraem por completo o acesso físico ao MySQL. Cada entidade de domínio é mapeada para a sua respetiva tabela SQL. Os repositórios geram as queries parametrizadas (para evitar SQL Injections) e executam instruções JDBC nativas (`INSERT/UPDATE/BATCH`) mapeando o estado em memória dos modelos Java para registos relacionais da base de dados.
+
 **Fontes:**
-- `pt.uminho.dai.pgu.repositories.RepositorioAutocarros` [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/RepositorioAutocarros.java:1-103]()
-- `pt.uminho.dai.pgu.repositories.RepositorioLeituras` [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/RepositorioLeituras.java:1-58]()
+- `pt.uminho.dai.pgu.data.operacao_tempo_real.RepositorioAutocarros` [backend_java/src/main/java/pt/uminho/dai/pgu/data/operacao_tempo_real/RepositorioAutocarros.java:1-103]()
+- `pt.uminho.dai.pgu.data.operacao_tempo_real.RepositorioLeituras` [backend_java/src/main/java/pt/uminho/dai/pgu/data/operacao_tempo_real/RepositorioLeituras.java:1-58]()
 
 ### Classes de Repositório Principais
 
 | Classe | Responsabilidade Principal | Método Principal |
 | :--- | :--- | :--- |
-| `RepositorioAutocarros` | Gere o estado e os metadados dos veículos. | `atualizarEstado(Autocarro)` [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/RepositorioAutocarros.java:78-94]() |
-| `RepositorioLeituras` | Persiste os dados dos sensores IoT (entradas/saídas). | `obterHistoricoPorDia()` [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/RepositorioLeituras.java:34-57]() |
-| `RepositorioAlertas` | Armazena os alertas gerados pelo sistema. | `guardarTodos(List<Alerta>)` [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/RepositorioAlertas.java:17-39]() |
-| `RepositorioCorrelacao` | Executa JOINs pesados para a analítica do dashboard. | `obterProcuraPorLinha(start, end)` [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/RepositorioCorrelacao.java:20-54]() |
-| `RepositorioClientes` | Trata dos perfis dos passageiros e dos dados de autenticação. | `procurarPorEmail(String)` [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/RepositorioClientes.java:59-63]() |
+| `RepositorioAutocarros` | Gere o estado e os metadados dos veículos. | `atualizarEstado(Autocarro)` [backend_java/src/main/java/pt/uminho/dai/pgu/data/operacao_tempo_real/RepositorioAutocarros.java:78-94]() |
+| `RepositorioLeituras` (ou `RegistoViagemRepository`) | Persiste os dados dos sensores IoT (entradas/saídas). | `obterHistoricoPorDia()` [backend_java/src/main/java/pt/uminho/dai/pgu/data/operacao_tempo_real/RepositorioLeituras.java:34-57]() |
+| `RepositorioAlertas` | Armazena os alertas gerados pelo sistema. | `guardarTodos(List<Alerta>)` [backend_java/src/main/java/pt/uminho/dai/pgu/data/operacao_tempo_real/RepositorioAlertas.java:17-39]() |
+| `RepositorioCorrelacao` | Executa JOINs pesados para a analítica do dashboard. | `obterProcuraPorLinha(start, end)` [backend_java/src/main/java/pt/uminho/dai/pgu/data/analitica_historico/RepositorioCorrelacao.java:20-54]() |
+| `RepositorioClientes` | Trata dos perfis dos passageiros e dos dados de autenticação. | `procurarPorEmail(String)` [backend_java/src/main/java/pt/uminho/dai/pgu/data/acessos_configuracao/RepositorioClientes.java:59-63]() |
+| `RepositorioBilhetes` | Persiste e consulta bilhetes e passes comprados via Stripe. | `procurarPorPaymentIntent(paymentIntentId)` [backend_java/src/main/java/pt/uminho/dai/pgu/data/acessos_configuracao/RepositorioBilhetes.java:55-66]() |
 
 **Fontes:**
-- `pt.uminho.dai.pgu.repositories.RepositorioCorrelacao` [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/RepositorioCorrelacao.java:1-110]()
-- `pt.uminho.dai.pgu.repositories.RepositorioAlertas` [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/RepositorioAlertas.java:1-61]()
+- `pt.uminho.dai.pgu.data.analitica_historico.RepositorioCorrelacao` [backend_java/src/main/java/pt/uminho/dai/pgu/data/analitica_historico/RepositorioCorrelacao.java:1-110]()
+- `pt.uminho.dai.pgu.data.operacao_tempo_real.RepositorioAlertas` [backend_java/src/main/java/pt/uminho/dai/pgu/data/operacao_tempo_real/RepositorioAlertas.java:1-61]()
+- `pt.uminho.dai.pgu.data.acessos_configuracao.RepositorioBilhetes` [backend_java/src/main/java/pt/uminho/dai/pgu/data/acessos_configuracao/RepositorioBilhetes.java:1-82]()
 
 ---
 
@@ -85,39 +94,59 @@ O esquema da base de dados, definido em `init.sql`, é composto por 10 tabelas c
 
 O diagrama seguinte mapeia as entidades de código para a estrutura da base de dados.
 
-**Title: Code Entity to Database Table Mapping**
+**Code Entity to Database Table Mapping**
 ```mermaid
 erDiagram
-    "Autocarro (Class)" ||--o{ "leituras (Table)" : "1:N"
-    "Autocarro (Class)" ||--o{ "alertas (Table)" : "1:N"
-    "Linha (Class)" ||--o{ "viagens (Table)" : "1:N"
-    "Cliente (Class)" ||--o{ "clientes_alertas (Table)" : "M:N"
-    "Alerta (Class)" ||--o{ "clientes_alertas (Table)" : "M:N"
-    "viagens (Table)" ||--o{ "horarios (Table)" : "1:N"
-    "paragens (Table)" ||--o{ "horarios (Table)" : "1:N"
+ "Autocarro (Class)" ||--o{ "leituras (Table)" : "1:N"
+ "Autocarro (Class)" ||--o{ "alertas (Table)" : "1:N"
+ "Linha (Class)" ||--o{ "viagens (Table)" : "1:N"
+ "Cliente (Class)" ||--o{ "clientes_alertas (Table)" : "M:N"
+ "Alerta (Class)" ||--o{ "clientes_alertas (Table)" : "M:N"
+ "Cliente (Class)" ||--o{ "bilhetes (Table)" : "1:N"
+ "viagens (Table)" ||--o{ "horarios (Table)" : "1:N"
+ "paragens (Table)" ||--o{ "horarios (Table)" : "1:N"
 
-    "autocarros (Table)" {
-        string id PK
-        int capacidade_maxima
-        int passageiros_atuais
-        datetime ultima_leitura
-    }
-    "leituras (Table)" {
-        bigint id PK
-        string autocarro_id FK
-        int entradas
-        int saidas
-        datetime timestamp
-    }
+ "autocarros (Table)" {
+ string id PK
+ int capacidade_maxima
+ int passageiros_atuais
+ datetime ultima_leitura
+ }
+ "leituras (Table)" {
+ bigint id PK
+ string autocarro_id FK
+ int entradas
+ int saidas
+ datetime timestamp
+ }
+ "bilhetes (Table)" {
+ string id PK
+ string cliente_id FK
+ string tipo
+ string nome_tipo
+ datetime data_compra
+ datetime data_validade
+ string estado
+ decimal preco
+ string payment_intent_id
+ }
 ```
+
+#### 💡 Explicação do Mapeamento Entidade-Relação
+* **Explicação Simplória (Para Entender):**
+  Este diagrama ER (Entidade-Relação) é o mapa definitivo da nossa base de dados. Ele mostra o que são os objetos lógicos (as classes do código) e como eles se relacionam com as tabelas reais do banco de dados MySQL. As linhas com garfos nas pontas (como a relação de 1 autocarro para N leituras) explicam que um autocarro pode ter muitas leituras gravadas ao longo do tempo. Um cliente pode possuir vários bilhetes, mas cada bilhete pertence apenas a um cliente.
+* **Explicação Técnica e Específica:**
+  Modelo físico de dados (MER) unificado e mapeamento objeto-relacional (ORM conceitual) semântico. A classe `Autocarro.java` mapeia para a tabela `autocarros`, mantendo integridade referencial de chave estrangeira (FK) de 1 para N com `leituras` e `alertas`. Clientes e Alertas partilham uma tabela de junção `clientes_alertas` representando uma relação M:N para entrega massiva de notificações. A tabela `bilhetes` contém o ID exclusivo e persistente do `payment_intent_id` vindo do Stripe para garantir conformidade transacional estrita e idempotência nos fluxos de checkout.
+
 **Fontes:**
 - Definições do esquema `init.sql` [init.sql:1-95]()
 
 ### Otimização de Desempenho
 Para suportar o elevado volume de leituras de sensores e as queries de correlação complexas, o esquema inclui vários índices B-Tree:
-*   **Índices de Chave Estrangeira**: `idx_leituras_autocarro` e `idx_alertas_autocarro` aceleram as pesquisas para veículos específicos [init.sql:102-103]().
-*   **Índices Temporais**: `idx_leituras_timestamp` e `idx_alertas_timestamp` otimizam as vistas de dashboard que filtram por intervalos de datas [init.sql:108-109]().
-*   **Pesquisas de Horários**: `idx_horarios_viagem` e `idx_viagens_linha` garantem a obtenção rápida dos horários dos autocarros [init.sql:106-107]().
+* **Índices de Chave Estrangeira**: `idx_leituras_autocarro` e `idx_alertas_autocarro` aceleram as pesquisas para veículos específicos [init.sql:102-103]().
+* **Índices Temporais**: `idx_leituras_timestamp` e `idx_alertas_timestamp` otimizam as vistas de dashboard que filtram por intervalos de datas [init.sql:108-109]().
+* **Pesquisas de Horários**: `idx_horarios_viagem` e `idx_viagens_linha` garantem a obtenção rápida dos horários dos autocarros [init.sql:106-107]().
+* **Pesquisas de Bilhetes e Transações**: `idx_bilhetes_cliente` acelera a listagem de passes por passageiro e `idx_bilhetes_payment_intent` garante velocidade extrema na validação de resiliência e prevenção de duplicações via `check-intent` [init.sql:125-126]().
 
 ### Queries Analíticas Complexas
 O `RepositorioCorrelacao` utiliza SQL avançado para agregar os dados diretamente na base de dados, reduzindo o payload enviado para o backend. Por exemplo, `obterProcuraPorLinha` faz um `JOIN` entre `leituras` e `autocarros`, agrupando por `linha_id` para calcular o total de entradas/saídas por linha [backend_java/src/main/java/pt/uminho/dai/pgu/repositories/RepositorioCorrelacao.java:23-33]().

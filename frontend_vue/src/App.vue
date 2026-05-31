@@ -3,9 +3,11 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTheme } from './composables/useTheme'
 import { usePassengerTheme } from './composables/usePassengerTheme'
-import { onMounted, watch } from 'vue'
+import { onMounted, watch, onUnmounted } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import TopHeader from './components/TopHeader.vue'
+import { useSidebar } from './composables/useSidebar'
+import { ChevronRight } from 'lucide-vue-next'
 
 const route = useRoute()
 const isAuthPage = computed(() => ['admin-login', 'pax-login'].includes(route.name))
@@ -19,13 +21,27 @@ const showAdminLayout = computed(() => {
 
 const { initTheme: initAdminTheme } = useTheme()
 const { initTheme: initPassengerTheme } = usePassengerTheme()
+const { isSidebarCollapsed, toggleSidebar } = useSidebar()
+
+const handleKeyDown = (e) => {
+  // Keyboard Shortcut: Ctrl + \ or Cmd + \
+  if ((e.ctrlKey || e.metaKey) && e.key === '\\') {
+    e.preventDefault()
+    toggleSidebar()
+  }
+}
 
 onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown)
   if (isPassengerApp.value) {
     initPassengerTheme()
   } else {
     initAdminTheme()
   }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown)
 })
 
 watch(isPassengerApp, (newVal) => {
@@ -49,8 +65,21 @@ watch(isPassengerApp, (newVal) => {
   </div>
 
   <!-- Backoffice Dashboard: sidebar + header (só visível se logado) -->
-  <div v-else-if="showAdminLayout" class="app-layout">
-    <Sidebar />
+  <div v-else-if="showAdminLayout" class="app-layout" :class="{ 'sidebar-collapsed': isSidebarCollapsed }">
+    <Sidebar :class="{ collapsed: isSidebarCollapsed }" />
+    
+    <!-- Floating Glass Edge Handle (Slack/Notion style) -->
+    <div 
+      v-if="isSidebarCollapsed" 
+      class="floating-edge-handle" 
+      @click="toggleSidebar"
+      title="Expandir Sidebar (Ctrl + \)"
+    >
+      <div class="handle-inner">
+        <ChevronRight :size="14" class="handle-chevron" />
+      </div>
+    </div>
+
     <main class="main-content">
       <TopHeader />
       <div class="view-container">
@@ -90,6 +119,7 @@ watch(isPassengerApp, (newVal) => {
   flex-direction: column;
   overflow-y: auto;
   position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .view-container {
@@ -111,5 +141,57 @@ watch(isPassengerApp, (newVal) => {
 .fade-leave-to {
   opacity: 0;
   transform: translateY(-10px);
+}
+
+/* Floating Edge Handle - Notion/Slack Style */
+.floating-edge-handle {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 14px;
+  z-index: 99;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  transition: width 0.2s ease;
+}
+
+.floating-edge-handle:hover {
+  width: 24px;
+}
+
+.handle-inner {
+  height: 56px;
+  width: 0;
+  opacity: 0;
+  background: var(--bg-glass);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border-light);
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.15);
+  color: var(--accent-blue);
+}
+
+.floating-edge-handle:hover .handle-inner {
+  width: 20px;
+  opacity: 1;
+  box-shadow: 0 0 14px rgba(6, 182, 212, 0.35);
+  border-color: rgba(6, 182, 212, 0.4);
+}
+
+.handle-chevron {
+  transition: transform 0.2s ease;
+}
+
+.floating-edge-handle:hover .handle-chevron {
+  transform: translateX(1px);
 }
 </style>

@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   mysql:
@@ -18,11 +18,13 @@ services:
       - pgu-network
 
   backend:
-    build: 
+    build:
       context: ./backend_java
     container_name: tub_backend
     ports:
       - "8080:8080"
+    env_file:
+      - .env
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${DB_NAME:-tub}?allowPublicKeyRetrieval=true&useSSL=false
       - SPRING_DATASOURCE_USERNAME=${DB_USER}

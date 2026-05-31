@@ -24,105 +24,105 @@ import PaxLogin from '../views/passenger/LoginView.vue'
 import { authService } from '../services/auth'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    // ═══ AUTH ROUTES ═══
-    {
-      path: '/login',
-      name: 'admin-login',
-      component: AdminLogin
-    },
-    {
-      path: '/app/login',
-      name: 'pax-login',
-      component: PaxLogin
-    },
+ history: createWebHistory(import.meta.env.BASE_URL),
+ routes: [
+ // ═══ AUTH ROUTES ═══
+ {
+ path: '/login',
+ name: 'admin-login',
+ component: AdminLogin
+ },
+ {
+ path: '/app/login',
+ name: 'pax-login',
+ component: PaxLogin
+ },
 
-    // ═══ BACKOFFICE ROUTES ═══
-    {
-      path: '/',
-      name: 'dashboard',
-      component: DashboardView,
-      meta: { requiresAdmin: true }
-    },
-    {
-      path: '/fleet',
-      name: 'fleet',
-      component: FleetView,
-      meta: { requiresAdmin: true }
-    },
-    {
-      path: '/network',
-      name: 'network',
-      component: PTNetworkView,
-      meta: { requiresAdmin: true }
-    },
-    {
-      path: '/ticketing',
-      name: 'ticketing',
-      component: TicketingView,
-      meta: { requiresAdmin: true }
-    },
-    {
-      path: '/occupancy',
-      name: 'occupancy',
-      component: OccupancyView,
-      meta: { requiresAdmin: true }
-    },
-    {
-      path: '/correlation',
-      name: 'correlation',
-      component: CorrelationView,
-      meta: { requiresAdmin: true }
-    },
-    {
-      path: '/alerts',
-      name: 'alerts',
-      component: AlertsCenterView,
-      meta: { requiresAdmin: true }
-    },
+ // ═══ BACKOFFICE ROUTES ═══
+ {
+ path: '/',
+ name: 'dashboard',
+ component: DashboardView,
+ meta: { requiresAdmin: true }
+ },
+ {
+ path: '/fleet',
+ name: 'fleet',
+ component: FleetView,
+ meta: { requiresAdmin: true }
+ },
+ {
+ path: '/network',
+ name: 'network',
+ component: PTNetworkView,
+ meta: { requiresAdmin: true }
+ },
+ {
+ path: '/ticketing',
+ name: 'ticketing',
+ component: TicketingView,
+ meta: { requiresAdmin: true }
+ },
+ {
+ path: '/occupancy',
+ name: 'occupancy',
+ component: OccupancyView,
+ meta: { requiresAdmin: true }
+ },
+ {
+ path: '/correlation',
+ name: 'correlation',
+ component: CorrelationView,
+ meta: { requiresAdmin: true }
+ },
+ {
+ path: '/alerts',
+ name: 'alerts',
+ component: AlertsCenterView,
+ meta: { requiresAdmin: true }
+ },
 
-    // ═══ PASSENGER APP ROUTES ═══
-    {
-      path: '/app',
-      component: PassengerApp,
-      meta: { requiresUser: true },
-      children: [
-        { path: '', name: 'pax-home', component: PaxHome },
-        { path: 'map', name: 'pax-map', component: PaxMap },
-        { path: 'ticket', name: 'pax-ticket', component: PaxTicket },
-        { path: 'buy-ticket', name: 'pax-buy-ticket', component: BuyTicketView },
-        { path: 'alerts', name: 'pax-alerts', component: PaxAlerts },
-        { path: 'profile', name: 'pax-profile', component: PaxProfile },
-      ]
-    },
+ // ═══ PASSENGER APP ROUTES ═══
+ {
+ path: '/app',
+ component: PassengerApp,
+ meta: { requiresUser: true },
+ children: [
+ { path: '', name: 'pax-home', component: PaxHome },
+ { path: 'map', name: 'pax-map', component: PaxMap },
+ { path: 'ticket', name: 'pax-ticket', component: PaxTicket },
+ { path: 'buy-ticket', name: 'pax-buy-ticket', component: BuyTicketView },
+ { path: 'alerts', name: 'pax-alerts', component: PaxAlerts },
+ { path: 'profile', name: 'pax-profile', component: PaxProfile },
+ ]
+ },
 
-    // ═══ 404 CATCH-ALL ═══
-    {
-      path: '/:pathMatch(.*)*',
-      name: 'not-found',
-      component: NotFoundView
-    }
-  ]
+ // ═══ 404 CATCH-ALL ═══
+ {
+ path: '/:pathMatch(.*)*',
+ name: 'not-found',
+ component: NotFoundView
+ }
+ ]
 })
 
 router.beforeEach((to, from, next) => {
-  // Admin Guard — usa sessionStorage, expira ao fechar o browser/tab
-  if (to.meta.requiresAdmin && !authService.isAdminLoggedIn()) {
-    next('/login')
-    return
-  }
+ // Admin Guard — usa sessionStorage, expira ao fechar o browser/tab
+ if (to.meta.requiresAdmin && !authService.isAdminLoggedIn()) {
+ next('/login')
+ return
+ }
 
-  // Passenger Guard — expira após 7 dias
-  if (to.meta.requiresUser) {
-    if (!authService.getUser()) {
-      const hadSession = localStorage.getItem('pgu_user_login_at')
-      next({ path: '/app/login', query: hadSession ? { reason: 'expired' } : {} })
-      return
-    }
-  }
+ // Passenger Guard — expira após 7 dias
+ if (to.meta.requiresUser) {
+ if (!authService.getUser()) {
+ const hadSession = localStorage.getItem('pgu_user_login_at')
+ next({ path: '/app/login', query: hadSession ? { reason: 'expired' } : {} })
+ return
+ }
+ }
 
-  next()
+ next()
 })
 
 export default router

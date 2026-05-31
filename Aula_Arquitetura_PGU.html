@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula Aberta: Entendendo a PGU/TUB</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f7f6;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            border-bottom: 2px solid #bdc3c7;
+            padding-bottom: 8px;
+            margin-top: 40px;
+            color: #2980b9;
+        }
+        .intro {
+            background-color: #e8f4f8;
+            border-left: 5px solid #3498db;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        .analogy {
+            background-color: #fdfae3;
+            padding: 15px;
+            border-radius: 6px;
+            font-style: italic;
+            margin: 15px 0;
+            border-left: 4px solid #f1c40f;
+        }
+        .summary {
+            background-color: #e8f8f5;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            border-left: 4px solid #1abc9c;
+            font-weight: bold;
+        }
+        .step-number {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            background-color: #2980b9;
+            color: white;
+            text-align: center;
+            line-height: 28px;
+            border-radius: 50%;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Aula Aberta: Entendendo o Motor Tecnológico da PGU/TUB</h1>
+
+    <div class="intro">
+        <p>Olá! Sou o teu Professor de Engenharia de Software. Hoje vamos deixar o "informatiquês" de lado e ter uma conversa muito acessível sobre como construímos o sistema da <strong>Plataforma de Gestão Unificada (PGU)</strong> para os Transportes Urbanos de Braga (TUB).</p>
+        <p>O nosso grande objetivo final? Garantir que os autocarros em Braga andam nas horas certas, são geridos de forma eficiente e que tu, como passageiro, <strong>saibas sempre se há um lugar sentado à tua espera antes de o autocarro chegar à paragem</strong>.</p>
+    </div>
+
+    <!-- PARTE 1 -->
+    <div class="card">
+        <h2>PARTE 1: O Que é o Método 4SRS?</h2>
+        <p>Em engenharia de software, não podemos simplesmente começar a escrever código, da mesma forma que não começas a construir uma casa colando tijolos à sorte. Precisamos de um método para desenhar a planta. É aqui que entra o <strong>4SRS (Four Step Rule Set)</strong>.</p>
+
+        <div class="analogy">
+            <strong>A Analogia da Cozinha:</strong><br>
+            Imagina que tens uma "lista de compras" com tudo o que queres cozinhar hoje (os Requisitos do cliente). O 4SRS é a receita de transformação passo-a-passo que pega nessa lista de compras caótica e a transforma num "plano de construção de uma cozinha" altamente eficiente e organizada (a Arquitetura).
+        </div>
+
+        <p>Para criar essa arquitetura de software, o 4SRS usa 4 passos rigorosos:</p>
+        <ul>
+            <li><span class="step-number">1</span><strong>Criar (Step 1):</strong> Olhamos para o que o sistema tem de fazer (ex: "vender bilhete"). Por cada ação destas, criamos três objetos virtuais: uma <em>Interface</em> (o balcão de atendimento), um <em>Controlo</em> (o cozinheiro que pensa e faz o trabalho) e os <em>Dados</em> (a despensa onde se guardam os ingredientes).</li>
+            <li><span class="step-number">2</span><strong>Eliminar (Step 2):</strong> É a fase das limpezas! Fazemos o <em>Local Killing</em> e o <em>Global Killing</em>. Se percebemos que temos três balcões de atendimento para a mesma coisa, apagamos dois. Ninguém gosta de redundância.</li>
+            <li><span class="step-number">3</span><strong>Empacotar (Step 3):</strong> Agrupamos os sobreviventes da limpeza. Juntamos todas as "gavetas de despensa" num pacote chamado "Base de Dados", e todos os "balcões" num pacote chamado "Interfaces Visuais". Fica tudo arrumado.</li>
+            <li><span class="step-number">4</span><strong>Associar (Step 4):</strong> Desenhamos linhas a ligar estes pacotes. "Este balcão só pode falar com este cozinheiro, que por sua vez só tem acesso àquela despensa." Isto garante que o sistema não é uma confusão e é seguro.</li>
+        </ul>
+
+        <div class="summary">
+            Em suma, isto serve para transformar as ideias e necessidades soltas de um cliente num mapa de peças organizado, sem repetições, garantindo que os programadores sabem exatamente o que têm de construir.
+        </div>
+    </div>
+
+    <!-- PARTE 2 -->
+    <div class="card">
+        <h2>PARTE 2: O 4SRS Específico deste Projeto (TUB)</h2>
+        <p>Agora, como aplicámos esta receita ao nosso projeto dos TUB? O nosso grande foco era a <strong>Contagem de Passageiros e Ocupação</strong> em tempo real.</p>
+
+        <p>Pegámos nos casos de uso reais. Por exemplo: "O sistema tem que Registar a Entrada de um passageiro" e "O sistema tem que Registar a Saída". No <strong>Passo 1</strong> do método, criámos peças de código separadas para a Entrada e para a Saída.</p>
+        
+        <p>Mas quando chegámos ao <strong>Passo 2 (Eliminação/Global Killing)</strong>, olhámos para o papel e pensámos: <em>"Espera aí. Quer a pessoa entre, quer saia, estamos sempre a falar de alterar a lotação da porta do autocarro. Porque não fundimos as duas coisas?"</em>. E foi assim que eliminámos a duplicação e fundimos tudo num único <strong>Gestor de Acessos</strong>. Menos peças, menos confusão, menos probabilidade de o software avariar.</p>
+
+        <p>Também tomámos uma decisão muito importante: criar um <strong>Gestor de Alertas</strong>. Porquê? Porque se um autocarro, de repente, fica sobrelotado, o condutor e a central precisam de saber imediatamente. Este Gestor funciona como um vigia 24/7. Assim que o sensor deteta que a lotação passou dos 90%, ele dispara um aviso para o painel de controlo da empresa e para a app dos passageiros.</p>
+
+        <div class="summary">
+            Em suma, isto serve para garantir que o nosso sistema de contagem não é pesado nem repetitivo, e que a comunicação de imprevistos (como autocarros cheios) é feita em tempo real e de forma inteligente.
+        </div>
+    </div>
+
+    <!-- PARTE 3 -->
+    <div class="card">
+        <h2>PARTE 3: Visita Guiada aos Diagramas (Um a Um)</h2>
+        <p>No final deste método, gerámos 4 grandes diagramas. Não te assustes com as linhas e os retângulos, eles são apenas mapas de diferentes perspetivas. Aqui tens o teu guia turístico:</p>
+
+        <ul>
+            <li>
+                <strong>1. Diagrama de Casos de Uso:</strong> 
+                <p>É o mapa de <em>"quem faz o quê"</em>. Mostra as pessoas (ex: Administrador, Passageiro) e as máquinas (Sensores IoT nas portas dos autocarros) de um lado, e o que eles podem fazer no sistema do outro (ex: "Ver lotação", "Fazer Login"). É a visão mais humana do projeto.</p>
+            </li>
+            <li>
+                <strong>2. Diagrama de Componentes:</strong> 
+                <p>São as <em>"peças do puzzle"</em> que compõem o software após aplicarmos o 4SRS. Aqui vemos claramente a divisão do trabalho: a peça da UI (os ecrãs do telemóvel ou do PC), a peça da Lógica de Negócio (o cérebro no computador central que faz contas de lotação) e a peça de Dados (o arquivo histórico de quantas pessoas andaram no 43 o ano passado).</p>
+            </li>
+            <li>
+                <strong>3. Diagrama de Classes:</strong> 
+                <p>Este é o <em>"ADN do código Java"</em>. É o documento que os programadores colam na parede. Mostra a anatomia das coisas. Diz, por exemplo, que o objeto <code>Autocarro</code> tem sempre um <code>id</code>, um <code>número de lugares</code> e uma <code>localização</code>. E mostra a linhagem e as regras de como o Autocarro interage com uma <code>Viagem</code>.</p>
+            </li>
+            <li>
+                <strong>4. Diagrama de Deployment (Implementação):</strong> 
+                <p>O <em>"Mapa de Instalação Geográfica"</em>. O software não flutua no ar. Este mapa mostra que a nossa Base de Dados mora num computador na "Nuvem" da Microsoft (Azure), a nossa API mora noutro servidor para não haver trânsito, e o ecrã final vai morar no telemóvel do cidadão de Braga ou no PC da central dos TUB. Mostra a segurança (HTTPS) e os cabos virtuais entre eles.</p>
+            </li>
+        </ul>
+
+        <div class="summary">
+            Em suma, isto serve para termos o projeto documentado de todos os ângulos. Assim, se o sistema ficar mais lento ou quisermos adicionar uma funcionalidade daqui a 5 anos, qualquer engenheiro consegue olhar para estes mapas e saber exatamente onde tem de mexer sem partir o resto.
+        </div>
+    </div>
+
+    <!-- PARTE 4 -->
+    <div class="card">
+        <h2>PARTE 4: Como Funciona a Base de Dados na Nuvem (Azure)</h2>
+        <p>A Base de Dados é onde toda a informação vital dos TUB (utilizadores, autocarros, viagens, alertas) é guardada. Em vez de termos um computador físico a correr na universidade para guardar isto, decidimos usar a "Nuvem" da Microsoft, especificamente o <strong>Azure MySQL Flexible Server</strong>.</p>
+        
+        <div class="analogy">
+            <strong>A Analogia do Cofre de Banco:</strong><br>
+            Guardar a base de dados no próprio computador (localhost) é como guardar as tuas poupanças debaixo do colchão — se o computador avariar ou houver um pico de luz, perdes tudo. Colocar a base de dados no Azure é como depositar o dinheiro num Cofre de Banco Suíço: tens guardas armados (Cibersegurança da Microsoft), cópias de segurança automáticas todos os dias, e o cofre aumenta de tamanho sozinho se precisares de mais espaço.
+        </div>
+
+        <h3>As Nossas Decisões de Segurança (Porque não partilhamos a password?):</h3>
+        <ul>
+            <li><strong>O Segredo do ficheiro .env:</strong> Quando programamos, não escrevemos a password verdadeira do banco de dados no código-fonte. Usamos um ficheiro invisível chamado <code>.env</code>. A grande jogada é que este ficheiro <strong>nunca é enviado para a internet (GitHub)</strong>. Por isso, podes partilhar o link do GitHub com toda a gente à vontade, porque o "código do cofre" fica sempre só no teu computador.</li>
+            <li><strong>A Inteligência da Conexão:</strong> O nosso código em Java é esperto. Quando ele liga, procura primeiro na própria Microsoft se há lá alguma password escondida (Application Settings). Só se não encontrar é que usa a tua password local de teste. Isto permite-te testar no teu PC sem estragar a base de dados real.</li>
+            <li><strong>O Carro-Forte (SSL/TLS):</strong> Configurámos o sistema para <strong>exigir SSL</strong>. Isto significa que quando a tua app pede para ver os dados de um passageiro, essa informação viaja pela internet dentro de um "túnel blindado". Se um hacker se puser no meio do caminho a tentar roubar os dados, só vai conseguir ler um monte de letras e números embaralhados.</li>
+        </ul>
+
+        <div class="summary">
+            Em suma, a escolha do Azure serve para garantir que a informação crítica dos TUB nunca se perde, está protegida contra hackers através de encriptação, e permite que o código da app seja público sem expor as chaves da casa.
+        </div>
+    </div>
+
+    <div class="intro" style="background-color: #eafaf1; border-left-color: #27ae60; text-align: center;">
+        <p><strong>Fim da Aula!</strong></p>
+        <p>No fim de contas, o 4SRS e toda esta arquitetura invisível têm um único propósito: <strong>fazer com que os autocarros em Braga sejam mais eficientes, menos poluentes e que tu, como passageiro, tenhas uma experiência moderna, previsível e com um lugar sentado sempre que possível.</strong></p>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,9 @@
+package pt.uminho.dai.pgu.core;
+
+public enum TipoAlerta {
+    OCUPACAO_ACIMA_DO_LIMIAR,
+    LEITURA_ANOMALA_ENTRADA,
+    LEITURA_ANOMALA_SAIDA,
+    LEITURA_INCONSISTENTE,
+    AUSENCIA_DE_LEITURAS
+}

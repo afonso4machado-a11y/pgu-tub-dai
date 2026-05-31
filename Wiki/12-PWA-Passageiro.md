@@ -26,19 +26,19 @@ A lógica de sugestão usa um algoritmo de pontuação multi-tier para fornecer 
 
 ```mermaid
 graph TD
-    Input["User Input (query)"] --> Normalize["normalize() - Strip Accents/Lowercase"]
-    Normalize --> Filter["Filter paragensBraga"]
-    Filter --> Score1["Score +10000: Starts with query"]
-    Filter --> Score2["Score +5000: Word starts with query"]
-    Filter --> Score3["Score +2000: Contains sequence"]
-    Filter --> Score4["Score +1000: Fuzzy (letters in order)"]
-    Score1 & Score2 & Score3 & Score4 --> Sort["Sort by Score DESC"]
-    Sort --> Slice["Slice(0, 6)"]
-    Slice --> UI["Display Suggestions"]
+ Input["User Input (query)"] --> Normalize["normalize() - Strip Accents/Lowercase"]
+ Normalize --> Filter["Filter paragensBraga"]
+ Filter --> Score1["Score +10000: Starts with query"]
+ Filter --> Score2["Score +5000: Word starts with query"]
+ Filter --> Score3["Score +2000: Contains sequence"]
+ Filter --> Score4["Score +1000: Fuzzy (letters in order)"]
+ Score1 & Score2 & Score3 & Score4 --> Sort["Sort by Score DESC"]
+ Sort --> Slice["Slice(0, 6)"]
+ Slice --> UI["Display Suggestions"]
 ```
 
-*   **Normalização:** Usa normalização `NFD` para remover diacríticos do português [frontend_vue/src/views/passenger/HomeView.vue:22-22]().
-*   **Lógica Aproximada:** O motor itera pelos caracteres da query para verificar se aparecem por ordem dentro do nome da paragem, mesmo com saltos [frontend_vue/src/views/passenger/HomeView.vue:49-63]().
+* **Normalização:** Usa normalização `NFD` para remover diacríticos do português [frontend_vue/src/views/passenger/HomeView.vue:22-22]().
+* **Lógica Aproximada:** O motor itera pelos caracteres da query para verificar se aparecem por ordem dentro do nome da paragem, mesmo com saltos [frontend_vue/src/views/passenger/HomeView.vue:49-63]().
 
 **Fontes:** [frontend_vue/src/views/passenger/HomeView.vue:24-71](), [frontend_vue/src/views/passenger/HomeView.vue:124-142]().
 
@@ -47,15 +47,15 @@ graph TD
 A `LiveMapView` implementa um mapa baseado em Leaflet otimizado especificamente para desempenho em dispositivos móveis. Visualiza a frota atual e os respetivos níveis de lotação.
 
 ### Detalhes Principais de Implementação
-*   **Gestão de Marcadores:** Em vez de limpar o mapa, a vista realiza atualizações incrementais. Remove marcadores obsoletos e apenas atualiza o ícone dos existentes se a "banda de cor" da lotação (Verde/Amarelo/Vermelho) mudar [frontend_vue/src/views/passenger/LiveMapView.vue:150-189]().
-*   **Segurança nas Interações:** As atualizações são bloqueadas durante os eventos `zoomstart` e `movestart` (flag `isZooming`) para evitar que os marcadores "saltem" enquanto o utilizador está a interagir com o mapa [frontend_vue/src/views/passenger/LiveMapView.vue:108-112]().
-*   **Posicionamento Estável:** Como o backend pode não fornecer coordenadas GPS precisas em modo demo, `getStablePos(bus)` gera coordenadas determinísticas com base num hash do ID do autocarro [frontend_vue/src/views/passenger/LiveMapView.vue:134-147]().
+* **Gestão de Marcadores:** Em vez de limpar o mapa, a vista realiza atualizações incrementais. Remove marcadores obsoletos e apenas atualiza o ícone dos existentes se a "banda de cor" da lotação (Verde/Amarelo/Vermelho) mudar [frontend_vue/src/views/passenger/LiveMapView.vue:150-189]().
+* **Segurança nas Interações:** As atualizações são bloqueadas durante os eventos `zoomstart` e `movestart` (flag `isZooming`) para evitar que os marcadores "saltem" enquanto o utilizador está a interagir com o mapa [frontend_vue/src/views/passenger/LiveMapView.vue:108-112]().
+* **Posicionamento Estável:** Como o backend pode não fornecer coordenadas GPS precisas em modo demo, `getStablePos(bus)` gera coordenadas determinísticas com base num hash do ID do autocarro [frontend_vue/src/views/passenger/LiveMapView.vue:134-147]().
 
 ### Visualização de Lotação
 A lotação é mapeada para cores e etiquetas que oferecem indicações visuais rápidas aos passageiros:
-*   **Livre (< 60%):** Verde (`#10b981`) [frontend_vue/src/views/passenger/LiveMapView.vue:50-50]().
-*   **Moderada (60-80%):** Amarelo (`#eab308`) [frontend_vue/src/views/passenger/LiveMapView.vue:49-49]().
-*   **Cheia (> 80%):** Vermelho (`#ef4444`) [frontend_vue/src/views/passenger/LiveMapView.vue:48-48]().
+* **Livre (< 60%):** Verde (`#10b981`) [frontend_vue/src/views/passenger/LiveMapView.vue:50-50]().
+* **Moderada (60-80%):** Amarelo (`#eab308`) [frontend_vue/src/views/passenger/LiveMapView.vue:49-49]().
+* **Cheia (> 80%):** Vermelho (`#ef4444`) [frontend_vue/src/views/passenger/LiveMapView.vue:48-48]().
 
 **Fontes:** [frontend_vue/src/views/passenger/LiveMapView.vue:47-83](), [frontend_vue/src/views/passenger/LiveMapView.vue:100-131]().
 
@@ -65,49 +65,74 @@ A `TicketView` apresenta a representação digital do passe ou bilhete do utiliz
 
 ### Dinâmica do QR Code
 O QR code não é uma imagem estática, mas uma grelha gerada que roda a cada 30 segundos.
-*   **Geração de Payload:** A função `generateQRPayload()` cria uma string Base64 contendo o tipo de bilhete, o titular e um timestamp de alta resolução [frontend_vue/src/views/TicketView.vue:22-26]().
-*   **Grelha Visual:** `generateQRGrid()` renderiza uma grelha 21x21. Inclui os "padrões de localização" (finder patterns) standard (os quadrados nos cantos) e uma área de dados preenchida com lógica pseudo-aleatória derivada dos códigos de carácter do payload [frontend_vue/src/views/TicketView.vue:35-62]().
-*   **Auto-Renovação:** Um `setInterval` gere uma contagem decrescente de 30 segundos, despoletando `refreshQR()` no fim [frontend_vue/src/views/TicketView.vue:78-88]().
+* **Geração de Payload:** A função `generateQRPayload()` cria uma string Base64 contendo o tipo de bilhete, o titular e um timestamp de alta resolução [frontend_vue/src/views/TicketView.vue:22-26]().
+* **Grelha Visual:** `generateQRGrid()` renderiza uma grelha 21x21. Inclui os "padrões de localização" (finder patterns) standard (os quadrados nos cantos) e uma área de dados preenchida com lógica pseudo-aleatória derivada dos códigos de carácter do payload [frontend_vue/src/views/TicketView.vue:35-62]().
+* **Auto-Renovação:** Um `setInterval` gere uma contagem decrescente de 30 segundos, despoletando `refreshQR()` no fim [frontend_vue/src/views/TicketView.vue:78-88]().
 
 **Fontes:** [frontend_vue/src/views/passenger/TicketView.vue:8-32](), [frontend_vue/src/views/passenger/TicketView.vue:133-164]().
 
-## 5. Perfil e Autenticação
+## 5. BuyTicketView: Integração Stripe Payment Elements
+
+A vista `BuyTicketView` disponibiliza uma interface fluída para a aquisição de passes mensais (€30,00) e bilhetes simples (€1,55) integrando a biblioteca oficial `@stripe/stripe-js` [frontend_vue/src/views/passenger/BuyTicketView.vue:4-5]().
+
+### Configuração e Ciclo de Vida do Stripe Element
+O fluxo do componente é dinâmico e reage automaticamente às preferências e ao estado do sistema do utilizador:
+* **Montagem do Elemento (`mountStripeElements`)**: Cria o formulário seguro do Stripe a partir do `clientSecret` obtido do backend, montando-o na referência DOM `stripeContainer` [frontend_vue/src/views/passenger/BuyTicketView.vue:80-129]().
+* **Internacionalização Local**: Força o locale `'pt-PT'` para garantir que as descrições dos campos estejam em português de Portugal [frontend_vue/src/views/passenger/BuyTicketView.vue:109-109]().
+* **Estilização com Dark Mode**: Deteta dinamicamente o tema ativo do browser e aplica o estilo do Stripe (`night` para modo escuro, `flat` para modo claro), garantindo uma integração estética harmoniosa [frontend_vue/src/views/passenger/BuyTicketView.vue:107-108]().
+* **Automatic Payment Methods**: Ao ativar a propriedade `AutomaticPaymentMethods`, o Stripe apresenta dinamicamente os métodos ativos no dashboard do comerciante (ex: Cartão de Crédito/Débito, MB WAY, Revolut Pay, Link), prevenindo incompatibilidades de código [frontend_vue/src/views/passenger/BuyTicketView.vue:107-108]().
+
+### Mecanismos de Proteção e Tratamento de Erros
+* **Segurança contra submissão múltipla**: Ao clicar em "Pagar", o estado `isProcessing` é ativado de imediato, desabilitando o botão e exibindo um spinner animado até à conclusão [frontend_vue/src/views/passenger/BuyTicketView.vue:151-155]().
+* **Tratamento Robusto de Erros**: Erros no processamento do cartão (como fundos insuficientes ou chaves API inválidas) são detetados pelo Stripe SDK e apresentados de forma clara em português no banner `errorMessage` com opção para re-tentativa imediata [frontend_vue/src/views/passenger/BuyTicketView.vue:266-267]().
+
+**Fontes:** [frontend_vue/src/views/passenger/BuyTicketView.vue:1-490]()
+
+## 6. Perfil e Autenticação
 
 A autenticação dos passageiros é tratada via `authService`, com foco na longevidade da sessão.
 
 ### Gestão de Sessão
-*   **Login Persistente:** Os passageiros usam `localStorage` para o armazenamento de sessão, ao contrário dos administradores que usam `sessionStorage` [frontend_vue/src/services/auth.js]().
-*   **Tratamento de Expiração:** Se uma sessão exceder os 7 dias, a `LoginView` apresenta um banner `sessionExpired` e força um novo login [frontend_vue/src/views/passenger/LoginView.vue:17-23]().
-*   **Integração de Perfil:** `ProfileView` obtém dados extendidos do utilizador (como NIF e estado do passe mensal) a partir do endpoint `/api/auth/profile/{id}` [frontend_vue/src/views/passenger/ProfileView.vue:18-32]().
+* **Login Persistente:** Os passageiros usam `localStorage` para o armazenamento de sessão, ao contrário dos administradores que usam `sessionStorage` [frontend_vue/src/services/auth.js]().
+* **Tratamento de Expiração:** Se uma sessão exceder os 7 dias, a `LoginView` apresenta um banner `sessionExpired` e força um novo login [frontend_vue/src/views/passenger/LoginView.vue:17-23]().
+* **Integração de Perfil:** `ProfileView` obtém dados extendidos do utilizador (como NIF e estado do passe mensal) a partir do endpoint `/api/auth/profile/{id}` [frontend_vue/src/views/passenger/ProfileView.vue:18-32]().
 
-### Mapeamento de Entidades de Código
+## 7. Mapeamento de Entidades de Código
 
 ```mermaid
 classDiagram
-    class authService {
-        +loginPassenger(email, pass)
-        +signupPassenger(nome, email, pass)
-        +getUser()
-    }
-    class HomeView {
-        +paragensBraga: Array
-        +getFilteredSuggestions(query)
-        +handlePlan()
-    }
-    class LiveMapView {
-        +markersCache: Map
-        +updateMarkers()
-        +fetchBuses()
-    }
-    class TicketView {
-        +qrCountdown: Number
-        +generateQRPayload()
-        +refreshQR()
-    }
+ class authService {
+ +loginPassenger(email, pass)
+ +signupPassenger(nome, email, pass)
+ +getUser()
+ }
+ class HomeView {
+ +paragensBraga: Array
+ +getFilteredSuggestions(query)
+ +handlePlan()
+ }
+ class LiveMapView {
+ +markersCache: Map
+ +updateMarkers()
+ +fetchBuses()
+ }
+ class TicketView {
+ +qrCountdown: Number
+ +generateQRPayload()
+ +refreshQR()
+ }
+ class BuyTicketView {
+ +stripeContainer: Ref
+ +isProcessing: Boolean
+ +errorMessage: String
+ +mountStripeElements()
+ +pay()
+ }
 
-    HomeView ..> authService : uses
-    LiveMapView ..> L : uses Leaflet
-    TicketView ..> authService : uses
+ HomeView ..> authService : uses
+ LiveMapView ..> L : uses Leaflet
+ TicketView ..> authService : uses
+ BuyTicketView ..> authService : uses
 ```
 
-**Fontes:** [frontend_vue/src/views/passenger/LoginView.vue:25-42](), [frontend_vue/src/views/passenger/ProfileView.vue:10-16](), [frontend_vue/src/views/passenger/HomeView.vue:4-5]().
+**Fontes:** [frontend_vue/src/views/passenger/LoginView.vue:25-42](), [frontend_vue/src/views/passenger/ProfileView.vue:10-16](), [frontend_vue/src/views/passenger/HomeView.vue:4-5](), [frontend_vue/src/views/passenger/BuyTicketView.vue:1-85]().

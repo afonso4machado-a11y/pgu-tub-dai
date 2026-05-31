@@ -1,4 +1,5 @@
 CREATE DATABASE IF NOT EXISTS tub;
+ALTER DATABASE tub CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE tub;
 
 CREATE TABLE IF NOT EXISTS autocarros (
@@ -10,7 +11,8 @@ CREATE TABLE IF NOT EXISTS autocarros (
     linha_id VARCHAR(10) NULL,
     passageiros_atuais INT NOT NULL DEFAULT 0,
     total_passageiros_transportados INT NOT NULL DEFAULT 0,
-    ultima_leitura DATETIME NULL
+    ultima_leitura DATETIME NULL,
+    deleted BOOLEAN NOT NULL DEFAULT FALSE  -- Soft delete: TRUE = eliminado (reversível)
 );
 
 CREATE TABLE IF NOT EXISTS clientes (
@@ -28,6 +30,7 @@ CREATE TABLE IF NOT EXISTS leituras (
     entradas INT NOT NULL,
     saidas INT NOT NULL,
     timestamp DATETIME NOT NULL,
+    tipo_passageiro VARCHAR(50) NULL, -- 'Estudante', 'Sénior', 'Passe Normal', 'Zapping'
     FOREIGN KEY (autocarro_id) REFERENCES autocarros(id)
 );
 
@@ -106,7 +109,27 @@ CREATE INDEX idx_linha_paragens_linha ON linha_paragens(linha_id);
 CREATE INDEX idx_viagens_linha ON viagens(linha_id);
 CREATE INDEX idx_horarios_viagem ON horarios(viagem_id);
 CREATE INDEX idx_leituras_timestamp ON leituras(timestamp);
+CREATE INDEX idx_leituras_tipo_passageiro ON leituras(tipo_passageiro);
 CREATE INDEX idx_alertas_timestamp ON alertas(timestamp);
+
+-- Seed de linhas TUB adicionais (inserção idempotente)
+INSERT INTO linhas (id, nome, descricao) VALUES
+ ('L2',  'Ponte de Prado — Bom Jesus', 'Linha interligando Ponte de Prado à zona do Bom Jesus.'),
+ ('L3',  'Avenida Central — Ruães', 'Linha ligando Avenida Central a Ruães.'),
+ ('L5',  'Dume — Quinta da Capela', 'Serviço entre Dume e Quinta da Capela.'),
+ ('L6',  'Av. Gen. Norton de Matos — Gondizalves/Semelhe', 'Linha servindo a Av. Gen. Norton de Matos e a zona de Gondizalves/Semelhe.'),
+ ('L7',  'Celeirós — S. Vítor', 'Linha já existente de Celeirós a São Vítor.'),
+ ('L8',  'Rua 25 de Abril — Sete Fontes', 'Ligação entre Rua 25 de Abril e Sete Fontes.'),
+ ('L9',  'Ruães — Nogueira (Barral)', 'Linha de Ruães até Nogueira (Barral).'),
+ ('L12', 'Av. da Liberdade — Lageosa/Pedralva via Gualtar', 'Linha entre Av. da Liberdade e Lageosa/Pedralva via Gualtar.'),
+ ('L13', 'Av. Gen. Norton de Matos — Lageosa/Pedralva', 'Linha entre Av. Gen. Norton de Matos e Lageosa/Pedralva.'),
+ ('L14', 'Praça Conde de Agrolongo — Priscos', 'Linha de Praça Conde de Agrolongo a Priscos.'),
+ ('L18', 'Rua do Raio — Pinheiro do Bicho via Esporões', 'Linha de Rua do Raio a Pinheiro do Bicho via Esporões.'),
+ ('L19', 'Areal — Boavista', 'Linha ligando Areal a Boavista.'),
+ ('L20', 'Av. da Liberdade — Escudeiros via Ponte Nova', 'Linha entre Av. da Liberdade e Escudeiros via Ponte Nova.'),
+ ('L40', 'Gualtar — Real', 'Linha do Hospital de Gualtar até Real.'),
+ ('L43', 'Estação — Universidade', 'Linha entre a Estação CP e a Universidade de Minho.')
+ON DUPLICATE KEY UPDATE nome = VALUES(nome), descricao = VALUES(descricao);
 
 -- Tabela de bilhetes comprados via Stripe
 CREATE TABLE IF NOT EXISTS bilhetes (
@@ -124,3 +147,21 @@ CREATE TABLE IF NOT EXISTS bilhetes (
 
 CREATE INDEX idx_bilhetes_cliente ON bilhetes(cliente_id);
 CREATE INDEX idx_bilhetes_payment_intent ON bilhetes(payment_intent_id);
+
+-- Configurações e definições específicas de cada cliente
+CREATE TABLE IF NOT EXISTS definicoes_cliente (
+    cliente_id VARCHAR(50) PRIMARY KEY,
+    tema VARCHAR(20) NOT NULL DEFAULT 'dark',
+    notificacoes_ativas BOOLEAN NOT NULL DEFAULT TRUE,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+);
+
+-- Linhas preferidas do cliente
+-- Nota: sem FK para linhas.id porque as linhas podem ser IDs externos (GTFS)
+-- que podem não ter sido registados via API antes de serem adicionados como favoritos
+CREATE TABLE IF NOT EXISTS linhas_favoritas (
+    cliente_id VARCHAR(50) NOT NULL,
+    linha_id VARCHAR(10) NOT NULL,
+    PRIMARY KEY (cliente_id, linha_id),
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+);

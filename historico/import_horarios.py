@@ -9,10 +9,10 @@ sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 # Configurações da Base de Dados
 # ────────────────────────────────────────────────
 db_config = {
-    'host': 'localhost',
-    'user': 'tub_user',
-    'password': 'tub_pass',
-    'database': 'tub'
+    'host': 'pgu-tub-db-pl.mysql.database.azure.com',
+    'user': 'tubadmin',
+    'password': 'Cunha@2006',
+    'database': 'pgu_tub'
 }
 
 def get_connection():
