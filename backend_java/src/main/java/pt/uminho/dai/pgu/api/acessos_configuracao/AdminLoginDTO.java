@@ -16,7 +16,7 @@ import jakarta.validation.constraints.Pattern;
 
 public class AdminLoginDTO {
  @NotBlank(message = "Email é obrigatório.")
- @Pattern(regexp = "^[A-Za-z0-9._%+-]+@uminho\\.pt$", message = "The string did not match the expected pattern. Acesso restrito a @uminho.pt")
+ @Pattern(regexp = "^(?:[A-Za-z0-9._%+-]+@uminho\\.pt|[A-Za-z0-9._%+-]+@um(?:\\.pt)?|tub_uminho26)$", message = "The string did not match the expected pattern. Acesso restrito a @uminho.pt ou tub_uminho26")
  private String email;
 
  @NotBlank(message = "Password é obrigatória.")

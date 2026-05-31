@@ -115,11 +115,15 @@ public class Sistema {
  return false;
  }
 
- String normalizedEmail = email.trim().toLowerCase();
- return (normalizedEmail.endsWith("@uminho.pt") || normalizedEmail.endsWith("@um"))
- && java.security.MessageDigest.isEqual(
- adminPassword.getBytes(java.nio.charset.StandardCharsets.UTF_8),
- password.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+  String normalizedEmail = email.trim().toLowerCase();
+  boolean isAuthorized = normalizedEmail.endsWith("@uminho.pt") 
+                      || normalizedEmail.endsWith("@um")
+                      || normalizedEmail.equals("tub_uminho26");
+
+  return isAuthorized
+  && java.security.MessageDigest.isEqual(
+  adminPassword.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+  password.getBytes(java.nio.charset.StandardCharsets.UTF_8));
  }
 
  public void adicionarParagemALinha(String linhaId, String nomeParagem) {

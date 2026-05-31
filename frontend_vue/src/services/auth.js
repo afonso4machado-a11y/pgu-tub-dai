@@ -28,9 +28,9 @@ export const authService = {
 
  async loginAdmin(email, password) {
  // Validação de formato apenas (sem expor credenciais no frontend)
- const isInstitutional = email.endsWith('@uminho.pt') || email.endsWith('@um');
+ const isInstitutional = email.endsWith('@uminho.pt') || email.endsWith('@um') || email === 'tub_uminho26';
  if (!isInstitutional) {
- throw new Error('Acesso restrito a emails institucionais (@uminho.pt).')
+ throw new Error('Acesso restrito a emails institucionais (@uminho.pt) ou tub_uminho26.')
  }
  if (!password || password.length < 6) {
  throw new Error('Password inválida.')

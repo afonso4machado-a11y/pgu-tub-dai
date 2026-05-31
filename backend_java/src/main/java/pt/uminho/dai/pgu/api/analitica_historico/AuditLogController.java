@@ -81,6 +81,19 @@ public class AuditLogController {
             ));
         }
 
+        String normalizedEmail = adminEmail.trim().toLowerCase();
+        boolean isAuthorized = normalizedEmail.endsWith("@uminho.pt") 
+                            || normalizedEmail.endsWith("@um.pt")
+                            || normalizedEmail.endsWith("@um")
+                            || normalizedEmail.equals("tub_uminho26");
+
+        if (!isAuthorized) {
+            return ResponseEntity.status(403).body(Map.of(
+                "status", "erro",
+                "mensagem", "Acesso restrito. Apenas administradores autorizados com email institucional (@uminho.pt) ou credenciais validas podem aceder a esta funcionalidade."
+            ));
+        }
+
         try {
             List<RegistoAcao> logs = repositorioAuditLogs.listarTodos();
             

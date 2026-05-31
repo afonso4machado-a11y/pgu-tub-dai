@@ -15,7 +15,7 @@ const lockoutInterval = ref(null)
 const isValidEmail = (e) => {
  if (!e) return false
  const normalized = e.trim().toLowerCase()
- return normalized.endsWith('@uminho.pt') || normalized.endsWith('@um')
+ return normalized.endsWith('@uminho.pt') || normalized.endsWith('@um') || normalized === 'tub_uminho26'
 }
 
 function formatTime(sec) {
@@ -68,7 +68,7 @@ async function handleLogin() {
   }
 
   if (!isValidEmail(email.value)) {
-    error.value = 'Por favor, use um email institucional (@uminho.pt ou @um).'
+    error.value = 'Por favor, use um email institucional (@uminho.pt ou @um) ou utilizador tub_uminho26.'
     return
   }
   
@@ -100,16 +100,16 @@ async function handleLogin() {
 
  <form @submit.prevent="handleLogin" class="login-form">
  <div class="input-group">
- <label>Email Institucional</label>
+ <label>Email Institucional / Utilizador</label>
  <input 
- type="email" 
+ type="text" 
  v-model="email" 
- placeholder="exemplo@uminho.pt" 
+ placeholder="exemplo@uminho.pt ou tub_uminho26" 
  :class="{ 'invalid-email': email && !isValidEmail(email) }"
  required 
  />
  <span v-if="email && !isValidEmail(email)" class="hint-error">
- Apenas emails @uminho.pt ou @um são permitidos.
+ Apenas emails @uminho.pt, @um ou o utilizador tub_uminho26 são permitidos.
  </span>
  </div>
 
