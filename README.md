@@ -155,6 +155,6 @@ pgu-tub-dai/
 
 ## Equipa de Desenvolvimento
 
-Projeto curricular desenvolvido por alunos da Universidade do Minho — Licenciatura em Engenharia Informática.
+Projeto curricular desenvolvido por alunos da Universidade do Minho — Licenciatura em Engenharia e Gestão de Sistemas de Informação.
 
 *Nota de Segurança: O ficheiro de variáveis de ambiente `.env` encontra-se devidamente excluído do controlo de versões (conforme as definições do `.gitignore`). Consulte o ficheiro `.env.example` para conhecer os parâmetros obrigatórios em ambiente de produção.*
