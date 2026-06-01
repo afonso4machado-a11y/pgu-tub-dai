@@ -1,15 +1,39 @@
 <script setup>
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, ref, onMounted, watch, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useTheme } from './composables/useTheme'
 import { usePassengerTheme } from './composables/usePassengerTheme'
-import { onMounted, watch, onUnmounted } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import TopHeader from './components/TopHeader.vue'
+import PageSkeleton from './components/PageSkeleton.vue'
 import { useSidebar } from './composables/useSidebar'
 import { ChevronRight } from 'lucide-vue-next'
 
 const route = useRoute()
+const router = useRouter()
+const isRouteLoading = ref(false)
+let loadingTimeout = null
+let navStartTime = 0
+
+router.beforeEach((to, from, next) => {
+  if (to.meta.requiresAdmin && to.path !== from.path) {
+    if (loadingTimeout) clearTimeout(loadingTimeout)
+    isRouteLoading.value = true
+    navStartTime = Date.now()
+  }
+  next()
+})
+
+router.afterEach((to, from) => {
+  if (isRouteLoading.value) {
+    const elapsed = Date.now() - navStartTime
+    const remainingTime = Math.max(0, 450 - elapsed)
+    loadingTimeout = setTimeout(() => {
+      isRouteLoading.value = false
+    }, remainingTime)
+  }
+})
+
 const isAuthPage = computed(() => ['admin-login', 'pax-login'].includes(route.name))
 const isPassengerApp = computed(() => route.path.startsWith('/app') && !isAuthPage.value)
 
@@ -42,6 +66,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown)
+  if (loadingTimeout) clearTimeout(loadingTimeout)
 })
 
 watch(isPassengerApp, (newVal) => {
@@ -85,7 +110,8 @@ watch(isPassengerApp, (newVal) => {
       <div class="view-container">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
-            <component :is="Component" />
+            <PageSkeleton v-if="isRouteLoading" />
+            <component v-else :is="Component" />
           </transition>
         </router-view>
       </div>

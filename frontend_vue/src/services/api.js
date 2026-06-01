@@ -268,6 +268,52 @@ function getDemoData(endpoint) {
  return { status: 'sucesso', paragens: DEMO_PARAGENS }
  case '/leituras':
  return { status: 'sucesso', mensagem: 'Leitura registada com sucesso (demonstração).', alertas: [] }
+ case '/audit-logs': {
+    let localLogs = [];
+    if (typeof localStorage !== 'undefined') {
+      const localLogsStr = localStorage.getItem('pgu_local_audit_logs');
+      try {
+        localLogs = localLogsStr ? JSON.parse(localLogsStr) : [];
+      } catch(e) {
+        localLogs = [];
+      }
+      
+      // If empty, seed with initial realistic logs by other colleagues
+      if (localLogs.length === 0) {
+        localLogs = [
+          {
+            id: 1001,
+            sessionId: 'sess-mock-1',
+            utilizadorEmail: 'gustavo@uminho.pt',
+            utilizadorNome: 'Gustavo Pinto',
+            acaoTipo: 'ADICIONAR_AUTOCARRO',
+            detalhes: 'Adicionado autocarro ID: TUB-109 (Matrícula: 90-QR-12, Lotação: 75)',
+            timestamp: new Date(Date.now() - 3600000 * 2).toISOString() // 2 hours ago
+          },
+          {
+            id: 1002,
+            sessionId: 'sess-mock-2',
+            utilizadorEmail: 'beatriz@uminho.pt',
+            utilizadorNome: 'Beatriz Mendes',
+            acaoTipo: 'ASSOCIAR_AUTOCARRO_LINHA',
+            detalhes: 'Associado autocarro ID: TUB-102 à linha L43',
+            timestamp: new Date(Date.now() - 3600000 * 5).toISOString() // 5 hours ago
+          },
+          {
+            id: 1003,
+            sessionId: 'sess-mock-3',
+            utilizadorEmail: 'marco@uminho.pt',
+            utilizadorNome: 'Marco Silva',
+            acaoTipo: 'ELIMINAR_AUTOCARRO',
+            detalhes: 'Eliminado autocarro ID: TUB-110',
+            timestamp: new Date(Date.now() - 3600000 * 24).toISOString() // 24 hours ago
+          }
+        ];
+        localStorage.setItem('pgu_local_audit_logs', JSON.stringify(localLogs));
+      }
+    }
+    return { status: 'sucesso', logs: localLogs };
+  }
  default:
  // POST /autocarros, POST /linhas/Lx/autocarros, etc.
  return { status: 'sucesso', mensagem: 'Operação simulada com sucesso (demonstração).' }

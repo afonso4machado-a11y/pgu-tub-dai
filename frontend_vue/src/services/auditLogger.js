@@ -31,6 +31,7 @@ export const auditLogger = {
     const nome = adminUser?.nome || 'Operador Backoffice';
 
     const logEntry = {
+      id: Math.floor(Math.random() * 1000000), // Random ID for keying
       sessionId: getSessionId(),
       utilizadorEmail: email,
       utilizadorNome: nome,
@@ -38,6 +39,18 @@ export const auditLogger = {
       detalhes: detalhes,
       timestamp: new Date().toISOString()
     };
+
+    // Save to local persistent log list in localStorage for offline/demo robustness
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const localLogsStr = localStorage.getItem('pgu_local_audit_logs');
+        const localLogs = localLogsStr ? JSON.parse(localLogsStr) : [];
+        localLogs.unshift(logEntry); // Add to beginning (most recent first)
+        localStorage.setItem('pgu_local_audit_logs', JSON.stringify(localLogs.slice(0, 100))); // Keep last 100 logs
+      } catch (err) {
+        console.error('Error saving local log:', err);
+      }
+    }
 
     console.log(`[Audit Logger] Attempting to send action immediately: ${acaoTipo}`);
 

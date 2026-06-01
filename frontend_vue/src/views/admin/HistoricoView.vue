@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { authService } from '../../services/auth'
 import { Search, Calendar, RefreshCw, Filter, User, Clock, Shield, Database, ArrowUpDown, FileDown, AlertTriangle } from 'lucide-vue-next'
+import { apiFetch } from '../../services/api'
 
 const logs = ref([])
 const loading = ref(true)
@@ -24,27 +25,19 @@ async function loadLogs() {
     const admin = authService.getAdminUser()
     const email = admin ? admin.email : ''
     
-    const res = await fetch('/api/audit-logs', {
+    const { live, data } = await apiFetch('/audit-logs', {
       headers: {
         'X-Admin-Email': email
       }
     })
     
-    if (!res.ok) {
-      if (res.status === 403) {
-        throw new Error('Acesso negado. Apenas administradores autorizados com email institucional.')
-      }
-      throw new Error('Falha ao obter os registos do servidor.')
-    }
-    
-    const data = await res.json()
     if (data.status === 'sucesso') {
       logs.value = data.logs || []
     } else {
       throw new Error(data.mensagem || 'Erro desconhecido.')
     }
   } catch (err) {
-    error.value = err.message
+    error.value = err.message || 'Falha ao obter os registos do servidor.'
   } finally {
     loading.value = false
   }
@@ -165,20 +158,8 @@ function exportCSV() {
   document.body.removeChild(link);
 }
 
-let pollInterval = null
-
 onMounted(() => {
   loadLogs()
-  // Poll new logs every 4 seconds for real-time multiplayer backoffice tracking
-  pollInterval = setInterval(() => {
-    loadLogs()
-  }, 4000)
-})
-
-onUnmounted(() => {
-  if (pollInterval) {
-    clearInterval(pollInterval)
-  }
 })
 </script>
 
