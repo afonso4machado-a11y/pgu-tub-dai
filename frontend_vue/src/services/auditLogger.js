@@ -64,11 +64,11 @@ export const auditLogger = {
    * @param {Object} logEntry 
    */
   bufferLog(logEntry) {
-    if (typeof sessionStorage === 'undefined') return;
+    if (typeof localStorage === 'undefined') return;
     const pendingLogs = this.getPendingLogs();
     pendingLogs.push(logEntry);
-    sessionStorage.setItem('pgu_pending_audit_logs', JSON.stringify(pendingLogs));
-    console.log(`[Audit Logger] Buffered action locally: ${logEntry.acaoTipo}`);
+    localStorage.setItem('pgu_pending_audit_logs', JSON.stringify(pendingLogs));
+    console.log(`[Audit Logger] Buffered action locally in localStorage: ${logEntry.acaoTipo}`);
   },
 
   /**
@@ -76,8 +76,8 @@ export const auditLogger = {
    * @returns {Array}
    */
   getPendingLogs() {
-    if (typeof sessionStorage === 'undefined') return [];
-    const logsStr = sessionStorage.getItem('pgu_pending_audit_logs');
+    if (typeof localStorage === 'undefined') return [];
+    const logsStr = localStorage.getItem('pgu_pending_audit_logs');
     return logsStr ? JSON.parse(logsStr) : [];
   },
 
@@ -85,8 +85,8 @@ export const auditLogger = {
    * Clears the pending logs from the buffer.
    */
   clearPendingLogs() {
-    if (typeof sessionStorage === 'undefined') return;
-    sessionStorage.removeItem('pgu_pending_audit_logs');
+    if (typeof localStorage === 'undefined') return;
+    localStorage.removeItem('pgu_pending_audit_logs');
   },
 
   /**
@@ -122,9 +122,9 @@ export const auditLogger = {
       console.log('[Audit Logger] Dispatched batch via fetch keepalive');
     } catch (err) {
       console.error('[Audit Logger] Failed to dispatch audit logs:', err);
-      // Restore logs back to sessionStorage to prevent loss
+      // Restore logs back to localStorage to prevent loss
       const currentLogs = this.getPendingLogs();
-      sessionStorage.setItem('pgu_pending_audit_logs', JSON.stringify([...logs, ...currentLogs]));
+      localStorage.setItem('pgu_pending_audit_logs', JSON.stringify([...logs, ...currentLogs]));
     }
   }
 };

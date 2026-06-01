@@ -88,8 +88,8 @@ public class SpringConfig implements WebMvcConfigurer {
  registry.addMapping("/api/**")
  .allowedOrigins(origins.split(","))
  .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
- .allowedHeaders("Content-Type", "Authorization")
- .exposedHeaders("Authorization")
+ .allowedHeaders("Content-Type", "Authorization", "X-Admin-Email")
+ .exposedHeaders("Authorization", "X-Admin-Email")
  .allowCredentials(true)
  .maxAge(3600);
  }

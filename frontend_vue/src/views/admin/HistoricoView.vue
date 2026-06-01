@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { authService } from '../../services/auth'
 import { Search, Calendar, RefreshCw, Filter, User, Clock, Shield, Database, ArrowUpDown, FileDown, AlertTriangle } from 'lucide-vue-next'
 
@@ -165,8 +165,20 @@ function exportCSV() {
   document.body.removeChild(link);
 }
 
+let pollInterval = null
+
 onMounted(() => {
   loadLogs()
+  // Poll new logs every 4 seconds for real-time multiplayer backoffice tracking
+  pollInterval = setInterval(() => {
+    loadLogs()
+  }, 4000)
+})
+
+onUnmounted(() => {
+  if (pollInterval) {
+    clearInterval(pollInterval)
+  }
 })
 </script>
 
