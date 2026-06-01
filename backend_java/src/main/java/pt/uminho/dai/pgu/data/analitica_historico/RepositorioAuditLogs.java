@@ -17,6 +17,30 @@ import java.util.List;
  */
 public class RepositorioAuditLogs {
 
+    public RepositorioAuditLogs() {
+        try {
+            criarTabelaSeNaoExistir();
+        } catch (SQLException e) {
+            System.err.println("Erro ao criar tabela de auditoria: " + e.getMessage());
+        }
+    }
+
+    private void criarTabelaSeNaoExistir() throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS registo_acoes_backoffice (" +
+                     "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                     "session_id VARCHAR(255) NOT NULL, " +
+                     "utilizador_email VARCHAR(255) NOT NULL, " +
+                     "utilizador_nome VARCHAR(255) NOT NULL, " +
+                     "acao_tipo VARCHAR(100) NOT NULL, " +
+                     "detalhes TEXT NOT NULL, " +
+                     "timestamp DATETIME NOT NULL" +
+                     ")";
+        try (Connection conn = DatabaseConnection.obterConexao();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.executeUpdate();
+        }
+    }
+
     /**
      * Saves a list of backoffice action logs securely using batch insert and parameterized queries.
      *

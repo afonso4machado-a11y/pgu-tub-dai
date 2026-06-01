@@ -32,7 +32,25 @@ async function loadLogs() {
     })
     
     if (data.status === 'sucesso') {
-      logs.value = data.logs || []
+      let dbLogs = data.logs || []
+      
+      // Merge with local persistent pgu_local_audit_logs from localStorage for bulletproof offline/simulation sync
+      if (typeof localStorage !== 'undefined') {
+        try {
+          const localLogsStr = localStorage.getItem('pgu_local_audit_logs')
+          const localLogs = localLogsStr ? JSON.parse(localLogsStr) : []
+          
+          // Deduplicate by comparing sessionId + timestamp or exact details to avoid repeating entries
+          const dbKeys = new Set(dbLogs.map(l => `${l.sessionId}-${l.timestamp}-${l.acaoTipo}`))
+          const uniqueLocalLogs = localLogs.filter(l => !dbKeys.has(`${l.sessionId}-${l.timestamp}-${l.acaoTipo}`))
+          
+          dbLogs = [...uniqueLocalLogs, ...dbLogs]
+        } catch (e) {
+          console.warn('[Audit logs merge] Failed to merge local logs:', e)
+        }
+      }
+      
+      logs.value = dbLogs
     } else {
       throw new Error(data.mensagem || 'Erro desconhecido.')
     }
