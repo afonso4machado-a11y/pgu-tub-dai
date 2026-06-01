@@ -125,61 +125,61 @@ function markTouched() {
 }
 
 async function handleRegistarAutocarro() {
- formTouched.value = true
- if (!validateForm()) return
+  formTouched.value = true
+  if (!validateForm()) return
 
- submitting.value = true
- try {
- const req = await fetch(apiUrl + '/autocarros', {
- method: 'POST', headers: {'Content-Type': 'application/json'},
- body: JSON.stringify({ 
- id: autoId.value.trim(), 
- capacidade: parseInt(autoCap.value),
- matricula: autoMatricula.value.trim().toUpperCase(),
- marca: autoMarca.value.trim(),
- modelo: autoModelo.value.trim()
- })
- })
- const res = await req.json()
- 
- if (res.status === 'sucesso') {
-  auditLogger.logAction('ADICIONAR_AUTOCARRO', `Adicionado autocarro ID: ${autoId.value.trim()} (Matrícula: ${autoMatricula.value.trim().toUpperCase()}, Lotação: ${autoCap.value})`);
-  let finalMsg = res.mensagem
-  if (autoLinha.value.trim()) {
+  submitting.value = true
   try {
-  const reqLinha = await fetch(`${apiUrl}/linhas/${autoLinha.value.trim()}/autocarros`, {
-  method: 'POST', headers: {'Content-Type': 'application/json'},
-  body: JSON.stringify({ 
-  autocarroId: autoId.value.trim(),
-  linhaId: autoLinha.value.trim()
-  })
-  })
-  const resLinha = await reqLinha.json()
-  if (resLinha.status === 'sucesso') {
-  auditLogger.logAction('ASSOCIAR_AUTOCARRO_LINHA', `Associado autocarro ID: ${autoId.value.trim()} à linha ${autoLinha.value.trim()}`);
-  finalMsg += ` E associado à linha ${autoLinha.value} com sucesso!`
-  } else {
-  finalMsg += ` Porém, falhou a associar à linha: ${resLinha.mensagem}`
-  }
+    const { data: res } = await apiFetch('/autocarros', {
+      method: 'POST', 
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ 
+        id: autoId.value.trim(), 
+        capacidade: parseInt(autoCap.value),
+        matricula: autoMatricula.value.trim().toUpperCase(),
+        marca: autoMarca.value.trim(),
+        modelo: autoModelo.value.trim()
+      })
+    })
+    
+    if (res.status === 'sucesso') {
+      auditLogger.logAction('ADICIONAR_AUTOCARRO', `Adicionado autocarro ID: ${autoId.value.trim()} (Matrícula: ${autoMatricula.value.trim().toUpperCase()}, Lotação: ${autoCap.value})`);
+      let finalMsg = res.mensagem
+      if (autoLinha.value.trim()) {
+        try {
+          const { data: resLinha } = await apiFetch(`/linhas/${autoLinha.value.trim()}/autocarros`, {
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ 
+              autocarroId: autoId.value.trim(),
+              linhaId: autoLinha.value.trim()
+            })
+          })
+          if (resLinha.status === 'sucesso') {
+            auditLogger.logAction('ASSOCIAR_AUTOCARRO_LINHA', `Associado autocarro ID: ${autoId.value.trim()} à linha ${autoLinha.value.trim()}`);
+            finalMsg += ` E associado à linha ${autoLinha.value} com sucesso!`
+          } else {
+            finalMsg += ` Porém, falhou a associar à linha: ${resLinha.mensagem}`
+          }
+        } catch(e) {
+          finalMsg += ` Porém, falhou a comunicação para associar à linha.`
+        }
+      }
+      alert(finalMsg)
+    } else {
+      alert(res.mensagem)
+    }
+    
+    // Limpar formulário
+    autoId.value = ''; autoCap.value = ''; autoLinha.value = '';
+    autoMatricula.value = ''; autoMarca.value = ''; autoModelo.value = '';
+    formTouched.value = false
+    formErrors.value = {}
   } catch(e) {
-  finalMsg += ` Porém, falhou a comunicação para associar à linha.`
+    alert("Falha de Comunicação com servidor Java.")
+  } finally {
+    submitting.value = false
   }
-  }
-  alert(finalMsg)
- } else {
- alert(res.mensagem)
- }
- 
- // Limpar formulário
- autoId.value = ''; autoCap.value = ''; autoLinha.value = '';
- autoMatricula.value = ''; autoMarca.value = ''; autoModelo.value = '';
- formTouched.value = false
- formErrors.value = {}
- } catch(e) {
- alert("Falha de Comunicação com servidor Java.")
- } finally {
- submitting.value = false
- }
 }
 
 async function handleConsulta() {
@@ -199,8 +199,9 @@ async function handleRegLeitura() {
     return
   }
   try {
-    const req = await fetch(`${apiUrl}/leituras`, {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
+    const { data: res } = await apiFetch('/leituras', {
+      method: 'POST', 
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         id: leitId.value, 
         entradas: leitIn.value, 
@@ -208,7 +209,6 @@ async function handleRegLeitura() {
         tipoPassageiro: leitPerfil.value
       })
     })
-    const res = await req.json()
     if(res.status === 'sucesso') {
       alert("Leitura manual gravada com sucesso!")
       autoAlerts.value = res.alertas || []
@@ -227,37 +227,35 @@ function confirmDelete(id) {
 }
 
 async function handleEliminarAutocarro() {
- showConfirmDelete.value = false
- const id = deleteTargetId.value || deleteId.value.trim()
- if (!id) return
- try {
- const req = await fetch(`${apiUrl}/autocarros/${encodeURIComponent(id)}`, { method: 'DELETE' })
- const res = await req.json()
- deleteFeedback.value = { ok: res.status === 'sucesso', msg: res.mensagem }
- if (res.status === 'sucesso') {
- auditLogger.logAction('ELIMINAR_AUTOCARRO', `Eliminado autocarro ID: ${id}`);
- deleteId.value = ''
- await loadEliminados()
- }
- } catch(e) {
- deleteFeedback.value = { ok: false, msg: 'Erro de comunicação com o servidor.' }
- }
+  showConfirmDelete.value = false
+  const id = deleteTargetId.value || deleteId.value.trim()
+  if (!id) return
+  try {
+    const { data: res } = await apiFetch(`/autocarros/${encodeURIComponent(id)}`, { method: 'DELETE' })
+    deleteFeedback.value = { ok: res.status === 'sucesso', msg: res.mensagem }
+    if (res.status === 'sucesso') {
+      auditLogger.logAction('ELIMINAR_AUTOCARRO', `Eliminado autocarro ID: ${id}`);
+      deleteId.value = ''
+      await loadEliminados()
+    }
+  } catch(e) {
+    deleteFeedback.value = { ok: false, msg: 'Erro de comunicação com o servidor.' }
+  }
 }
 
 async function handleRestaurarAutocarro(id) {
- try {
- const req = await fetch(`${apiUrl}/autocarros/${encodeURIComponent(id)}/restaurar`, { method: 'POST' })
- const res = await req.json()
- if (res.status === 'sucesso') {
- auditLogger.logAction('RESTAURAR_AUTOCARRO', `Restaurado autocarro ID: ${id}`);
- await loadEliminados()
- deleteFeedback.value = { ok: true, msg: `Autocarro ${id} restaurado com sucesso.` }
- } else {
- deleteFeedback.value = { ok: false, msg: res.mensagem }
- }
- } catch(e) {
- deleteFeedback.value = { ok: false, msg: 'Erro de comunicação com o servidor.' }
- }
+  try {
+    const { data: res } = await apiFetch(`/autocarros/${encodeURIComponent(id)}/restaurar`, { method: 'POST' })
+    if (res.status === 'sucesso') {
+      auditLogger.logAction('RESTAURAR_AUTOCARRO', `Restaurado autocarro ID: ${id}`);
+      await loadEliminados()
+      deleteFeedback.value = { ok: true, msg: `Autocarro ${id} restaurado com sucesso.` }
+    } else {
+      deleteFeedback.value = { ok: false, msg: res.mensagem }
+    }
+  } catch(e) {
+    deleteFeedback.value = { ok: false, msg: 'Erro de comunicação com o servidor.' }
+  }
 }
 
 async function loadEliminados() {
